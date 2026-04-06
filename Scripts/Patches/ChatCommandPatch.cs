@@ -4,9 +4,7 @@
 [HarmonyPatch]
 public static class ChatCommandPatch
 {
-    static ChatController chatController = UnityEngine.Object.FindObjectOfType<ChatController>();
-
-    [HarmonyPatch(typeof(ChatController), nameof(chatController.SendChat))]
+    [HarmonyPatch(typeof(ChatController), nameof(ChatController.SendChat))]
     [HarmonyPrefix]
     public static bool Prefix(ChatController __instance)
     {
@@ -22,25 +20,6 @@ public static class ChatCommandPatch
             string command = strs[0];
             switch (command.ToLower())
             {
-                case "/lobbyrule":
-                case "/lobbyrules":
-                case "/rules":
-                case "/rule":
-                    __instance.freeChatField.Clear();
-                    __instance.quickChatMenu.Clear();
-                    __instance.quickChatField.Clear();
-                    __instance.UpdateChatMode();
-                    if (AmongUsClient.Instance != null && AmongUsClient.Instance.AmHost)
-                    {
-                        var rulesText = PatchManager.GetLobbyRulesText();
-                        RpcSendLobbyRulesGlobal.Invoke((PlayerControl.LocalPlayer, rulesText));
-                    }
-                    else
-                    {
-                        RpcRequestLobbyRules.Invoke(PlayerControl.LocalPlayer);
-                    }
-                    return false;
-
                 case "/jailor":
                 case "/j":
                 case "/jail":
@@ -62,50 +41,6 @@ public static class ChatCommandPatch
         }
         return true;
     }
-
-    internal static RemoteProcess<PlayerControl> RpcRequestLobbyRules = new("RequestLobbyRules",
-        (requester, _) =>
-        {
-            if (!AmongUsClient.Instance.AmHost)
-            {
-                return;
-            }
-
-            if (requester == null)
-            {
-                return;
-            }
-
-            var rulesText = PatchManager.GetLobbyRulesText();
-            RpcSendLobbyRules?.Invoke((PlayerControl.LocalPlayer, requester, rulesText));
-        });
-
-    internal static RemoteProcess<(PlayerControl host, PlayerControl target, string rulesText)> RpcSendLobbyRules = new("SendLobbyRules",
-        (message, _) =>
-        {
-            var rulesText = message.rulesText;
-
-            if (PlayerControl.LocalPlayer != message.target)
-            {
-                return;
-            }
-
-            var title = $"<color=#8BFDFD>{Language.Translate("lobby.rule.title")}</color>";
-            var msg = string.IsNullOrWhiteSpace(rulesText) ? Language.Translate("lobby.rule.error") : $"<size=75%>{rulesText}</size>";
-            if (message.host is not null && message.target is not null)
-            {
-                DHMOUtilities.AddCustomChat(message.target, message.host, title, msg);
-            }
-        });
-
-    public static RemoteProcess<(PlayerControl host, string rulesText)> RpcSendLobbyRulesGlobal = new("SendLobbyRulesGlobal",
-        (message, _) =>
-    {
-        if (!message.host.AmHost()) return;
-        var title = $"<color=#8BFDFD>{Language.Translate("lobby.rule.title")}</color>";
-        var msg = string.IsNullOrWhiteSpace(message.rulesText) ? Language.Translate("lobby.rule.error") : $"<size=75%>{message.rulesText}</size>";
-        DHMOUtilities.AddCustomChat(PlayerControl.LocalPlayer, message.host, title, msg);
-    });
 
     internal static RemoteProcess<(int type, PlayerControl player, string chatText)> RpcSendJailorChat = new("SendMeetingJailChat", (message, __) =>
     {

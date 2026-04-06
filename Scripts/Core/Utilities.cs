@@ -1,9 +1,15 @@
-﻿using BepInEx.Unity.IL2CPP;
+﻿using AmongUs.GameOptions;
+using BepInEx.Unity.IL2CPP;
+using Il2CppInterop.Runtime.Attributes;
+using Il2CppInterop.Runtime.Injection;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using Innersloth.IO;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml;
+using UnityEngine.Events;
+using static Nebula.Roles.Neutral.Spectre;
 using static UnityEngine.UIElements.BaseVerticalCollectionView;
 using Object = UnityEngine.Object;
 using Vector2 = UnityEngine.Vector2;
