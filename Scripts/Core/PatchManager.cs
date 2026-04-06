@@ -53,10 +53,8 @@ global using Virial.Media;
 global using Virial.Text;
 global using Virial.Utilities;
 global using GamePlayer = Virial.Game.Player;
-using Cpp2IL.Core.Utils;
+
 using Virial.Runtime;
-using static Il2CppSystem.Net.Http.Headers.Parser;
-using static UnityEngine.GraphicsBuffer;
 using Color = UnityEngine.Color;
 using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
