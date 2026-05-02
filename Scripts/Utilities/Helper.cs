@@ -21,6 +21,13 @@ public static class  AddonHelper
         return (totalAlive, alivePlayers);
     }
 
+    public static bool ModAbilityMeetingButton()
+    {
+        if (AmongUsUtil.InMeeting && MeetingHud.Instance.state is not MeetingHud.VoteStates.Animating and not MeetingHud.VoteStates.Discussion and not MeetingHud.VoteStates.Results and not MeetingHud.VoteStates.Proceeding)
+            return true;
+        else return false;
+    }
+
     public static void AddCustomChat(PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
     {
         if (sourcePlayer == null || PlayerControl.LocalPlayer == null || string.IsNullOrEmpty(chatText)) return;

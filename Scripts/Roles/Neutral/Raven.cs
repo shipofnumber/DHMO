@@ -330,7 +330,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         public static bool IsOutMeeting() => MeetingHud.Instance && MeetingHud.Instance.gameObject.transform.localPosition.x > 15;
 
         private TextMeshPro? tmPro;
-        private DefinedRole? targetRole;
+        private DefinedRole? targetRole = null;
 
         private IEnumerator CoLeaveOrJoinMeeting(bool isleaving)
         {
@@ -371,17 +371,19 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     if (!tmPro) return;
                     if (IsOutMeeting() && !killed)
                     {
+                        if (NebulaGameManager.Instance is null) return;
                         MyPlayer.VanillaCosmetics.TogglePet(false);
                         NebulaAPI.RunEvent(new LeaveMeetingEvent());
 
-                        if (targetRole == null || !NebulaGameManager.Instance!.AllPlayerInfo.Any(p => !p.IsDead && targetRole.Id == p.Role.Role.Id))
+                        if (targetRole == null || !NebulaGameManager.Instance.AllPlayerInfo.Any(p => !p.IsDead && targetRole.Id == p.Role.Role.Id))
                         {
-                            var allAlive = NebulaGameManager.Instance!.AllPlayerInfo.Where(p => !p.IsDead && p.Role.Role is not Raven).ToList();
+                            var allAlive = NebulaGameManager.Instance.AllPlayerInfo.Where(p => !p.IsDead && p.Role.Role is not Raven).ToList();
                             targetRole = allAlive.Count > 0 ? allAlive[Random.Range(0, allAlive.Count)].Role.Role : null;
                         }
 
                         tmPro?.gameObject.SetActive(true);
                         var iconTag = targetRole != null ? targetRole.GetRoleIconTag() : "";
+                        tmPro?.UseRoleIcon();
                         tmPro?.text = Language.Translate("role.raven.killtarget").Replace("%ROLE%", iconTag + (targetRole?.DisplayColoredName ?? ""));
                         tmPro?.transform.localPosition = new Vector3(-0.07f, -2.45f, 0f);
                         PlayerControl.LocalPlayer.gameObject.layer = LayerExpansion.GetGhostLayer();
@@ -439,7 +441,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     .BindKey(VirtualKeyInput.SidekickAction)
                     .SetImage(buttonImage!)
                     .SetColorLabel(MyRole.RoleColor);
-                meetingButton.Availability = _ => !killed && MeetingHud.Instance.state is not MeetingHud.VoteStates.Animating and not MeetingHud.VoteStates.Discussion and not MeetingHud.VoteStates.Results;
+                meetingButton.Availability = _ => !killed && AddonHelper.ModAbilityMeetingButton();
                 meetingButton.Visibility = _ => !MyPlayer.IsDead && AmongUsUtil.InMeeting;
                 meetingButton.OnClick = (action) =>
                 {
@@ -463,7 +465,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     .BindKey(VirtualKeyInput.Kill)
                     .SetLabelType(ModAbilityButton.LabelType.Impostor);
                 meetingKillButton.Availability = _ => !killed && mkillTracker.CurrentTarget != null && IsOutMeeting() && !MyPlayer.IsDead;
-                meetingKillButton.Visibility = _ => AmongUsUtil.InMeeting && MeetingHud.Instance.state is not MeetingHud.VoteStates.Animating and not MeetingHud.VoteStates.Discussion and not MeetingHud.VoteStates.Results && IsOutMeeting();
+                meetingKillButton.Visibility = _ => AddonHelper.ModAbilityMeetingButton() && IsOutMeeting();
                 meetingKillButton.OnClick = _ =>
                 {
                     killed = true;
@@ -516,7 +518,11 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         }
 
         [Local]
-        void OnMeetingStart(MeetingStartEvent _) => killed = false;
+        void OnMeetingStart(MeetingPreStartEvent _)
+        {
+            killed = false;
+            targetRole = null;
+        }
 
         void OnMeetingEnd(MeetingPreEndEvent _)
         {

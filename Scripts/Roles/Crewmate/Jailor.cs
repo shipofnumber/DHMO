@@ -86,8 +86,8 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
                 executeButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true).BindKey(VirtualKeyInput.SidekickAction).SetLabel("jailor.execute").SetLabelType(ModAbilityButton.LabelType.Impostor).SetColorLabel(MyRole.UnityColor);
 
-                executeButton.Availability = _ => Jailed != null && leftExecute > 0 && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Discussion && MeetingHud.Instance.state != MeetingHud.VoteStates.Results;
-                executeButton.Visibility = _ => !MyPlayer.IsDead && MeetingHud.Instance;
+                executeButton.Availability = _ => Jailed != null && leftExecute > 0 && AddonHelper.ModAbilityMeetingButton();
+                executeButton.Visibility = _ => !MyPlayer.IsDead && AmongUsUtil.InMeeting;
                 executeButton.SetImage(executeImage!);
                 executeButton.ShowUsesIcon(3, leftExecute.ToString());
 
