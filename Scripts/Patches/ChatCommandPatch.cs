@@ -53,13 +53,13 @@ public static class ChatCommandPatch
             {
                 if (NebulaGameManager.Instance!.CanBeSpectator && GamePlayer.LocalPlayer!.IsDead)
                 {
-                    DHMOUtilities.AddCustomChat(message.player, message.player, message.player.name + Language.Translate("chat.jailor").Color(Jailor.MyRole.UnityColor), message.chatText);
+                    AddonHelper.AddCustomChat(message.player, message.player, message.player.name + Language.Translate("chat.jailor").Color(Jailor.MyRole.UnityColor), message.chatText);
                 }
                 else if (jailed != null)
                 {
                     if (nsp == jailed || nsp.TryGetAbility<Jailor.Ability>(out _) && (GamePlayer.LocalPlayer == jailed || GamePlayer.LocalPlayer!.TryGetAbility<Jailor.Ability>(out _)))
                     {
-                        DHMOUtilities.AddCustomChat(message.player, jailed.VanillaPlayer, message.player.name + Language.Translate("chat.jailor").Color(Jailor.MyRole.UnityColor), message.chatText);
+                        AddonHelper.AddCustomChat(message.player, jailed.VanillaPlayer, message.player.name + Language.Translate("chat.jailor").Color(Jailor.MyRole.UnityColor), message.chatText);
                     }
                 }
             }

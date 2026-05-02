@@ -1,6 +1,4 @@
-﻿using Color = UnityEngine.Color;
-
-namespace DHMO.Patches;
+﻿namespace DHMO.Patches;
 
 [HarmonyPatch]
 public static class ChatPatches
@@ -13,6 +11,7 @@ public static class ChatPatches
         __instance.AllowEmail = true;
         __instance.AllowSymbols = true;
     }
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.Update))]
     public static void UpdatePostfix(ChatController __instance)

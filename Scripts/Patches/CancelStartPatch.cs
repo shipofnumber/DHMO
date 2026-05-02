@@ -7,7 +7,7 @@ public static class CancelStartPatch
     [HarmonyPrefix]
     public static void Prefix(GameStartManager __instance)
     {
-        if (__instance.startState is GameStartManager.StartingStates.Countdown)
+        if (__instance.startState == GameStartManager.StartingStates.Countdown)
         {
             SoundManager.Instance.StopSound(__instance.gameStartSound);
             if (AmongUsClient.Instance.AmHost)
