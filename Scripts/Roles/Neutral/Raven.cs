@@ -148,13 +148,13 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         {
             if (NebulaGameManager.Instance != null && (MyRole as ISpawnable).IsSpawnable)
             {
-                __result = ModCoStartMeetingCoroutine(reporter, deadBody, reportType);
+                __result = ModCoStartMeeting(reporter, deadBody, reportType);
                 return false;
             }
             return true;
         }
 
-        private static IEnumerator ModCoStartMeetingCoroutine(PlayerControl reporter, NetworkedPlayerInfo? deadBody, int reportType)
+        private static IEnumerator ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo? deadBody, int reportType)
         {
             while (!MeetingHud.Instance) yield return null;
 
@@ -218,16 +218,6 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         public DeadbodyArrowAbility? ArrowAbility { get; private set; }
         DefinedRole RuntimeRole.Role => MyRole;
         public static GameEnd RavenTeamWin = NebulaAPI.Preprocessor!.CreateEnd("raven", MyRole.RoleColor);
-
-        void OnGameStart(GameStartEvent _)
-        {
-            if (NebulaAPI.CurrentGame is not { } game || !(Raven.MyRole as ISpawnable).IsSpawnable) return;
-            GameOperatorManager.Instance?.Subscribe<MeetingPreEndEvent>(ev =>
-            {
-                foreach (var p in GamePlayer.AllPlayers)
-                    if (p.VanillaPlayer) p.VanillaPlayer.ResetForMeeting();
-            }, game);
-        }
 
         void BlockTriggerEnd(EndCriteriaPreMetEvent ev)
         {
@@ -528,7 +518,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         [Local]
         void OnMeetingStart(MeetingStartEvent _) => killed = false;
 
-        void OnMeetingEnd(MeetingEndEvent _)
+        void OnMeetingEnd(MeetingPreEndEvent _)
         {
             foreach (var player in GamePlayer.AllPlayers)
                 if (player.VanillaPlayer) player.VanillaPlayer.ResetForMeeting();
