@@ -1,6 +1,5 @@
 ﻿using AmongUs.GameOptions;
 using Il2CppInterop.Runtime.Injection;
-using Rewired.UI.ControlMapper;
 
 namespace DHMO.Modules;
 
@@ -114,6 +113,7 @@ public sealed class RoleMarkMenu : Minigame
     private float yStart = 2.15f;
 
     public static readonly Image? NextButton = NebulaAPI.AddonAsset?.GetResource("NextButton.png")?.AsImage();
+    public static readonly Image? NextButtonActive = NebulaAPI.AddonAsset?.GetResource("NextButtonActive.png")?.AsImage();
 
     static RoleMarkMenu() => ClassInjector.RegisterTypeInIl2Cpp<RoleMarkMenu>();
     public RoleMarkMenu(System.IntPtr ptr) : base(ptr) { }
@@ -140,10 +140,12 @@ public sealed class RoleMarkMenu : Minigame
         customMenu.xOffset = newMenu.XOffset;
         customMenu.yOffset = newMenu.YOffset;
         customMenu.defaultButtonSelected = newMenu.DefaultButtonSelected;
+        customMenu.name = "RoleMarkMenu";
         customMenu.backButton = newMenu.BackButton;
+        customMenu.backButton?.gameObject.SetActive(false);
 
-        var backBtn = customMenu.backButton.gameObject.GetComponent<PassiveButton>();
-        backBtn.OnClick.RemoveAllListeners();
+        var backBtn = MetaScreen.InstantiateCloseButton(customMenu.transform, new Vector3(-4.79f, 2.48f, 0f)); 
+        backBtn.transform.localScale = new Vector3(0.75f, 0.75f, 1f); 
         backBtn.OnClick.AddListener(customMenu.Close);
 
         customMenu.CloseSound = newMenu.CloseSound;
@@ -155,24 +157,33 @@ public sealed class RoleMarkMenu : Minigame
         customMenu.transform.SetParent(Camera.main.transform, false);
         customMenu.transform.localPosition = new Vector3(0f, 0f, -60f);
 
-        var nextButton = Instantiate(customMenu.backButton, customMenu.transform).gameObject;
+        var nextButton = Instantiate(backBtn, customMenu.transform).gameObject;
         nextButton.transform.localPosition = new Vector3(1.85f, -2.185f, -60f);
         nextButton.transform.localScale = new Vector3(0.65f, 0.65f, 1);
         nextButton.name = "RightArrowButton";
-        nextButton.GetComponent<SpriteRenderer>().sprite = NextButton?.GetSprite();
-        nextButton.gameObject.GetComponent<CloseButtonConsoleBehaviour>().DestroyImmediate();
+        var sprite = nextButton.GetComponent<SpriteRenderer>();
+        sprite.sprite = NextButton?.GetSprite();
 
         var nextPassive = nextButton.GetComponent<PassiveButton>();
+        nextPassive.OnClick.RemoveAllListeners();
+        nextPassive.OnMouseOver.RemoveAllListeners();
+        nextPassive.OnMouseOut.RemoveAllListeners();
         nextPassive.OnClick.AddListener(() => customMenu.NextPage());
+        nextPassive.OnMouseOver.AddListener(() => sprite.sprite = NextButtonActive?.GetSprite());
+        nextPassive.OnMouseOut.AddListener(() => sprite.sprite = NextButton?.GetSprite());
 
         var prevButton = Instantiate(nextButton, customMenu.transform).gameObject;
         prevButton.transform.localPosition = new Vector3(-1.85f, -2.185f, -60f);
         prevButton.name = "LeftArrowButton";
-        prevButton.gameObject.GetComponent<CloseButtonConsoleBehaviour>().Destroy();
         prevButton.GetComponent<SpriteRenderer>().flipX = true;
 
         var prevPassive = prevButton.GetComponent<PassiveButton>();
+        prevPassive.OnClick.RemoveAllListeners();
+        prevPassive.OnMouseOver.RemoveAllListeners();
+        prevPassive.OnMouseOut.RemoveAllListeners();
         prevPassive.OnClick.AddListener(() => customMenu.PreviousPage());
+        prevPassive.OnMouseOver.AddListener(() => prevButton.GetComponent<SpriteRenderer>().sprite = NextButtonActive?.GetSprite());
+        prevPassive.OnMouseOut.AddListener(() => prevButton.GetComponent<SpriteRenderer>().sprite = NextButton?.GetSprite());
 
         var phoneUI = customMenu.transform.TryDig("PhoneUI");
         if (phoneUI != null)
@@ -181,7 +192,6 @@ public sealed class RoleMarkMenu : Minigame
             phoneUI.GetChild(0)?.GetComponent<SpriteRenderer>()?.SetMaterial(bodyMat);
             phoneUI.GetChild(1)?.GetComponent<SpriteRenderer>()?.SetMaterial(bodyMat);
         }
-
         return customMenu;
     }
 
@@ -259,13 +269,12 @@ public sealed class RoleMarkMenu : Minigame
             roleText?.transform.localScale = new Vector3(0.6333f, 0.6333f);
             roleText?.rectTransform.sizeDelta += new Vector2(0.35f, 0f);
             roleText?.UseRoleIcon();
-            roleText?.gameObject.SetActive(true);
             var script = roleText?.gameObject.AddComponent<ScriptBehaviour>();
             if (roleText != null)
                 script?.UpdateHandler += () => updateRoleText?.Invoke(roleText, player);
 
             var highlight = panel?.gameObject.transform.TryDig("Nameplate", "Highlight");
-            highlight?.FindChild("ShapeshifterIcon")?.gameObject.SetActive(false);
+            highlight?.Find("ShapeshifterIcon")?.gameObject.SetActive(false);
 
             if (panel != null)
             {

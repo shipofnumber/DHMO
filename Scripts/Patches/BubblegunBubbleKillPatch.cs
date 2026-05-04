@@ -65,7 +65,13 @@ public static class BubblegunBubbleKillPatch
 
         var labelSkip = generator.DefineLabel();
 
-        matcher.InsertAndAdvance(new CodeInstruction(OpCodes.Dup), new CodeInstruction(OpCodes.Ldsfld, isIgnoreField), new CodeInstruction(OpCodes.Dup), new CodeInstruction(OpCodes.Brfalse_S, labelSkip), loadLocal, new CodeInstruction(OpCodes.Callvirt, funcInvoke), new CodeInstruction(OpCodes.Or), new CodeInstruction(OpCodes.Br_S, labelSkip));
+        matcher.InsertAndAdvance(new CodeInstruction(OpCodes.Dup),
+            new CodeInstruction(OpCodes.Ldsfld, isIgnoreField),
+            new CodeInstruction(OpCodes.Dup), new CodeInstruction(OpCodes.Brfalse_S, labelSkip),
+            loadLocal,
+            new CodeInstruction(OpCodes.Callvirt, funcInvoke),
+            new CodeInstruction(OpCodes.Or),
+            new CodeInstruction(OpCodes.Br_S, labelSkip));
 
         matcher.InstructionAt(matcher.Pos - 1).labels.Add(labelSkip);
 

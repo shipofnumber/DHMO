@@ -1,6 +1,34 @@
 ﻿namespace DHMO.Utilities;
 
-public static class  AddonHelper
+public static class ModAbilityButtonExtensions
+{
+    public static GameObject? UsesIcon = null;
+    public static TextMeshPro? UsesIconText = null;
+    public static void SetUsesIcon(this ModAbilityButton button, string text)
+    {
+        Transform template = HudManager.Instance.AbilityButton.transform.GetChild(2);
+        var usesObject = GameObject.Instantiate(template.gameObject);
+        usesObject.transform.SetParent(((ModAbilityButtonImpl)button).VanillaButton.gameObject.transform);
+        usesObject.transform.localScale = template.localScale;
+        usesObject.transform.localPosition = template.localPosition * 1.2f;
+
+        var renderer = usesObject.GetComponent<SpriteRenderer>();
+        renderer.color = ((ModAbilityButtonImpl)button).VanillaButton.buttonLabelText.outlineColor;
+        var textMesh = usesObject.transform.GetChild(0).GetComponent<TMPro.TextMeshPro>();
+        textMesh.text = text;
+        UsesIconText = textMesh;
+        UsesIcon = usesObject;
+    }
+
+    public static void UpdateUsesText(this ModAbilityButton button, string text)
+    {
+        if (button is null && !UsesIconText) return;
+        UsesIconText?.text = text;
+    }
+    public static void DestroyUsesIcon(this ModAbilityButton button) { if (button is not null && UsesIcon) UsesIcon?.Destroy(); }
+}
+
+public static class AddonHelper
 {
     public static (int totalAlive, List<GamePlayer> alivePlayers) GetAlivePlayers()
     {

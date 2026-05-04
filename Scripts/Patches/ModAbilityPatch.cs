@@ -1,5 +1,6 @@
 ﻿namespace DHMO.Patches;
 
+[HarmonyPatch]
 public class ModAbilityButtonPatch
 {
     private static bool wasVisible = false;

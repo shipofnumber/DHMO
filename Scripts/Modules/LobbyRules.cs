@@ -7,8 +7,6 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
     public LobbyRule() => ModSingleton<LobbyRule>.Instance = this;
     static LobbyRule()
     {
-        string projectLogPath = Path.Combine(new DirectoryInfo(Application.dataPath).Parent?.FullName ?? string.Empty, "LobbyRules.txt");
-        if (File.Exists(projectLogPath)) File.WriteAllText(projectLogPath, string.Empty);
         DIManager.Instance.RegisterModule(() => new LobbyRule());
     }
     protected override void OnInjected(Game container) => this.Register(container);
@@ -31,7 +29,7 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
 
     void OnUpdate(UpdateEvent _)
     {
-        if (PreloadManager.FinishedPreload && ((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.L)) && AmongUsClient.Instance != null && AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.NotJoined && !IsShown)
+        if (PreloadManager.FinishedPreload && ((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.U)) && AmongUsClient.Instance != null && AmongUsClient.Instance.GameState != InnerNet.InnerNetClient.GameStates.NotJoined && !IsShown)
         {
             if (PlayerControl.LocalPlayer.AmHost())
                 OpenHostRuleScreen(HudManager.Instance.transform);

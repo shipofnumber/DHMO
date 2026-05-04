@@ -3,13 +3,23 @@
 [HarmonyPatch]
 public static class NebulaHudPatch
 {
-    [HarmonyPatch(typeof(HudManager), nameof(HudManager.Update))]
-    [HarmonyPostfix]
-    public static void Postfix(HudManager __instance)
+    [HarmonyPatch(typeof(HudManagerExtension), "UpdateHudContent"), HarmonyPostfix]
+    public static void UpdateHudContent(HudManager manager)
     {
-        if (GeneralConfigurations.CurrentGameMode != GameModes.AeroGuesser || NebulaAPI.CurrentGame == null) return;
+        var localPlayer = GamePlayer.LocalPlayer;
+        if (!PlayerControl.LocalPlayer || localPlayer is null || NebulaAPI.CurrentGame is null) return;
 
-        if (__instance.MapButton.isActiveAndEnabled) __instance.ToggleMapButton(false);
-        if (!__instance.Chat.isActiveAndEnabled) __instance.Chat.SetVisible(true);  
+        if (GeneralConfigurations.CurrentGameMode == GameModes.AeroGuesser)
+        {
+            if (manager.MapButton.isActiveAndEnabled) manager.ToggleMapButton(false);
+            if (!manager.Chat.isActiveAndEnabled) manager.Chat.SetVisible(true);
+        }
+
+        if (Raven.Instance.IsInRavenTime)
+        {
+            manager.ReportButton.ToggleVisible(false);
+            manager.ImpostorVentButton.ToggleVisible(false);
+            manager.SabotageButton.ToggleVisible(false);
+        }
     }
 }

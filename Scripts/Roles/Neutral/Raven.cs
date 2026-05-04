@@ -9,8 +9,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 {
     public static readonly Team RavenTeam = new("teams.raven", new(49, 36, 82), TeamRevealType.OnlyMe);
     private Raven() : base("raven", RavenTeam.Color, RoleCategory.NeutralRole, RavenTeam,
-        [KillCooldown, HasDeadBodyArrow, new GroupConfiguration("options.role.raven.group.raventime", [RavenTimeOption, RavenTimeAliveNum, RavenTimeDuration, MeetingEndEnterRavenTimeDisperse], RavenTeam.Color.ToUnityColor().RGBMultiplied(0.65f))])
-    { }
+        [KillCooldown, HasDeadBodyArrow, new GroupConfiguration("options.role.raven.group.raventime", [RavenTimeOption, RavenTimeAliveNum, RavenTimeDuration, MeetingEndEnterRavenTimeDisperse], RavenTeam.Color.ToUnityColor().RGBMultiplied(0.65f))]){}
 
     Citation? HasCitation.Citation => DHMOCitations.GGD;
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(Player player, int[] arguments) => new Instance(player);
@@ -23,7 +22,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
     public static readonly BoolConfiguration MeetingEndEnterRavenTimeDisperse = NebulaAPI.Configurations.Configuration("options.role.raven.meetingEndEnterRavenTimeDisperse", true, () => RavenTimeOption);
 
     public static readonly Raven MyRole = new();
-    private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("Raven.png")?.AsImage(115f);
+    private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("RavenMeetingButton.png")?.AsImage(115f);
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RavenIcon.png")?.AsImage(120f);
     (Virial.Color mainColor, Virial.Color? subColor)? DefinedAssignable.IconColor => (RavenTeam.Color, Impostor.MyTeam.Color);
     public static TranslatableTag missing = new("state.missing");
@@ -103,121 +102,14 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         HudManager.Instance.lightFlashHandle = null;
     }
 
-    [HarmonyPatch]
-    public static class RavenPatchs
-    {
-        [HarmonyPatch(typeof(PlayerControl), "get_CanMove"), HarmonyPostfix]
-        public static void CanMovePatch(ref bool __result)
-        {
-            if (GamePlayer.LocalPlayer is null) return;
-            if (!__result && Instance.IsOutMeeting() && NebulaAPI.CurrentGame != null && GamePlayer.LocalPlayer.Role is Raven.Instance)
-                __result = true;
-        }
-
-        [HarmonyPatch(typeof(PlayerPhysics), "HandleAnimation"), HarmonyPrefix]
-        public static void PlayerHandleAnimationPatch(PlayerPhysics __instance, ref bool amDead)
-        {
-            var gamePlayer = __instance.myPlayer.ToGamePlayer();
-            if (!amDead && (Instance.IsOutMeeting() || Instance.IsInRavenTime) && NebulaAPI.CurrentGame != null && gamePlayer.Role is Raven.Instance)
-            {
-                amDead = true;
-                __instance.myPlayer.gameObject.layer = LayerExpansion.GetGhostLayer();
-                __instance.myPlayer.cosmetics.SetGhost();
-            }
-        }
-
-        [HarmonyPatch(typeof(HudManagerExtension), "UpdateHudContent"), HarmonyPostfix]
-        public static void UpdateHudContent(HudManager manager)
-        {
-            if (!PlayerControl.LocalPlayer) return;
-            var instance = NebulaGameManager.Instance;
-            if (instance != null && instance.GameState == NebulaGameStates.NotStarted) return;
-            if (Instance.IsInRavenTime)
-            {
-                manager.ReportButton.ToggleVisible(false);
-                manager.ImpostorVentButton.ToggleVisible(false);
-                manager.SabotageButton.ToggleVisible(false);
-            }
-        }
-
-        [HarmonyPatch(typeof(PlayerControl), "CmdReportDeadBody"), HarmonyPrefix]
-        public static bool ReportDeadBodyPatch() => !Instance.IsInRavenTime;
-
-        [HarmonyPatch(typeof(MeetingHudExtension), "ModCoStartMeeting"), HarmonyPrefix]
-        public static bool ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
-        {
-            if (NebulaGameManager.Instance != null && (MyRole as ISpawnable).IsSpawnable)
-            {
-                __result = ModCoStartMeeting(reporter, deadBody, reportType);
-                return false;
-            }
-            return true;
-        }
-
-        private static IEnumerator ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo? deadBody, int reportType)
-        {
-            while (!MeetingHud.Instance) yield return null;
-
-            MeetingRoomManager.Instance.RemoveSelf();
-            HudManager.Instance.InitMap();
-            MapBehaviour.Instance.SetPreMeetingPosition(PlayerControl.LocalPlayer.transform.position, false);
-
-            foreach (var player in GamePlayer.AllPlayers)
-            {
-                if (player.VanillaPlayer is not { } vp) continue;
-                if (!vp.GetComponent<DummyBehaviour>().enabled) vp.MyPhysics.ExitAllVents();
-                vp.RemoveProtection();
-                vp.NetTransform.enabled = true;
-                vp.MyPhysics.ResetMoveState(true);
-
-                for (int i = 0; i < vp.currentRoleAnimations.Count; i++)
-                {
-                    if (vp.currentRoleAnimations[i]?.gameObject != null)
-                        Object.Destroy(vp.currentRoleAnimations[i].gameObject);
-                }
-                vp.logger.Error("Encountered a null Role Animation while destroying.", null);
-
-                vp.inMovingPlat = false;
-                vp.isKilling = false;
-                vp.currentRoleAnimations.Clear();
-
-                if (vp.cosmetics.CurrentPet is not { } pet) continue;
-                if (vp.cosmetics.petHiddenByViper)
-                {
-                    vp.cosmetics.TogglePet(true);
-                    var vector = vp.transform.position;
-                    if (ShipStatus.Instance.TryCast<AirshipStatus>())
-                    {
-                        var list = new List<Vector2>
-                        {
-                            new(8.2f, 15.2f), new(8.25f, 15.9f), new(8.2f, 14.3f),
-                            new(11f, 14.3f), new(9.8f, 14.3f), new(13f, 14.3f)
-                        };
-                        vector = list[Random.Range(0, list.Count)];
-                    }
-                    pet.SetGettingPet(false, vector);
-                    continue;
-                }
-                pet.SetGettingPet(false, pet.transform.position);
-            }
-
-            if (MapBehaviour.Instance) MapBehaviour.Instance.Close();
-            if (Minigame.Instance) Minigame.Instance.ForceClose();
-            ShipStatus.Instance.OnMeetingCalled();
-            KillAnimation.SetMovement(reporter, true);
-            GameData.TimeLastMeetingStarted = Time.realtimeSinceStartup;
-
-            MeetingHud instance = MeetingHud.Instance;
-            instance.StartCoroutine(MeetingHudExtension.ModCoMeetingHudIntro(instance, reporter, deadBody, (MeetingHudExtension.ReportType)reportType).WrapToIl2Cpp());
-        }
-    }
-
+    [NebulaRPCHolder]
     public class Instance(Player player) : RuntimeAssignableTemplate(player), RuntimeRole, RuntimeAssignable, ILifespan, IBindPlayer, IGameOperator, IReleasable
     {
         public static bool IsInRavenTime;
         public DeadbodyArrowAbility? ArrowAbility { get; private set; }
         DefinedRole RuntimeRole.Role => MyRole;
-        public static GameEnd RavenTeamWin = NebulaAPI.Preprocessor!.CreateEnd("raven", MyRole.RoleColor);
+        bool RuntimeRole.CanUseVent => true;
+        public static GameEnd? RavenTeamWin = NebulaAPI.Preprocessor?.CreateEnd("raven", MyRole.RoleColor);
 
         void BlockTriggerEnd(EndCriteriaPreMetEvent ev)
         {
@@ -233,13 +125,13 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         }
 
         [OnlyHost]
-        void WinCheck(GameUpdateEvent _)
+        void WinCheck(GameUpdateEvent ev)
         {
             try
             {
                 var totalAlive = AddonHelper.GetAlivePlayers().totalAlive;
                 if (!MyPlayer.IsDead && totalAlive <= 1)
-                    NebulaAPI.CurrentGame?.TriggerGameEnd(RavenTeamWin, GameEndReason.Situation, BitMasks.AsPlayer().Add(MyPlayer));
+                    NebulaAPI.CurrentGame?.TriggerGameEnd(RavenTeamWin!, GameEndReason.Situation, BitMasks.AsPlayer().Add(MyPlayer));
             }
             catch (Exception e)
             {
@@ -285,24 +177,22 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                 if (!MyPlayer.IsDead) MyPlayer.VanillaPlayer.Visible = true;
             }
             else
-            {
                 StopRavenTimeFlash();
-            }
         }
 
-        void OnUpdate(GameUpdateEvent _)
+        void OnUpdate(GameUpdateEvent ev)
         {
-            if (NebulaGameManager.Instance is null || !RavenTimeOption || MyPlayer.IsDead) return;
+            if (NebulaGameManager.Instance is null || !RavenTimeOption) return;
 
             var aliveCount = NebulaGameManager.Instance.AllPlayerInfo.Count(p => !p.IsDead);
-            if (aliveCount <= RavenTimeAliveNum && !IsInRavenTime)
+            if (aliveCount <= RavenTimeAliveNum && !IsInRavenTime && !MyPlayer.IsDead)
             {
                 if (!MeetingHud.Instance && !ExileController.Instance)
                     SetRavenTime.Invoke(true);
                 MyPlayer.VanillaCosmetics.TogglePet(false);
             }
 
-            if ((FlashCoroutine != null && !IsInRavenTime) || (IsInRavenTime && MeetingHud.Instance) || (IsInRavenTime && aliveCount > RavenTimeAliveNum))
+            if ((FlashCoroutine != null && !IsInRavenTime) || (IsInRavenTime && MeetingHud.Instance) || (IsInRavenTime && aliveCount > RavenTimeAliveNum) || MyPlayer.IsDead)
             {
                 SetRavenTime.Invoke(false);
                 MyPlayer.VanillaCosmetics.TogglePet(true);
@@ -319,12 +209,6 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     SetRavenTime.Invoke(false);
                 }
             }
-        }
-
-        void OnDead(PlayerDieOrDisconnectEvent ev)
-        {
-            if (ev.Player == MyPlayer && IsInRavenTime)
-                SetRavenTime.Invoke(false);
         }
 
         public static bool IsOutMeeting() => MeetingHud.Instance && MeetingHud.Instance.gameObject.transform.localPosition.x > 15;
@@ -357,11 +241,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                         PostBuilder = t => tmPro = t
                     };
 
-                    var instantiatedObj = noSGUIText.Instantiate(
-                        new Anchor(new Virial.Compat.Vector2(0f, 0f), new Virial.Compat.Vector3(-0.5f, -0.5f, 0f)),
-                        new Size(20f, 20f),
-                        out _
-                    );
+                    var instantiatedObj = noSGUIText.Instantiate(new Anchor(new Virial.Compat.Vector2(0f, 0f), new Virial.Compat.Vector3(-0.5f, -0.5f, 0f)),new Size(20f, 20f),out _);
                     instantiatedObj?.transform.SetParent(textHolder.transform, false);
                 }
 
@@ -373,7 +253,6 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     {
                         if (NebulaGameManager.Instance is null) return;
                         MyPlayer.VanillaCosmetics.TogglePet(false);
-                        NebulaAPI.RunEvent(new LeaveMeetingEvent());
 
                         if (targetRole == null || !NebulaGameManager.Instance.AllPlayerInfo.Any(p => !p.IsDead && targetRole.Id == p.Role.Role.Id))
                         {
@@ -387,13 +266,14 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                         tmPro?.text = Language.Translate("role.raven.killtarget").Replace("%ROLE%", iconTag + (targetRole?.DisplayColoredName ?? ""));
                         tmPro?.transform.localPosition = new Vector3(-0.07f, -2.45f, 0f);
                         PlayerControl.LocalPlayer.gameObject.layer = LayerExpansion.GetGhostLayer();
+                        NebulaAPI.RunEvent(new LeaveMeetingEvent(MyPlayer, targetRole!));
                     }
                     else if ((MyPlayer.IsDead && IsOutMeeting()) || !IsOutMeeting() || killed)
                     {
                         MyPlayer.VanillaCosmetics.TogglePet(true);
-                        NebulaAPI.RunEvent(new ReturnMeetingEvent());
                         PlayerControl.LocalPlayer.gameObject.layer = PlayerControl.LocalPlayer.Data.IsDead ? LayerExpansion.GetGhostLayer() : LayerExpansion.GetPlayersLayer();
                         tmPro?.gameObject.SetActive(false);
+                        NebulaAPI.RunEvent(new ReturnMeetingEvent(MyPlayer, killed));
                     }
                 }, this);
             }
@@ -441,9 +321,9 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     .BindKey(VirtualKeyInput.SidekickAction)
                     .SetImage(buttonImage!)
                     .SetColorLabel(MyRole.RoleColor);
-                meetingButton.Availability = _ => !killed && AddonHelper.ModAbilityMeetingButton();
                 meetingButton.Visibility = _ => !MyPlayer.IsDead && AmongUsUtil.InMeeting;
-                meetingButton.OnClick = (action) =>
+                meetingButton.Availability = _ => !killed && AddonHelper.ModAbilityMeetingButton();
+                meetingButton.OnClick = _ =>
                 {
                     if (killed)
                     {
@@ -463,9 +343,10 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
                 meetingKillButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
                     .BindKey(VirtualKeyInput.Kill)
+                    .SetLabel("kill")
                     .SetLabelType(ModAbilityButton.LabelType.Impostor);
-                meetingKillButton.Availability = _ => !killed && mkillTracker.CurrentTarget != null && IsOutMeeting() && !MyPlayer.IsDead;
                 meetingKillButton.Visibility = _ => AddonHelper.ModAbilityMeetingButton() && IsOutMeeting();
+                meetingKillButton.Availability = _ => !killed && mkillTracker.CurrentTarget != null && IsOutMeeting() && !MyPlayer.IsDead;
                 meetingKillButton.OnClick = _ =>
                 {
                     killed = true;
@@ -474,15 +355,15 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                         MyPlayer.MurderPlayer(p, missing, EventDetails.Kill, KillParameter.MeetingKill, KillCondition.TargetAlive);
                     coroutine = NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
                 };
-                meetingKillButton.SetLabel("kill");
 
                 var killTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, p => ObjectTrackers.PlayerlikeStandardPredicate(p) && !IsOutMeeting(), null, false, false);
                 killButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false)
                     .BindKey(VirtualKeyInput.Kill, null)
+                    .SetLabel("kill")
                     .SetLabelType(ModAbilityButton.LabelType.Impostor);
-                killButton.Availability = _ => killTracker.CurrentTarget != null && MyPlayer.CanMove;
-                killButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, KillCooldown.Cooldown).SetAsKillCoolTimer().Start(null);
                 killButton.Visibility = _ => !MyPlayer.IsDead && (IsInRavenTime || !NebulaGameManager.Instance!.AllPlayerInfo.Any(p => !p.IsDead && p.IsImpostor));
+                killButton.Availability = _ => killTracker.CurrentTarget != null && MyPlayer.CanMove;
+                killButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, KillCooldown.Cooldown).SetAsKillCoolTimer().Start();
                 killButton.OnClick = _ =>
                 {
                     var target = killTracker.CurrentTarget;
@@ -493,7 +374,6 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     }
                 };
                 killButton.StartCoolDown();
-                killButton.SetLabel("kill");
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(killButton.GetKillButtonLike());
             }
         }
@@ -506,7 +386,13 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         }
 
         [OnlyMyPlayer]
-        void OnRavenTimeStart(RavenTimeStartEvent _) => killButton?.CoolDownTimer = NebulaAPI.Modules.Timer(this, KillCooldown.Cooldown / 10f).SetAsKillCoolTimer().Start(null);
+        void OnRavenTimeStart(RavenTimeStartEvent ev) => killButton?.CoolDownTimer = NebulaAPI.Modules.Timer(this, KillCooldown.Cooldown / 10f).SetAsKillCoolTimer().Start(null);
+
+        void CheckCanPushEmergencyButton(CheckCanPushEmergencyButtonEvent ev)
+        {
+            if (IsInRavenTime && !MeetingHud.Instance && !MyPlayer.IsDead)
+                ev.DenyButton("role.raven.meetingButtonText");
+        }
 
         void OnCameraUpdate(CameraUpdateEvent ev)
         {
@@ -518,22 +404,27 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         }
 
         [Local]
-        void OnMeetingStart(MeetingPreStartEvent _)
+        void OnMeetingPreStart(MeetingPreStartEvent ev)
         {
             killed = false;
             targetRole = null;
         }
 
-        void OnMeetingEnd(MeetingPreEndEvent _)
-        {
-            foreach (var player in GamePlayer.AllPlayers)
-                if (player.VanillaPlayer) player.VanillaPlayer.ResetForMeeting();
-        }
+        void OnMeetingStart(MeetingStartEvent ev) => NebulaManager.Instance.StartCoroutine(ClientOption.CoChangeAmbientVolume(true));
 
-        void OnTaskStart(TaskPhaseRestartEvent _)
+        void OnMeetingPreEnd(MeetingPreEndEvent ev) => NebulaManager.Instance.StartCoroutine(ClientOption.CoChangeAmbientVolume(false));
+
+        void OnTaskStart(TaskPhaseRestartEvent ev)
         {
             if (IsInRavenTime && MeetingEndEnterRavenTimeDisperse)
                 RavenStartDisperseRpc.Invoke();
+        }
+
+        [Local]
+        void OnUpdateVisibility(PlayerUpdateVisibilityEvent ev)
+        {
+            if (IsOutMeeting() && ev.Visibility == PlayerUpdateVisibilityEvent.VisibilityLevel.Invisible)
+                ev.SetSemitransparent();
         }
 
         bool RuntimeRole.EyesightIgnoreWalls => true;

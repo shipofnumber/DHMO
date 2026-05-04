@@ -2,15 +2,14 @@
 
 public class RavenTimeStartEvent : Virial.Events.Event
 {
-    internal RavenTimeStartEvent() { }
 }
 
-public class LeaveMeetingEvent : Virial.Events.Event
+public class LeaveMeetingEvent(GamePlayer player, DefinedAssignable target) : Virial.Events.Player.AbstractPlayerEvent(player)
 {
-    internal LeaveMeetingEvent() { }
+    public DefinedAssignable? Target { get; init; } = target;
 }
 
-public class ReturnMeetingEvent : Virial.Events.Event
+public class ReturnMeetingEvent(GamePlayer player, bool killed) : Virial.Events.Player.AbstractPlayerEvent(player)
 {
-    internal ReturnMeetingEvent() { }
+    public bool Killed { get; init; } = killed;
 }

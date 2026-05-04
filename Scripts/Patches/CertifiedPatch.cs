@@ -9,13 +9,13 @@ public class CertifiedPatch
     public static string Text = string.Empty;
     private static readonly byte[] HashBuffer = new byte[4096];
 
-    private static RemoteProcess<(PlayerControl player, int epoch, int build, string vanilla, string[] ids, int[] hashes)> RpcHandshake = new(
+    private static RemoteProcess<(byte playerId, int epoch, int build, string vanilla, string[] ids, int[] hashes)> RpcHandshake = new(
         "DHMOHandshake", (message, _) =>
         {
-            var player = message.player;
+            var player = Helpers.GetPlayer(message.playerId);
             if (player != null && player.gameObject.TryGetComponent(out UncertifiedPlayer certification))
             {
-                if (message.vanilla != ReferenceDataManager.Instance.Refdata.userFacingVersion)
+                if (!message.vanilla.Equals(ReferenceDataManager.Instance.Refdata.userFacingVersion))
                     certification.Reject(UncertifiedReason.UnmatchedVanilla);
                 else if (message.epoch != NebulaPlugin.PluginEpoch)
                     certification.Reject(UncertifiedReason.UnmatchedEpoch);
@@ -65,12 +65,12 @@ public class CertifiedPatch
     [HarmonyPrefix]
     public static bool HandshakePrefix()
     {
-        if (NebulaAddon.AllAddons == null) return true;
         Text = string.Empty;
         List<NebulaAddon> handshakeAddons = [.. NebulaAddon.AllAddons.Where(a => a.NeedHandshake)];
         string[] ids = [.. handshakeAddons.Select(a => a.Id)];
         int[] hashes = [.. handshakeAddons.Select(a => a.HandshakeHash)];
 
+        RpcHandshake.Invoke((PlayerControl.LocalPlayer.PlayerId, NebulaPlugin.PluginEpoch, NebulaPlugin.PluginBuildNum, ReferenceDataManager.Instance.Refdata.userFacingVersion, ids, hashes));
         Certification.RpcShareAchievement.Invoke((PlayerControl.LocalPlayer.PlayerId, NebulaAchievementManager.MyTitleData));
         ModSingleton<ShowUp>.Instance?.ShareLocalAfk();
         DynamicPalette.RpcShareMyColor();
@@ -80,7 +80,6 @@ public class CertifiedPatch
             ModSingleton<ShowUp>.Instance?.ShareSocialSettingsAsHost();
             ConfigurationValues.ShareAll();
         }
-        RpcHandshake.Invoke((PlayerControl.LocalPlayer, NebulaPlugin.PluginEpoch, NebulaPlugin.PluginBuildNum, ReferenceDataManager.Instance.Refdata.userFacingVersion, ids, hashes));
         return false;
     }
 
@@ -114,15 +113,13 @@ public class CertifiedPatch
         {
             yield return new WaitForSeconds(0.8f);
 
-            int waitCount = 0;
-            while (__instance.State == UncertifiedReason.Waiting && waitCount < 16)
+            for (int i = 0; i < 20; i++)
             {
+                if (__instance.State != UncertifiedReason.Waiting) break;
                 yield return new WaitForSeconds(0.5f);
-                waitCount++;
             }
 
-            if (__instance.State == UncertifiedReason.Waiting)
-                __instance.Reject(UncertifiedReason.Uncertified);
+            if (__instance.State == UncertifiedReason.Waiting) __instance.Reject(UncertifiedReason.Uncertified);
         }
         __instance.StartCoroutine(CoWaitAndUpdate().WrapToIl2Cpp());
         return false;
