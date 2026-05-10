@@ -1,6 +1,6 @@
 ﻿namespace DHMO.Roles;
 
-public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Ability>, DefinedRole
+public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Ability>, DefinedRole, HasCitation
 {
     private LucidDreamer() : base("lucidDreamer", new(176, 175, 255), RoleCategory.CrewmateRole, Crewmate.MyTeam, [NumOfLeaveOption, LeavingDuration, CanLeaveMultiple, MaxLeftVotingTimeForLeaving, CanDoTaskDuringLeaving, NumOfCanCompleteTasks]) 
     {
@@ -20,6 +20,8 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
     static public readonly LucidDreamer MyRole = new();
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("LucidDreamerIcon.png")?.AsImage(80f);
     MultipleAssignmentType DefinedRole.MultipleAssignment => MultipleAssignmentType.Allowed;
+
+    public Citation? Citation => DHMOCitations.GGD;
 
     public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility
     {
@@ -53,16 +55,20 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                     };
                     modUseButton.OnUpdate = _ =>
                     {
-                        ImageNames imageNames = HudManager.Instance.UseButton.currentTarget.UseIcon;
-                        if (!HudManager.Instance.UseButton.fastUseSettings.ContainsKey(imageNames) || MyPlayer.VanillaPlayer.closest == null)
+                        if (NebulaAPI.CurrentGame is null || DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings is null) return;
+                        ImageNames imageNames = DestroyableSingleton<HudManager>.Instance.UseButton.currentTarget.UseIcon;
+                        if (!DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings.ContainsKey(imageNames) || MyPlayer.VanillaPlayer.closest == null)
                         {
                             imageNames = ImageNames.UseButton;
                         }
-                        var settings = HudManager.Instance.UseButton.fastUseSettings[imageNames];
-                        modUseButton.SetSprite(settings.Image);
-                        modUseButton.VanillaButton.graphic.SetCooldownNormalizedUvs();
-                        modUseButton.VanillaButton.buttonLabelText.fontSharedMaterial = settings.FontMaterial;
-                        modUseButton.VanillaButton.buttonLabelText.text = DestroyableSingleton<TranslationController>.Instance.GetString(settings.Text, []);
+                        var settings = DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings[imageNames];
+                        if (settings != null)
+                        {
+                            modUseButton.SetSprite(settings.Image);
+                            modUseButton.VanillaButton.graphic.SetCooldownNormalizedUvs();
+                            modUseButton.VanillaButton.buttonLabelText.fontSharedMaterial = settings.FontMaterial;
+                            modUseButton.VanillaButton.buttonLabelText.text = DestroyableSingleton<TranslationController>.Instance.GetString(settings.Text, []);
+                        }
                     };
                 }
 
@@ -129,7 +135,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             if (DestroyableSingleton<HudManager>.Instance.GameMenu.IsOpen)
                 DestroyableSingleton<HudManager>.Instance.GameMenu.Close();
 
-            yield return HudManager.Instance.CoFadeFullScreen(Color.clear, Color.black, 1f, false);
+            yield return DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.clear, Color.black, 1f, false);
             MeetingHud.Instance.gameObject.transform.localPosition = new Vector3(isLeaving ? 17f : 0f, 0f);
             Camera.main.GetComponent<FollowerCamera>().Locked = !isLeaving;
 
@@ -148,7 +154,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                 leavingTime?.Reset();
             }
 
-            yield return HudManager.Instance?.CoFadeFullScreen(Color.black, Color.clear, 1f, false);
+            yield return DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.black, Color.clear, 1f, false);
             coroutine = null;
         }
 

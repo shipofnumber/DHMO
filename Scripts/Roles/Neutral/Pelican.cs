@@ -1,6 +1,4 @@
-﻿using System.Net.Security;
-
-namespace DHMO.Roles;
+﻿namespace DHMO.Roles;
 
 public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder
 {

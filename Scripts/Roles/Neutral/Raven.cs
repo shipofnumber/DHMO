@@ -95,11 +95,11 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
     {
         if (FlashCoroutine is null) return;
 
-        HudManager.Instance.StopCoroutine(FlashCoroutine);
-        HudManager.Instance.FullScreen.gameObject.SetActive(false);
+        DestroyableSingleton<HudManager>.Instance.StopCoroutine(FlashCoroutine);
+        DestroyableSingleton<HudManager>.Instance.FullScreen.gameObject.SetActive(false);
         FlashCoroutine = null;
-        HudManager.Instance.lightFlashHandle?.Dispose();
-        HudManager.Instance.lightFlashHandle = null;
+        DestroyableSingleton<HudManager>.Instance.lightFlashHandle?.Dispose();
+        DestroyableSingleton<HudManager>.Instance.lightFlashHandle = null;
     }
 
     [NebulaRPCHolder]
@@ -170,7 +170,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         {
             if (IsInRavenTime)
             {
-                FlashCoroutine ??= HudManager.Instance.StartCoroutine(CoRavenTimeFlash());
+                FlashCoroutine ??= DestroyableSingleton<HudManager>.Instance.StartCoroutine(CoRavenTimeFlash());
                 even = !even;
                 var color = even ? Color.yellow : Color.red;
                 ev.AppendText(Language.Translate("role.raven.raventime").Replace("%TIME%", Mathf.Ceil(RavenTimeLeft).ToString()).Color(color));
@@ -198,8 +198,8 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
             if (IsInRavenTime)
             {
-                HudManager.Instance.StopOxyFlash();
-                HudManager.Instance.StopReactorFlash();
+                DestroyableSingleton<HudManager>.Instance.StopOxyFlash();
+                DestroyableSingleton<HudManager>.Instance.StopReactorFlash();
                 RavenTimeLeft -= Time.deltaTime;
                 if (RavenTimeLeft <= 0f && MyPlayer.AmOwner)
                 {
@@ -214,14 +214,13 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
         private IEnumerator CoLeaveOrJoinMeeting(bool isleaving)
         {
-            yield return HudManager.Instance.CoFadeFullScreen(Color.clear, Color.black, 1f, false);
+            yield return DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.clear, Color.black, 1f, false);
             MeetingHud.Instance.gameObject.transform.localPosition = new Vector3(isleaving ? 17f : 0f, 0f);
             Camera.main.GetComponent<FollowerCamera>().Locked = !isleaving;
-            PlayerControl.LocalPlayer.cosmetics.ToggleName(isleaving);
 
             if (isleaving && tmPro == null)
             {
-                var textHolder = UnityHelper.CreateObject("RavenTarget", HudManager.Instance.transform, Vector3.zero, LayerExpansion.GetUILayer());
+                var textHolder = UnityHelper.CreateObject("RavenTarget", DestroyableSingleton<HudManager>.Instance.transform, Vector3.zero, LayerExpansion.GetUILayer());
                 this.BindGameObject(textHolder);
 
                 if (NebulaGUIWidgetEngine.API != null)
@@ -271,7 +270,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                 }, this);
             }
 
-            yield return HudManager.Instance.CoFadeFullScreen(Color.black, Color.clear, 1f, false);
+            yield return DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.black, Color.clear, 1f, false);
             coroutine = null;
         }
 
@@ -432,7 +431,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
             if (msg)
             {
                 StopRavenTimeFlash();
-                FlashCoroutine = HudManager.Instance.StartCoroutine(CoRavenTimeFlash().WrapToIl2Cpp());
+                FlashCoroutine = DestroyableSingleton<HudManager>.Instance.StartCoroutine(CoRavenTimeFlash().WrapToIl2Cpp());
                 GamePlayer.LocalPlayer?.GainAttribute(PlayerAttributes.Roughening, 0.5f, 20f, false, 0, "DHMO::Raven");
                 NebulaAPI.RunEvent(new RavenTimeStartEvent());
                 IsInRavenTime = msg;

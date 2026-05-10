@@ -1,20 +1,21 @@
 ﻿using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace DHMO.Patche;
+namespace DHMO.Patches;
 
 [HarmonyPatch]
 public class MeetingStartPatch
 {
-    [HarmonyPatch(typeof(MeetingHudExtension), "ModCoStartMeeting"), HarmonyPrefix]
+    [HarmonyPatch(typeof(MeetingHudExtension), nameof(MeetingHudExtension.ModCoStartMeeting)), HarmonyPrefix]
     public static bool ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
     {
-        if (NebulaGameManager.Instance != null)
+        if (NebulaGameManager.Instance is not null)
         {
             __result = ModCoStartMeeting(reporter, deadBody, reportType);
             return false;
         }
-        return true;
+        else
+            return true;
     }
 
     private static IEnumerator ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo? deadBody, int reportType)
@@ -22,46 +23,11 @@ public class MeetingStartPatch
         while (!MeetingHud.Instance) yield return null;
 
         MeetingRoomManager.Instance.RemoveSelf();
-        HudManager.Instance.InitMap();
+        DestroyableSingleton<HudManager>.Instance.InitMap();
         MapBehaviour.Instance.SetPreMeetingPosition(PlayerControl.LocalPlayer.transform.position, false);
-
         foreach (var player in GamePlayer.AllPlayers)
         {
-            if (player.VanillaPlayer is not { } vp) continue;
-            if (!vp.GetComponent<DummyBehaviour>().enabled) vp.MyPhysics.ExitAllVents();
-            vp.RemoveProtection();
-            vp.NetTransform.enabled = true;
-            vp.MyPhysics.ResetMoveState(true);
-
-            for (int i = 0; i < vp.currentRoleAnimations.Count; i++)
-            {
-                if (vp.currentRoleAnimations[i]?.gameObject != null)
-                    Object.Destroy(vp.currentRoleAnimations[i].gameObject);
-            }
-            vp.logger.Error("Encountered a null Role Animation while destroying.", null);
-
-            vp.inMovingPlat = false;
-            vp.isKilling = false;
-            vp.currentRoleAnimations.Clear();
-
-            if (vp.cosmetics.CurrentPet is not { } pet) continue;
-            if (vp.cosmetics.petHiddenByViper)
-            {
-                vp.cosmetics.TogglePet(true);
-                var vector = vp.transform.position;
-                if (ShipStatus.Instance.TryCast<AirshipStatus>())
-                {
-                    var list = new List<Vector2>
-                        {
-                            new(8.2f, 15.2f), new(8.25f, 15.9f), new(8.2f, 14.3f),
-                            new(11f, 14.3f), new(9.8f, 14.3f), new(13f, 14.3f)
-                        };
-                    vector = list[Random.Range(0, list.Count)];
-                }
-                pet.SetGettingPet(false, vector);
-                continue;
-            }
-            pet.SetGettingPet(false, pet.transform.position);
+            if (player.VanillaPlayer) ModResetForMeeting(player.VanillaPlayer, false);
         }
 
         if (MapBehaviour.Instance) MapBehaviour.Instance.Close();
@@ -70,7 +36,57 @@ public class MeetingStartPatch
         KillAnimation.SetMovement(reporter, true);
         GameData.TimeLastMeetingStarted = Time.realtimeSinceStartup;
 
-        MeetingHud instance = MeetingHud.Instance;
-        instance.StartCoroutine(MeetingHudExtension.ModCoMeetingHudIntro(instance, reporter, deadBody, (MeetingHudExtension.ReportType)reportType).WrapToIl2Cpp());
+        var meetingHud = MeetingHud.Instance;
+        meetingHud.StartCoroutine(MeetingHudExtension.ModCoMeetingHudIntro(meetingHud, reporter, deadBody, (MeetingHudExtension.ReportType)reportType).WrapToIl2Cpp());
+        yield break;
+    }
+
+    public static void ModResetForMeeting(PlayerControl player, bool spawn = true)
+    {
+        if (!player.GetComponent<DummyBehaviour>().enabled)
+        {
+            player.MyPhysics.ExitAllVents();
+            if (spawn)
+            {
+                ShipStatus.Instance.SpawnPlayer(player, GameData.Instance.PlayerCount, false);
+            }
+        }
+        player.RemoveProtection();
+        player.NetTransform.enabled = true;
+        player.MyPhysics.ResetMoveState(true);
+        for (int i = 0; i < player.currentRoleAnimations.Count; i++)
+        {
+            if (player.currentRoleAnimations[i] != null && player.currentRoleAnimations[i].gameObject != null)
+            {
+                Object.Destroy(player.currentRoleAnimations[i].gameObject);
+            }
+        }
+        player.inMovingPlat = false;
+        player.isKilling = false;
+        player.currentRoleAnimations.Clear();
+        if (player.cosmetics.CurrentPet != null)
+        {
+            if (player.cosmetics.petHiddenByViper)
+            {
+                player.cosmetics.TogglePet(true);
+                Vector2 vector = player.transform.position;
+                if (ShipStatus.Instance is AirshipStatus)
+                {
+                    List<Vector2> list =
+                    [
+                        new Vector2(8.2f, 15.2f),
+                        new Vector2(8.25f, 15.9f),
+                        new Vector2(8.2f, 14.3f),
+                        new Vector2(11f, 14.3f),
+                        new Vector2(9.8f, 14.3f),
+                        new Vector2(13f, 14.3f)
+                    ];
+                    vector = list[Random.Range(0, list.Count)];
+                }
+                player.cosmetics.CurrentPet.SetGettingPet(false, vector);
+                return;
+            }
+            player.cosmetics.CurrentPet.SetGettingPet(false, player.cosmetics.CurrentPet.transform.position);
+        }
     }
 }

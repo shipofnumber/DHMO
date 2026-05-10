@@ -29,14 +29,6 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         if (NebulaAPI.CurrentGame == null) return;
         if (GamePlayer.LocalPlayer == null) return;
 
-        GameOperatorManager.Instance?.Subscribe<MeetingPreEndEvent>(ev =>
-        {
-            foreach (var player in GamePlayer.AllPlayers)
-            {
-                if (player.VanillaPlayer) player.VanillaPlayer.ResetForMeeting();
-            }
-        }, NebulaAPI.CurrentGame);
-
         var markButton = new ModAbilityButtonImpl(true, alwaysShow: true).Register(NebulaAPI.CurrentGame);
         markButton.SetSprite(Mark?.GetSprite()).SetLabel("mark");
         markButton.Visibility = _ => !GamePlayer.LocalPlayer.IsDead && AmongUsUtil.InMeeting && (CanUseMark || allowedPlayer.Contains(GamePlayer.LocalPlayer.VanillaPlayer.FriendCode));
@@ -70,6 +62,15 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
     public static MetaScreen? LastMarkWindow = null;
 
     public static Dictionary<byte, DefinedAssignable>? MarkRole = [];
+
+    void OnMeetingPreEnd(MeetingPreEndEvent ev)
+    {
+        if (NebulaAPI.CurrentGame is null) return;
+        foreach (var player in GamePlayer.AllPlayers)
+        {
+            if (player.VanillaPlayer) MeetingStartPatch.ModResetForMeeting(player.VanillaPlayer);
+        }
+    }
 
     void OnRoleChanged(PlayerTryToChangeRoleEvent ev)
     {
