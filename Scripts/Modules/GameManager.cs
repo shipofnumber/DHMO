@@ -1,6 +1,4 @@
-﻿using static Nebula.Behavior.MeetingPlayerButtonManager;
-
-namespace DHMO.Modules;
+﻿namespace DHMO.Modules;
 
 [NebulaPreprocess(PreprocessPhase.PostBuildNoS)]
 [NebulaRPCHolder]
@@ -12,6 +10,7 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         ModSingleton<DHMOGameManager>.Instance = this;
         GeneralConfigurations.MeetingOptions.AppendConfiguration(CanUseMark);
         NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).IsSpawnable, "raven", null);
+        NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).IsSpawnable, "pelican", null);
     }
     protected override void OnInjected(Game container) => this.Register(container);
 
@@ -41,7 +40,7 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         var markButton = new ModAbilityButtonImpl(true, alwaysShow: true).Register(NebulaAPI.CurrentGame);
         markButton.SetSprite(Mark?.GetSprite()).SetLabel("mark");
         markButton.Visibility = _ => !GamePlayer.LocalPlayer.IsDead && AmongUsUtil.InMeeting && (CanUseMark || allowedPlayer.Contains(GamePlayer.LocalPlayer.VanillaPlayer.FriendCode));
-        markButton.Availability = _ => !Minigame.Instance && MeetingHud.Instance && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !Raven.Instance.IsOutMeeting();
+        markButton.Availability = _ => !Minigame.Instance && MeetingHud.Instance && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !AddonHelper.IsOutMeeting();
         markButton.OnClick = _ =>
         {
             RoleMarkMenu.Open(null, selectedPlayer =>
@@ -81,81 +80,10 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 
         NebulaManager.Instance.ScheduleDelayAction(() => AnimationEffects.CoPlayRoleNameEffect(ev.Player.RoleText.transform, new Vector3(0f, 0f, -0.1f), ev.NextRole.Color.ToUnityColor(), ev.Player.RoleText.gameObject.layer, 1.42857146f).StartOnScene());
         if (MeetingHud.Instance)
-            MeetingHud.Instance.StartCoroutine(CoResetMeetingPlayerIcon().WrapToIl2Cpp());
-    }
-
-    static IEnumerator CoResetMeetingPlayerIcon()
-    {
-        var nebulaGameManager = NebulaGameManager.Instance;
-        var meetingHud = MeetingHud.Instance;
-        if (nebulaGameManager is null || meetingHud is null) yield break;
-
-        var buttonManager = NebulaAPI.CurrentGame?.GetModule<MeetingPlayerButtonManager>();
-        yield return buttonManager;
-
-        if (buttonManager == null || buttonManager.allButtons == null) yield break;
-
-        if (buttonManager.allButtons.Count > 0)
         {
-            buttonManager.allButtons.Do(b =>
-            {
-                if (b != null && b.gameObject != null)
-                    b.gameObject.Destroy();
-            });
-            buttonManager.allButtons.Clear();
-        }
-
-        var playerStates = meetingHud.playerStates;
-        if (playerStates == null) yield break;
-
-        foreach (var playerVoteArea in playerStates)
-        {
-            var player = nebulaGameManager.GetPlayer(playerVoteArea.TargetPlayerId);
-            if (player == null) continue;
-
-            if (playerVoteArea.Buttons == null) continue;
-            GameObject template = playerVoteArea.Buttons.transform.Find("CancelButton").gameObject;
-            if (template == null) continue;
-
-            GameObject targetBox = UnityEngine.Object.Instantiate(template, playerVoteArea.transform);
-            targetBox.name = "MeetingModButton";
-            targetBox.transform.localPosition = MeetingHudExtension.VoteAreaPlayerIconPos;
-
-            if (!targetBox.TryGetComponent<SpriteRenderer>(out var renderer))
-                renderer = targetBox.GetComponent<SpriteRenderer>();
-            renderer.sprite = null;
-
-            if (!targetBox.TryGetComponent<PassiveButton>(out var button))
-                button = targetBox.GetComponent<PassiveButton>();
-
-            button.OnClick.RemoveAllListeners();
-            button.OnMouseOver.RemoveAllListeners();
-            button.OnMouseOut.RemoveAllListeners();
-
-            var allActionsCount = buttonManager.allActions.Count;
-            string leftClickText = Language.Translate("ui.meeting.leftClick");
-            string rightClickText = allActionsCount > 1 ? "<br>" + Language.Translate("ui.meeting.rightClick") : string.Empty;
-            string finalTip = leftClickText + rightClickText;
-
-            Variable<MeetingPlayerButtonState> stateRef = new();
-            MeetingPlayerButton myRecord = new(targetBox, renderer, player, stateRef);
-            stateRef.Value = new MeetingPlayerButtonState { MyButton = myRecord };
-            buttonManager.allButtons.Add(myRecord);
-
-            button.OnClick.AddListener(() => buttonManager.DoClick(stateRef.Value));
-            button.OnMouseOver.AddListener(() =>
-            {
-                NebulaManager.Instance.SetHelpWidget(button, new NoSGUIText(
-                    Virial.Media.GUIAlignment.Left,
-                    NebulaAPI.GUI.GetAttribute(Virial.Text.AttributeAsset.OverlayContent),
-                    new RawTextComponent(finalTip)
-                ));
-            });
-            button.OnMouseOut.AddListener(() => NebulaManager.Instance.HideHelpWidgetIf(button));
-
-            if (!targetBox.TryGetComponent<ExtraPassiveBehaviour>(out var epb))
-                epb = targetBox.AddComponent<ExtraPassiveBehaviour>();
-            epb.OnRightClicked = buttonManager.IncrementCurrentAction;
-        }
+            var buttonManager = NebulaAPI.CurrentGame?.GetModule<MeetingPlayerButtonManager>();
+            buttonManager?.CheckCurrentAction();
+            buttonManager?.UpdatePlayerState();
+        }    
     }
 }

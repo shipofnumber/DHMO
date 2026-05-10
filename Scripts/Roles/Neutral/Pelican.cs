@@ -1,4 +1,6 @@
-﻿namespace DHMO.Roles;
+﻿using System.Net.Security;
+
+namespace DHMO.Roles;
 
 public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder
 {
@@ -34,7 +36,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
             }
         }
 
-        private List<GamePlayer> devouredPlayer = [];
+        static List<GamePlayer> devouredPlayer = [];
         ModAbilityButton? DevourButton;
 
         void BlockTriggerEnd(EndCriteriaPreMetEvent ev)
@@ -46,7 +48,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
         [OnlyMyPlayer]
         void OnCheckWin(PlayerCheckWinEvent ev)
         {
-            var totalAlive = AddonHelper.GetAlivePlayers().totalAlive;
+            var totalAlive = AddonHelper.GetAlivePlayers().alivePlayers.Where(p => !p.WillDie).Count();
             ev.SetWinIf(ev.GameEnd == PelicanTeamWin && !MyPlayer.IsDead && totalAlive <= 1);
         }
 
@@ -55,7 +57,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
         {
             try
             {
-                var totalAlive = AddonHelper.GetAlivePlayers().totalAlive;
+                var totalAlive = AddonHelper.GetAlivePlayers().alivePlayers.Where(p => !p.WillDie).Count();
                 if (!MyPlayer.IsDead && totalAlive <= 1)
                     NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin!, GameEndReason.Situation, BitMasks.AsPlayer().Add(MyPlayer));
             }
@@ -74,7 +76,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                 DevourButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false)
                     .BindKey(VirtualKeyInput.Kill)
                     .SetImage(buttonImage!)
-                    .SetLabel("devour")
+                    .SetLabel("pelican.devour")
                     .SetColorLabel(MyRole.RoleColor);
                 DevourButton.Visibility = _ => !MyPlayer.IsDead;
                 DevourButton.Availability = _ => devourTracker.CurrentTarget != null && MyPlayer.CanMove && !MyPlayer.WillDie;
@@ -99,6 +101,23 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
             }
         }
 
+        protected override void OnReleased()
+        {
+            base.OnReleased();
+            var list = devouredPlayer;
+            devouredPlayer = [];
+            if (list.Count > 0)
+            {
+                foreach (var player in list)
+                {
+                    if (player != null)
+                    {
+                        MyPlayer.MurderPlayer(player, Digestion, EventDetails.Kill, KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE, KillCondition.BothAlive);
+                    }
+                }
+            }
+        }
+
         float GetCurrentCooldown()
         {
             var time = Mathf.Max(DevourCooldown.Cooldown - (devouredPlayer.Count * ReduceTime.GetValue()));
@@ -113,14 +132,13 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
             if (GamePlayer.LocalPlayer is not null)
             if (ev.Devoured == GamePlayer.LocalPlayer)
                 AmongUsUtil.SetCamTarget(MyPlayer.VanillaPlayer);
-
+            ev.Devoured.Unbox().WillDie = true;
             DevourButton?.CoolDownTimer = NebulaAPI.Modules.Timer(this, GetCurrentCooldown()).SetAsKillCoolTimer();
         }
 
         void OnMeetingPreStart(MeetingPreStartEvent ev)
         {
             var list = devouredPlayer;
-            devouredPlayer = [];
             DevourButton?.CoolDownTimer = NebulaAPI.Modules.Timer(this, GetCurrentCooldown()).SetAsKillCoolTimer();
             if (list.Count >0)
             {
@@ -132,6 +150,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                     }
                 }
             }
+            devouredPlayer = [];
         }
 
         void OnUpdataVisible(PlayerUpdateVisibilityEvent ev)
@@ -149,7 +168,10 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                     AmongUsUtil.SetCamTarget();
 
                 foreach (var player in devouredPlayer)
+                {
                     player?.Logic.SnapTo(ev.Player.TruePosition);
+                    player?.Unbox().WillDie = false;
+                }
 
                 devouredPlayer = [];
             }
@@ -161,8 +183,12 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                     if (deadPlayer == GamePlayer.LocalPlayer)
                         AmongUsUtil.SetCamTarget();
 
-                    deadPlayer.Logic.SnapTo(MyPlayer.TruePosition); 
-                    devouredPlayer.Remove(deadPlayer);
+                    if (deadPlayer is not null)
+                    {
+                        deadPlayer.Unbox().WillDie = false;
+                        deadPlayer.Logic.SnapTo(MyPlayer.TruePosition);
+                        devouredPlayer.Remove(deadPlayer);
+                    }
                 }
             }
         }

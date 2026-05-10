@@ -9,15 +9,13 @@ public class CertifiedPatch
     public static string Text = string.Empty;
     private static readonly byte[] HashBuffer = new byte[4096];
 
-    private static RemoteProcess<(byte playerId, int epoch, int build, string vanilla, string[] ids, int[] hashes)> RpcHandshake = new(
+    private static RemoteProcess<(PlayerControl player, int epoch, int build, string[] ids, int[] hashes)> RpcHandshake = new(
         "DHMOHandshake", (message, _) =>
         {
-            var player = Helpers.GetPlayer(message.playerId);
+            var player = message.player;
             if (player != null && player.gameObject.TryGetComponent(out UncertifiedPlayer certification))
             {
-                if (!message.vanilla.Equals(ReferenceDataManager.Instance.Refdata.userFacingVersion))
-                    certification.Reject(UncertifiedReason.UnmatchedVanilla);
-                else if (message.epoch != NebulaPlugin.PluginEpoch)
+                if (message.epoch != NebulaPlugin.PluginEpoch)
                     certification.Reject(UncertifiedReason.UnmatchedEpoch);
                 else if (message.build != NebulaPlugin.PluginBuildNum)
                     certification.Reject(UncertifiedReason.UnmatchedBuild);
@@ -70,7 +68,7 @@ public class CertifiedPatch
         string[] ids = [.. handshakeAddons.Select(a => a.Id)];
         int[] hashes = [.. handshakeAddons.Select(a => a.HandshakeHash)];
 
-        RpcHandshake.Invoke((PlayerControl.LocalPlayer.PlayerId, NebulaPlugin.PluginEpoch, NebulaPlugin.PluginBuildNum, ReferenceDataManager.Instance.Refdata.userFacingVersion, ids, hashes));
+        RpcHandshake.Invoke((PlayerControl.LocalPlayer, NebulaPlugin.PluginEpoch, NebulaPlugin.PluginBuildNum, ids, hashes));
         Certification.RpcShareAchievement.Invoke((PlayerControl.LocalPlayer.PlayerId, NebulaAchievementManager.MyTitleData));
         ModSingleton<ShowUp>.Instance?.ShareLocalAfk();
         DynamicPalette.RpcShareMyColor();

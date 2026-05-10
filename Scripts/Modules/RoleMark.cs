@@ -165,9 +165,7 @@ public sealed class RoleMarkMenu : Minigame
         sprite.sprite = NextButton?.GetSprite();
 
         var nextPassive = nextButton.GetComponent<PassiveButton>();
-        nextPassive.OnClick.RemoveAllListeners();
-        nextPassive.OnMouseOver.RemoveAllListeners();
-        nextPassive.OnMouseOut.RemoveAllListeners();
+        nextPassive.RemoveAllListeners();
         nextPassive.OnClick.AddListener(() => customMenu.NextPage());
         nextPassive.OnMouseOver.AddListener(() => sprite.sprite = NextButtonActive?.GetSprite());
         nextPassive.OnMouseOut.AddListener(() => sprite.sprite = NextButton?.GetSprite());
@@ -178,9 +176,7 @@ public sealed class RoleMarkMenu : Minigame
         prevButton.GetComponent<SpriteRenderer>().flipX = true;
 
         var prevPassive = prevButton.GetComponent<PassiveButton>();
-        prevPassive.OnClick.RemoveAllListeners();
-        prevPassive.OnMouseOver.RemoveAllListeners();
-        prevPassive.OnMouseOut.RemoveAllListeners();
+        prevPassive.RemoveAllListeners();
         prevPassive.OnClick.AddListener(() => customMenu.PreviousPage());
         prevPassive.OnMouseOver.AddListener(() => prevButton.GetComponent<SpriteRenderer>().sprite = NextButtonActive?.GetSprite());
         prevPassive.OnMouseOut.AddListener(() => prevButton.GetComponent<SpriteRenderer>().sprite = NextButton?.GetSprite());
@@ -261,7 +257,7 @@ public sealed class RoleMarkMenu : Minigame
             panel?.transform.localPosition = new Vector3(xStart + col * xOffset, yStart + row * yOffset, -1f);
             panel?.SetPlayer(index, player.Data, (Action)(() => onClick?.Invoke(player)));
             panel?.NameText.color = player == PlayerControl.LocalPlayer ? GamePlayer.LocalPlayer!.Role.Role.UnityColor : Color.white;
-            panel?.ColorBlindName.gameObject.SetActive(false);
+            panel?.ColorBlindName.transform.localPosition = new UnityEngine.Vector3(-0.9616f ,-0.1666f ,-0.1f);
 
             var roleText = GameObject.Instantiate(panel?.NameText, panel?.NameText.transform);
             roleText?.name = "RoleMarkText";
@@ -274,7 +270,7 @@ public sealed class RoleMarkMenu : Minigame
                 script?.UpdateHandler += () => updateRoleText?.Invoke(roleText, player);
 
             var highlight = panel?.gameObject.transform.TryDig("Nameplate", "Highlight");
-            highlight?.Find("ShapeshifterIcon")?.gameObject.SetActive(false);
+            highlight?.Find("ShapeshifterIcon").gameObject.SetActive(false);
 
             if (panel != null)
             {

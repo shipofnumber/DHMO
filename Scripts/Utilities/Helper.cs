@@ -2,30 +2,26 @@
 
 public static class ModAbilityButtonExtensions
 {
-    public static GameObject? UsesIcon = null;
-    public static TextMeshPro? UsesIconText = null;
-    public static void SetUsesIcon(this ModAbilityButton button, string text)
+    public static void SetUsesIcon(this ModAbilityButton button, Virial.Color color, string text, out GameObject uses, out TextMeshPro tmPro, bool isRight = false)
     {
         Transform template = HudManager.Instance.AbilityButton.transform.GetChild(2);
         var usesObject = GameObject.Instantiate(template.gameObject);
         usesObject.transform.SetParent(((ModAbilityButtonImpl)button).VanillaButton.gameObject.transform);
         usesObject.transform.localScale = template.localScale;
-        usesObject.transform.localPosition = template.localPosition * 1.2f;
+        if (isRight) 
+        {
+            usesObject.transform.localPosition = new Vector3(0.5096f, -0.3513f, template.localPosition.z * 1.2f);
+            usesObject.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+        }
+        else usesObject.transform.localPosition = template.localPosition * 1.2f;
 
         var renderer = usesObject.GetComponent<SpriteRenderer>();
-        renderer.color = ((ModAbilityButtonImpl)button).VanillaButton.buttonLabelText.outlineColor;
+        renderer.color = color.ToUnityColor();
         var textMesh = usesObject.transform.GetChild(0).GetComponent<TMPro.TextMeshPro>();
         textMesh.text = text;
-        UsesIconText = textMesh;
-        UsesIcon = usesObject;
+        uses = usesObject;
+        tmPro = textMesh;
     }
-
-    public static void UpdateUsesText(this ModAbilityButton button, string text)
-    {
-        if (button is null && !UsesIconText) return;
-        UsesIconText?.text = text;
-    }
-    public static void DestroyUsesIcon(this ModAbilityButton button) { if (button is not null && UsesIcon) UsesIcon?.Destroy(); }
 }
 
 public static class AddonHelper
@@ -49,12 +45,21 @@ public static class AddonHelper
         return (totalAlive, alivePlayers);
     }
 
+    public static void RemoveAllListeners(this PassiveButton button)
+    {
+        button.OnClick.RemoveAllListeners();
+        button.OnMouseOver.RemoveAllListeners();
+        button.OnMouseOut.RemoveAllListeners();
+    }
+
     public static bool ModAbilityMeetingButton()
     {
         if (AmongUsUtil.InMeeting && MeetingHud.Instance.state is not MeetingHud.VoteStates.Animating and not MeetingHud.VoteStates.Discussion and not MeetingHud.VoteStates.Results and not MeetingHud.VoteStates.Proceeding)
             return true;
         else return false;
     }
+
+    public static bool IsOutMeeting() => MeetingHud.Instance && MeetingHud.Instance.gameObject.transform.localPosition.x > 15;
 
     public static void AddCustomChat(PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
     {
