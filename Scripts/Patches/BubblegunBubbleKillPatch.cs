@@ -16,7 +16,7 @@ public static class BubblegunBubbleKillPatch
         var matcher = new CodeMatcher(instructions, generator);
 
         var getLocalPlayerMethod = AccessTools.PropertyGetter(typeof(GamePlayer), nameof(GamePlayer.LocalPlayer));
-        var canKillMethod = AccessTools.Method(typeof(GamePlayer), nameof(GamePlayer.CanKill), new[] { typeof(GamePlayer) });
+        var canKillMethod = AccessTools.Method(typeof(GamePlayer), nameof(GamePlayer.CanKill), [typeof(GamePlayer)]);
 
         matcher.MatchForward(false, new CodeMatch(OpCodes.Call, getLocalPlayerMethod), new CodeMatch(OpCodes.Stloc_S));
 

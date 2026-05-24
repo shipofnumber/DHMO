@@ -14,13 +14,4 @@ public class PlayerControlPatch
 
     [HarmonyPatch(typeof(PlayerControl), "CmdReportDeadBody"), HarmonyPrefix]
     public static bool ReportDeadBodyPatch() => !Raven.Instance.IsInRavenTime;
-
-    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.FixedUpdate)), HarmonyPostfix]
-    public static void FixedUpdatePatch(PlayerControl __instance)
-    {
-        if (AddonHelper.IsOutMeeting())
-            __instance.cosmetics.ToggleNameVisible(false);
-        else
-            __instance.cosmetics.ToggleNameVisible(true);
-    }
 }

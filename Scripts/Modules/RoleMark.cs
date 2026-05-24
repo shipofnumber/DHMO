@@ -5,8 +5,8 @@ namespace DHMO.Modules;
 
 static public class RoleMarkWindow
 {
-    static TextAttributeOld ButtonAttribute = new TextAttributeOld(TextAttributeOld.BoldAttr) { Size = new(1.05f, 0.3f), Alignment = TMPro.TextAlignmentOptions.Center, FontMaterial = VanillaAsset.StandardMaskedFontMaterial }.EditFontSize(2f, 1f, 2f);
-    static TextAttributeOld TabAttribute = new(TextAttributeOld.BoldAttr) { FontMaterial = VanillaAsset.StandardMaskedFontMaterial };
+    readonly static TextAttributeOld ButtonAttribute = new TextAttributeOld(TextAttributeOld.BoldAttr) { Size = new(1.05f, 0.3f), Alignment = TMPro.TextAlignmentOptions.Center, FontMaterial = VanillaAsset.StandardMaskedFontMaterial }.EditFontSize(2f, 1f, 2f);
+    readonly static TextAttributeOld TabAttribute = new(TextAttributeOld.BoldAttr) { FontMaterial = VanillaAsset.StandardMaskedFontMaterial };
     static public MetaScreen OpenRoleSelectWindow(IEnumerable<DefinedRole>? roles, Predicate<DefinedRole>? predicate, bool impRolesArrangeAtFirst, string underText, Action<DefinedRole> onSelected)
         => OpenRoleSelectWindowUsingTabs(roles, [(null, predicate)], impRolesArrangeAtFirst, underText, onSelected);
 
@@ -220,7 +220,7 @@ public sealed class RoleMarkMenu : Minigame
             entry.Panel.gameObject.SetActive(false);
 
         var totalPages = GetTotalPages(allEntries.Count);
-        currentPage = Mathf.Clamp(currentPage, 0, totalPages - 1);
+        currentPage = Mathn.Clamp(currentPage, 0, totalPages - 1);
 
         var pageEntries = allEntries.Skip(currentPage * ItemsPerPage).Take(ItemsPerPage).ToList();
         var uiElements = new List<UiElement>();
@@ -277,20 +277,16 @@ public sealed class RoleMarkMenu : Minigame
                 potentialVictims.Add(panel);
                 allEntries.Add(new MenuEntry(panel));
             }
-
             index++;
         }
 
         IEnumerator CoCloseOnResult()
         {
             if (MeetingHud.Instance)
-            {
                 while (MeetingHud.Instance.state != MeetingHud.VoteStates.Results) yield return null;
-            }
             else
-            {
                 while (!MeetingHud.Instance) yield return null;
-            }
+
             this.Close();
         }
 

@@ -21,8 +21,5 @@ public static class HudPatch
             manager.ImpostorVentButton.ToggleVisible(false);
             manager.SabotageButton.ToggleVisible(false);
         }
-
-        if (AmongUsUtil.InMeeting && manager.TaskPanel.gameObject.activeSelf)
-            manager.TaskPanel.gameObject.SetActive(false);
     }
 }

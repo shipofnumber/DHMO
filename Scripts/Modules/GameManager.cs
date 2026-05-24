@@ -8,13 +8,10 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
     public DHMOGameManager()
     {
         ModSingleton<DHMOGameManager>.Instance = this;
-        GeneralConfigurations.MeetingOptions.AppendConfiguration(CanUseMark);
-        NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).IsSpawnable, "raven", null);
-        NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).IsSpawnable, "pelican", null);
     }
     protected override void OnInjected(Game container) => this.Register(container);
 
-    static BoolConfiguration CanUseMark = NebulaAPI.Configurations.Configuration("options.meeting.canUseMark", true);
+    public static BoolConfiguration CanUseMark = NebulaAPI.Configurations.Configuration("options.meeting.canUseMark", true);
 
     private readonly static List<string> allowedPlayer =
         ["eggantique#7155", //Water
@@ -63,7 +60,7 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 
     public static Dictionary<byte, DefinedAssignable>? MarkRole = [];
 
-    void OnMeetingPreEnd(MeetingPreEndEvent ev)
+    void OnMeetingPreEnd(MeetingVoteEndEvent ev)
     {
         if (NebulaAPI.CurrentGame is null) return;
         foreach (var player in GamePlayer.AllPlayers)
@@ -80,11 +77,5 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         if (game == null || local == null || (local != ev.Player && !game.CanSeeAllInfo)) return;
 
         NebulaManager.Instance.ScheduleDelayAction(() => AnimationEffects.CoPlayRoleNameEffect(ev.Player.RoleText.transform, new Vector3(0f, 0f, -0.1f), ev.NextRole.Color.ToUnityColor(), ev.Player.RoleText.gameObject.layer, 1.42857146f).StartOnScene());
-        if (MeetingHud.Instance)
-        {
-            var buttonManager = NebulaAPI.CurrentGame?.GetModule<MeetingPlayerButtonManager>();
-            buttonManager?.CheckCurrentAction();
-            buttonManager?.UpdatePlayerState();
-        }    
     }
 }

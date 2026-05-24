@@ -2,6 +2,7 @@
 global using BepInEx.Unity.IL2CPP.Utils.Collections;
 global using DHMO;
 global using DHMO.Events;
+global using DHMO.Modules;
 global using DHMO.Patches;
 global using DHMO.Roles;
 global using DHMO.Utilities;

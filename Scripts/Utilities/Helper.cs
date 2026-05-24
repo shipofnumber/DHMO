@@ -141,7 +141,7 @@ public static class APICompat
 
     public static void DestroyImmediate(this UnityEngine.Object obj) => UnityEngine.Object.DestroyImmediate(obj);
 
-    static public GamePlayer ToGamePlayer(this PlayerControl player) => GamePlayer.GetPlayer(player.PlayerId)!;
+    static public GamePlayer? ToGamePlayer(this PlayerControl player) => GamePlayer.GetPlayer(player.PlayerId);
 
     public static IEnumerable<T> ToEnumerable<T>(this IEnumerator<T> enumerator)
     {

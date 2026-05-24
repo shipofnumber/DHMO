@@ -1,10 +1,25 @@
-﻿namespace DHMO;
+﻿using Virial.Runtime;
+
+namespace DHMO;
 
 [NebulaPreprocess(PreprocessPhase.PostFixStructure)]
 public class DHMO
 {
     internal static Harmony? harmony = new("DHMO");
-    static DHMO() => harmony?.PatchAll();
+
+    public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
+    {
+        yield return preprocessor;
+        CertifiedPatch.addonDictionary = NebulaAddon.AllAddons.Where(a => a.NeedHandshake).ToDictionary(a => a.Id, CertifiedPatch.AddonHash); ;
+    }
+
+    static DHMO()
+    {
+        harmony?.PatchAll();
+        GeneralConfigurations.MeetingOptions.AppendConfiguration(DHMOGameManager.CanUseMark);
+        NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).CanSpawnInCurrentGame, "raven", null);
+        NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame, "pelican", null);
+    }
 }
 
 public class DLog

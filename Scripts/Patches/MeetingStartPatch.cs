@@ -1,5 +1,4 @@
-﻿using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
+﻿using Random = UnityEngine.Random;
 
 namespace DHMO.Patches;
 
@@ -26,9 +25,7 @@ public class MeetingStartPatch
         DestroyableSingleton<HudManager>.Instance.InitMap();
         MapBehaviour.Instance.SetPreMeetingPosition(PlayerControl.LocalPlayer.transform.position, false);
         foreach (var player in GamePlayer.AllPlayers)
-        {
             if (player.VanillaPlayer) ModResetForMeeting(player.VanillaPlayer, false);
-        }
 
         if (MapBehaviour.Instance) MapBehaviour.Instance.Close();
         if (Minigame.Instance) Minigame.Instance.ForceClose();
@@ -47,9 +44,7 @@ public class MeetingStartPatch
         {
             player.MyPhysics.ExitAllVents();
             if (spawn)
-            {
                 ShipStatus.Instance.SpawnPlayer(player, GameData.Instance.PlayerCount, false);
-            }
         }
         player.RemoveProtection();
         player.NetTransform.enabled = true;
@@ -58,7 +53,7 @@ public class MeetingStartPatch
         {
             if (player.currentRoleAnimations[i] != null && player.currentRoleAnimations[i].gameObject != null)
             {
-                Object.Destroy(player.currentRoleAnimations[i].gameObject);
+                player.currentRoleAnimations[i].gameObject.Destroy();
             }
         }
         player.inMovingPlat = false;

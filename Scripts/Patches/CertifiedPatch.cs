@@ -1,15 +1,13 @@
-﻿using Nebula.Modules.Cosmetics;
-
-namespace DHMO.Patches;
+﻿namespace DHMO.Patches;
 
 [NebulaRPCHolder]
 [HarmonyPatch]
 public class CertifiedPatch
 {
-    public static string Text = string.Empty;
-    private static readonly byte[] HashBuffer = new byte[4096];
+    public static string text = string.Empty;
+    public static Dictionary<string, int> addonDictionary = [];
 
-    private static RemoteProcess<(PlayerControl player, int epoch, int build, string[] ids, int[] hashes)> RpcHandshake = new(
+    private static readonly RemoteProcess<(PlayerControl player, int epoch, int build, string[] ids, int[] hashes)> RpcHandshake = new(
         "DHMOHandshake", (message, _) =>
         {
             var player = message.player;
@@ -20,58 +18,50 @@ public class CertifiedPatch
                 else if (message.build != NebulaPlugin.PluginBuildNum)
                     certification.Reject(UncertifiedReason.UnmatchedBuild);
                 else
-                    certification.StartCoroutine(CoCertifiedAddons(certification, message.ids, message.hashes).WrapToIl2Cpp());
+                {
+                    HashSet<string> paramIdSet = [.. message.ids];
+                    List<string> redundant = new(addonDictionary.Count);
+
+                    foreach (var key in addonDictionary.Keys)
+                    {
+                        if (!paramIdSet.Contains(key))
+                            redundant.Add(key);
+                    }
+
+                    List<string> missing = new(message.ids.Length);
+                    List<string> unmatched = new(message.hashes.Length);
+                    for (int i = 0; i < message.ids.Length; i++)
+                    {
+                        var id = message.ids[i];
+                        if (!addonDictionary.TryGetValue(id, out int clientHash))
+                        {
+                            missing.Add(id);
+                            continue;
+                        }
+                        if (clientHash != message.hashes[i])
+                            unmatched.Add(id);
+                    }
+                    if (missing.Any() || redundant.Any() || unmatched.Any())
+                    {
+                        certification.Reject(UncertifiedReason.UnmatchedAddon);
+                        AddonInfo(redundant, missing, unmatched);
+                    }
+                    else certification.Certify();
+                }
             }
         }, false);
-
-    private static IEnumerator CoCertifiedAddons(UncertifiedPlayer certification, string[] Ids, int[] Hashes)
-    {
-        yield return null;
-        var dict = NebulaAddon.AllAddons.Where(a => a.NeedHandshake).ToDictionary(a => a.Id, a => a.HandshakeHash);
-        List<string> redundant = [];
-        HashSet<string> paramIdSet = [.. Ids];
-        redundant.AddRange(dict.Keys.Except(paramIdSet));
-
-        List<string> missing = [];
-        List<string> unmatched = [];
-        for (int i = 0; i < Ids.Length; i++)
-        {
-            var id = Ids[i];
-            if (!dict.TryGetValue(id, out int clientHash))
-            {
-                missing.Add(id);
-                continue;
-            }
-            if (clientHash != Hashes[i])
-                unmatched.Add(id);
-        }
-
-        if (redundant.Any() || missing.Any() || unmatched.Any())
-        {
-            certification.Reject(UncertifiedReason.UnmatchedAddon);
-            AddonInfo(redundant, missing, unmatched);
-        }
-        else
-            certification.Certify();
-    }
-
-    [HarmonyPatch(typeof(NebulaAddon), nameof(NebulaAddon.HandshakeHash), MethodType.Getter)]
-    [HarmonyPostfix]
-    public static void HashPostfix(NebulaAddon __instance, ref int __result) => __result = AddonHash(__instance);
 
     [HarmonyPatch(typeof(Certification), nameof(Certification.Handshake))]
     [HarmonyPrefix]
     public static bool HandshakePrefix()
     {
-        Text = string.Empty;
-        List<NebulaAddon> handshakeAddons = [.. NebulaAddon.AllAddons.Where(a => a.NeedHandshake)];
-        string[] ids = [.. handshakeAddons.Select(a => a.Id)];
-        int[] hashes = [.. handshakeAddons.Select(a => a.HandshakeHash)];
+        string[] ids = [.. addonDictionary.Keys];
+        int[] hashes = [.. addonDictionary.Values];
 
         RpcHandshake.Invoke((PlayerControl.LocalPlayer, NebulaPlugin.PluginEpoch, NebulaPlugin.PluginBuildNum, ids, hashes));
         Certification.RpcShareAchievement.Invoke((PlayerControl.LocalPlayer.PlayerId, NebulaAchievementManager.MyTitleData));
         ModSingleton<ShowUp>.Instance?.ShareLocalAfk();
-        DynamicPalette.RpcShareMyColor();
+        Nebula.Modules.Cosmetics.DynamicPalette.RpcShareMyColor();
         NebulaAchievementManager.SendLastClearedAchievements();
         if (AmongUsClient.Instance.AmHost)
         {
@@ -86,6 +76,7 @@ public class CertifiedPatch
     public static bool StartPrefix(UncertifiedPlayer __instance)
     {
         __instance.State = UncertifiedReason.Waiting;
+        text = string.Empty;
 
         __instance.myShower = UnityHelper.CreateObject("UncertifiedHolder", __instance.gameObject.transform, new Vector3(0, 0, -20f), LayerExpansion.GetPlayersLayer());
         new MetaWidgetOld.Text(TextAttributeOld.BoldAttr)
@@ -111,7 +102,7 @@ public class CertifiedPatch
         {
             yield return new WaitForSeconds(0.8f);
 
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < 16; i++)
             {
                 if (__instance.State != UncertifiedReason.Waiting) break;
                 yield return new WaitForSeconds(0.5f);
@@ -144,16 +135,20 @@ public class CertifiedPatch
             foreach (var id in unmatched)
                 builder.AppendLine($"- <color=red><b>{id}</b></color>");
         }
-        return Text = builder.ToString();
+        return text = builder.ToString();
     }
 
-    internal static string UnmatchedDetail(UncertifiedReason reason) => reason == UncertifiedReason.UnmatchedAddon ? "<br>" + Text : string.Empty;
-
-    private static int AddonHash(NebulaAddon addon)
+    internal static string UnmatchedDetail(UncertifiedReason reason) => reason == UncertifiedReason.UnmatchedAddon ? "<br>" + text : string.Empty;
+    internal static int AddonHash(NebulaAddon addon)
     {
+        if (addonDictionary.TryGetValue(addon.Id, out int cachedHash))
+            return cachedHash;
+
         try
         {
-            using MD5 md5 = MD5.Create();
+            using var md5 = MD5.Create();
+            byte[] buffer = new byte[4096];
+
             foreach (var entry in addon.Archive.Entries)
             {
                 if (entry.Name.EndsWith(".dat", StringComparison.OrdinalIgnoreCase))
@@ -161,11 +156,18 @@ public class CertifiedPatch
 
                 using var entryStream = entry.Open();
                 int bytesRead;
-                while ((bytesRead = entryStream.Read(HashBuffer, 0, HashBuffer.Length)) > 0)
-                    md5.TransformBlock(HashBuffer, 0, bytesRead, HashBuffer, 0);
+                while ((bytesRead = entryStream.Read(buffer, 0, buffer.Length)) > 0)
+                    md5.TransformBlock(buffer, 0, bytesRead, buffer, 0);
             }
+
             md5.TransformFinalBlock([], 0, 0);
-            return md5.Hash == null ? addon.HandshakeHash : BitConverter.ToString(md5.Hash).ComputeConstantHash();
+
+            if (md5.Hash == null)
+                return addon.HandshakeHash;
+
+            int hash = BitConverter.ToString(md5.Hash).ComputeConstantHash();
+            addonDictionary[addon.Id] = hash;
+            return hash;
         }
         catch
         {

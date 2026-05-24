@@ -11,9 +11,7 @@ public static class CancelStartPatch
         {
             SoundManager.Instance.StopSound(__instance.gameStartSound);
             if (AmongUsClient.Instance.AmHost)
-            {
                 GameManager.Instance.LogicOptions.SyncOptions();
-            }
         }
     }
 }

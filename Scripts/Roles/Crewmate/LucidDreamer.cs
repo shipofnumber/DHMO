@@ -2,7 +2,7 @@
 
 public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Ability>, DefinedRole, HasCitation
 {
-    private LucidDreamer() : base("lucidDreamer", new(176, 175, 255), RoleCategory.CrewmateRole, Crewmate.MyTeam, [NumOfLeaveOption, LeavingDuration, CanLeaveMultiple, MaxLeftVotingTimeForLeaving, CanDoTaskDuringLeaving, NumOfCanCompleteTasks]) 
+    private LucidDreamer() : base("lucidDreamer", new(176, 175, 255), RoleCategory.CrewmateRole, Crewmate.MyTeam, [NumOfLeaveOption, LeavingDuration, CanLeaveMultiple, MaxLeftVotingTimeForLeaving, NumOfCanCompleteTasks]) 
     {
         ConfigurationHolder?.AddTags(ConfigurationTags.TagFunny);
         ConfigurationHolder?.Illustration = NebulaAPI.AddonAsset.GetResource("LucidDreamerImage.png")?.AsImage(300f);
@@ -14,15 +14,14 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
     static internal readonly FloatConfiguration LeavingDuration = NebulaAPI.Configurations.Configuration("options.role.lucidDreamer.leavingDuration", (0f, 120f, 5f), 30f, FloatConfigurationDecorator.Second);
     public static readonly BoolConfiguration CanLeaveMultiple = NebulaAPI.Configurations.Configuration("options.role.lucidDreamer.canLeaveMultiple", true);
     static internal readonly FloatConfiguration MaxLeftVotingTimeForLeaving = NebulaAPI.Configurations.Configuration("options.role.lucidDreamer.maxLeftVotingTimeForLeaving", (0f, 60f, 5f), 20f, FloatConfigurationDecorator.Second);
-    public static readonly BoolConfiguration CanDoTaskDuringLeaving = NebulaAPI.Configurations.Configuration("options.role.lucidDreamer.canDoTaskDuringLeaving", true);
-    static internal readonly IntegerConfiguration NumOfCanCompleteTasks = NebulaAPI.Configurations.Configuration("options.role.lucidDreamer.numOfCanCompleteTasks", (1, 5), 2, () => CanDoTaskDuringLeaving);
+    static internal readonly IntegerConfiguration NumOfCanCompleteTasks = NebulaAPI.Configurations.Configuration("options.role.lucidDreamer.numOfCanCompleteTasks", (1, 5), 2);
 
     static public readonly LucidDreamer MyRole = new();
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("LucidDreamerIcon.png")?.AsImage(80f);
-    MultipleAssignmentType DefinedRole.MultipleAssignment => MultipleAssignmentType.Allowed;
 
     public Citation? Citation => DHMOCitations.GGD;
 
+    [NebulaRPCHolder]
     public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility
     {
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
@@ -37,40 +36,59 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         {
             leftLeave = leave;
             gameObject = null;
+
+            if (NebulaAPI.CurrentGame is { } currentGame)
+            {
+                GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
+                {
+                    if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
+                        NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
+                }, currentGame);
+                GameOperatorManager.Instance?.Subscribe<MeetingPreStartEvent>(ev =>
+                {
+                    RpcCamouflage.Invoke((MyPlayer, true));
+                }, currentGame);
+                GameOperatorManager.Instance?.Subscribe<MeetingPreEndEvent>(ev =>
+                {
+                    RpcCamouflage.Invoke((MyPlayer, false));
+                }, currentGame);
+                GameOperatorManager.Instance?.RegisterOnReleased(() =>
+                {
+                    if (AddonHelper.IsOutMeeting())
+                        NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
+                }, currentGame);
+            }
+
             if (AmOwner)
             {
                 leavingTime = new TimerImpl(LeavingDuration).Register(this);
 
-                if (CanDoTaskDuringLeaving)
+                var modUseButton = new ModAbilityButtonImpl(alwaysShow: true).Register(this).KeyBind(NebulaInput.GetInput(VirtualKeyInput.Use));
+                modUseButton.Visibility = _ => !MyPlayer.IsDead && AddonHelper.IsOutMeeting() && coroutine == null;
+                modUseButton.Availability = _ => MyPlayer.CanMove && !AmongUsUtil.MapIsOpen && MyPlayer.VanillaPlayer.closest != null && completedTasks > 0;
+                modUseButton.OnClick = _ =>
                 {
-                    var modUseButton = new ModAbilityButtonImpl(alwaysShow: true).Register(this).KeyBind(NebulaInput.GetInput(VirtualKeyInput.Use));
-                    modUseButton.Visibility = _ => !MyPlayer.IsDead && AddonHelper.IsOutMeeting() && coroutine == null;
-                    modUseButton.Availability = _ => MyPlayer.CanMove && coroutine == null && !AmongUsUtil.MapIsOpen && MyPlayer.VanillaPlayer.closest != null && completedTasks > 0;
-                    modUseButton.OnClick = _ =>
+                    if (MyPlayer.VanillaPlayer.closest != null)
+                        MyPlayer.VanillaPlayer.UseClosest();
+                };
+                modUseButton.OnUpdate = _ =>
+                {
+                    if (NebulaAPI.CurrentGame is null || DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings is null) return;
+                    var vanillaUseButton = modUseButton.VanillaButton;
+                    ImageNames imageNames = DestroyableSingleton<HudManager>.Instance.UseButton.currentTarget.UseIcon;
+                    if (!DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings.ContainsKey(imageNames) || MyPlayer.VanillaPlayer.closest == null)
                     {
-                        if (MyPlayer.VanillaPlayer.closest != null)
-                        {
-                            MyPlayer.VanillaPlayer.UseClosest();
-                        }
-                    };
-                    modUseButton.OnUpdate = _ =>
+                        imageNames = ImageNames.UseButton;
+                    }
+                    var settings = DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings[imageNames];
+                    if (settings != null)
                     {
-                        if (NebulaAPI.CurrentGame is null || DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings is null) return;
-                        ImageNames imageNames = DestroyableSingleton<HudManager>.Instance.UseButton.currentTarget.UseIcon;
-                        if (!DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings.ContainsKey(imageNames) || MyPlayer.VanillaPlayer.closest == null)
-                        {
-                            imageNames = ImageNames.UseButton;
-                        }
-                        var settings = DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings[imageNames];
-                        if (settings != null)
-                        {
-                            modUseButton.SetSprite(settings.Image);
-                            modUseButton.VanillaButton.graphic.SetCooldownNormalizedUvs();
-                            modUseButton.VanillaButton.buttonLabelText.fontSharedMaterial = settings.FontMaterial;
-                            modUseButton.VanillaButton.buttonLabelText.text = DestroyableSingleton<TranslationController>.Instance.GetString(settings.Text, []);
-                        }
-                    };
-                }
+                        modUseButton.SetSprite(settings.Image);
+                        vanillaUseButton.graphic.SetCooldownNormalizedUvs();
+                        vanillaUseButton.buttonLabelText.fontSharedMaterial = settings.FontMaterial;
+                        vanillaUseButton.buttonLabelText.text = DestroyableSingleton<TranslationController>.Instance.GetString(settings.Text, []);
+                    }
+                };
 
                 var meetingButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true).BindKey(VirtualKeyInput.SidekickAction).SetColorLabel(MyRole.RoleColor);
                 meetingButton.Visibility = _ => !MyPlayer.IsDead && AmongUsUtil.InMeeting;
@@ -103,15 +121,6 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                     }
                     meetingButton.SetLabel(AddonHelper.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
                 };
-
-                if (NebulaAPI.CurrentGame is { } currentGame)
-                {
-                    GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
-                    {
-                        if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
-                            LeaveOrJoinMeeting(false, usesText);
-                    }, currentGame);
-                }
             }
         }
 
@@ -129,7 +138,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         private IEnumerator CoLeaveOrJoinMeeting(bool isLeaving)
         {
             if (Minigame.Instance)
-                Minigame.Instance.CloseInternal();
+                Minigame.Instance.ForceClose();
             if (AmongUsUtil.MapIsOpen)
                 MapBehaviour.Instance.Close();
             if (DestroyableSingleton<HudManager>.Instance.GameMenu.IsOpen)
@@ -184,9 +193,20 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         void OnCameraUpdate(CameraUpdateEvent ev)
         {
             if (AddonHelper.IsOutMeeting() && !MyPlayer.IsDead)
-                ev.UpdateSaturation(0.1f, true);
+                ev.UpdateSaturation(0f, true);
         }
 
         bool IPlayerAbility.EyesightIgnoreWalls => AddonHelper.IsOutMeeting() && MyPlayer.IsAlive;
+
+        public static RemoteProcess<(GamePlayer player, bool on)> RpcCamouflage = new("LucidDreamerCamouflage", (message, _) =>
+        {
+            if (NebulaGameManager.Instance is null || GamePlayer.LocalPlayer is null) return;
+            if (GamePlayer.LocalPlayer == message.player || GamePlayer.LocalPlayer.Role is not Raven.Instance) return;
+            var tag = $"LucidDreamer{GamePlayer.LocalPlayer?.PlayerId}";
+            if (message.on)
+                message.player?.Unbox().AddOutfit(new OutfitCandidate(NebulaGameManager.Instance.UnknownOutfit, tag, 50, true));
+            else
+                message.player?.Unbox().RemoveOutfit(tag);
+        });
     }
 }

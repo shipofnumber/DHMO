@@ -214,9 +214,21 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
         private IEnumerator CoLeaveOrJoinMeeting(bool isleaving)
         {
+            if (Minigame.Instance)
+                Minigame.Instance.ForceClose();
+            if (AmongUsUtil.MapIsOpen)
+                MapBehaviour.Instance.Close();
+            if (DestroyableSingleton<HudManager>.Instance.GameMenu.IsOpen)
+                DestroyableSingleton<HudManager>.Instance.GameMenu.Close();
+
             yield return DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.clear, Color.black, 1f, false);
             MeetingHud.Instance.gameObject.transform.localPosition = new Vector3(isleaving ? 17f : 0f, 0f);
             Camera.main.GetComponent<FollowerCamera>().Locked = !isleaving;
+
+            if (isleaving)
+                RpcCamouflage.Invoke((MyPlayer, true));
+            else
+                RpcCamouflage.Invoke((MyPlayer, false));
 
             if (isleaving && tmPro == null)
             {
@@ -293,6 +305,14 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     IsInRavenTime = false;
                     RavenTimeLeft = RavenTimeDuration;
                 }, currentGame);
+                GameOperatorManager.Instance?.Subscribe<MeetingPreStartEvent>(ev =>
+                {
+                    RpcCamouflage.Invoke((MyPlayer, true));
+                }, currentGame);
+                GameOperatorManager.Instance?.Subscribe<MeetingPreEndEvent>(ev =>
+                {
+                    RpcCamouflage.Invoke((MyPlayer, false));
+                }, currentGame);
                 GameOperatorManager.Instance?.RegisterOnReleased(() =>
                 {
                     IsInRavenTime = false;
@@ -311,6 +331,32 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     ArrowAbility.RegisterSelf();
                     GameOperatorManager.Instance?.Subscribe<GameUpdateEvent>(ev => ArrowAbility.ShowArrow = !IsInRavenTime && !MyPlayer.IsDead, this);
                 }
+
+                var modUseButton = new ModAbilityButtonImpl(alwaysShow: true).Register(this).KeyBind(NebulaInput.GetInput(VirtualKeyInput.Use));
+                modUseButton.Visibility = _ => !MyPlayer.IsDead && AddonHelper.IsOutMeeting() && coroutine == null;
+                modUseButton.Availability = _ => MyPlayer.CanMove && !AmongUsUtil.MapIsOpen && MyPlayer.VanillaPlayer.closest != null;
+                modUseButton.OnClick = _ =>
+                {
+                    if (MyPlayer.VanillaPlayer.closest != null)
+                        MyPlayer.VanillaPlayer.UseClosest();
+                };
+                modUseButton.OnUpdate = _ =>
+                {
+                    if (NebulaAPI.CurrentGame is null || DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings is null) return;
+                    ImageNames imageNames = DestroyableSingleton<HudManager>.Instance.UseButton.currentTarget.UseIcon;
+                    if (!DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings.ContainsKey(imageNames) || MyPlayer.VanillaPlayer.closest == null)
+                    {
+                        imageNames = ImageNames.UseButton;
+                    }
+                    var settings = DestroyableSingleton<HudManager>.Instance.UseButton.fastUseSettings[imageNames];
+                    if (settings != null)
+                    {
+                        modUseButton.SetSprite(settings.Image);
+                        modUseButton.VanillaButton.graphic.SetCooldownNormalizedUvs();
+                        modUseButton.VanillaButton.buttonLabelText.fontSharedMaterial = settings.FontMaterial;
+                        modUseButton.VanillaButton.buttonLabelText.text = DestroyableSingleton<TranslationController>.Instance.GetString(settings.Text, []);
+                    }
+                };
 
                 var mkillTracker = ObjectTrackers.ForPlayer(this, null, MyPlayer, p => ObjectTrackers.LocalKillablePredicate(p) && AddonHelper.IsOutMeeting(), null, false, false);
 
@@ -383,7 +429,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         }
 
         [OnlyMyPlayer]
-        void OnRavenTimeStart(RavenTimeStartEvent ev) => killButton?.CoolDownTimer = NebulaAPI.Modules.Timer(this, KillCooldown.Cooldown / 10f).SetAsKillCoolTimer().Start(null);
+        void OnRavenTimeStart(RavenTimeStartEvent _) => killButton?.CoolDownTimer = NebulaAPI.Modules.Timer(this, KillCooldown.Cooldown / 10f).SetAsKillCoolTimer().Start(null);
 
         [OnlyMyPlayer]
         void OnPlayerStepSound(PlayerCheckPlayFootSoundEvent ev)
@@ -401,7 +447,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         void OnCameraUpdate(CameraUpdateEvent ev)
         {
             if ((IsInRavenTime || AddonHelper.IsOutMeeting()) && !MyPlayer.IsDead)
-                ev.UpdateSaturation(0.1f, true);
+                ev.UpdateSaturation(0f, true);
         }
 
         [Local]
@@ -442,6 +488,18 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                 StopRavenTimeFlash();
                 IsInRavenTime = msg;
             }
+        });
+
+        public static RemoteProcess<(GamePlayer player, bool on)> RpcCamouflage = new("RavenCamouflage", (message, _) =>
+        {
+            if (NebulaGameManager.Instance is null || GamePlayer.LocalPlayer is null) return;
+            if (GamePlayer.LocalPlayer == message.player || !GamePlayer.LocalPlayer.TryGetAbility<LucidDreamer.Ability>(out var _)) return;
+
+            var tag = $"Raven{GamePlayer.LocalPlayer?.PlayerId}";
+            if (message.on)
+                message.player?.Unbox().AddOutfit(new OutfitCandidate(NebulaGameManager.Instance.UnknownOutfit, tag, 50, true));
+            else
+                message.player?.Unbox().RemoveOutfit(tag);
         });
     }
 }

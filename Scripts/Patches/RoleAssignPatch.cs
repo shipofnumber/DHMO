@@ -5,10 +5,7 @@ internal static class RoleAssignPatch
 {
     [HarmonyPrefix]
     [HarmonyPatch(nameof(RoleTable.SetRole))]
-    private static void SetRolePrefix(RoleTable __instance, byte player, DefinedRole role, int[]? arguments)
-    {
-        __instance.roles.RemoveAll(entry => entry.playerId == player);
-    }
+    private static void SetRolePrefix(RoleTable __instance, byte player, DefinedRole role, int[]? arguments) => __instance.roles.RemoveAll(entry => entry.playerId == player);
 
     [HarmonyPrefix]
     [HarmonyPatch(nameof(RoleTable.EditRole))]
