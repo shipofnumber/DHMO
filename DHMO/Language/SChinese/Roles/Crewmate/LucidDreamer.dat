@@ -1,0 +1,27 @@
+# Assignable
+
+"role.lucidDreamer.name" : "清醒梦"
+"role.lucidDreamer.short" : "梦"
+"role.lucidDreamer.blurb" : "坠入梦境的奇迹"
+
+# Document
+
+"role.lucidDreamer.doc" : "清醒梦可以离开会议去探寻一些秘密。"
+"role.lucidDreamer.ability.title" : "固有能力【盗梦空间】"
+"role.lucidDreamer.ability.main" : "离开会议时会来到特殊的梦境空间，在里面会复刻现实中的一切。<br>同时，在梦境中完成任务也会反馈到现实中，在梦境中最多完成<var>%NUM%</var>个任务。"
+"role.lucidDreamer.ability.leave" : "<title>离开/返回</title>离开会议，潜入梦境，仅在距离投票结束前<var>%MAXLEAVINGTIME%</var>秒前才可以离开会议。<br>如果已经处于梦境中，则会返回会议。"
+"role.lucidDreamer.tips" : "・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.lucidDreamer.detail" : "清醒梦可以离开会议获得信息或完成任务。"
+"options.role.lucidDreamer.numOfLeave" : "离开会议次数"
+"options.role.lucidDreamer.leavingDuration" : "离开持续时间"
+"options.role.lucidDreamer.canLeaveMultiple" : "一轮会议可以多次离开"
+"options.role.lucidDreamer.maxLeftVotingTimeForLeaving" : "可离开最大会议剩余时间"
+"options.role.lucidDreamer.numOfCanCompleteTasks" : "离开期间最大可完成任务数"
+
+# Button
+
+"button.label.lucidDreamer.leavemeeting" : "离开"
+"button.label.lucidDreamer.returnmeeting" : "返回"

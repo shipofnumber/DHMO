@@ -1,0 +1,13 @@
+# Certification
+
+"certification.unmatchedAddon.redundant" : "Redundant Addons"
+"certification.unmatchedAddon.missing" : "Missing Addons"
+"certification.unmatchedAddon.unmatched" : "Hash Unmatched"
+
+# LobbyRule
+
+"lobby.host.rule" : "Lobby Rule"
+"lobby.host" : "Host"
+"ui.lobby.rule" : "Rule"
+"ui.lobby.error" : "The input box cannot be empty."
+"lobby.rule.error" : "Rule has no content."

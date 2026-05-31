@@ -1,0 +1,37 @@
+# Assignable
+
+"role.pelican.name" : "鹈鹕"
+"role.pelican.short" : "鹕"
+"role.pelican.blurb" : "放纵餐！"
+
+# Document
+
+"document.tip.winCond.pelican.title" : "吞噬胜利"
+"document.tip.winCond.pelican" : "鹈鹕吞噬场上所有玩家或者只剩鹈鹕一个时获胜。"
+
+"role.pelican.doc" : "鹈鹕可以将玩家吞进肚子里，并在会议时消化。"
+"role.pelican.winCond" : "场上除自身外无人幸存或没有被吞噬。"
+"role.pelican.ability.title" : "固有能力【无底线的胃口】"
+"role.pelican.ability.main" : "可以直接将玩家整个吞下，吞下的玩家不会死亡，而是会在开始会议的时候被消化（无尸体）。"
+"role.pelican.ability.devour" : "<title>吞噬</title>吞噬其他玩家。被吞噬后该玩家的视角会被锁定在鹈鹕上。"
+"role.pelican.tips" : "・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.pelican.detail" : "鹈鹕可以吞噬玩家。"
+"options.role.pelican.devourCooldown" : "吞噬冷却时间"
+"options.role.pelican.canReduceCD" : "吞噬玩家后减少冷却时间"
+"options.role.pelican.reduceTime" : "吞噬减少冷却时间"
+
+# Button
+
+"button.label.pelican.devour" : "吞噬"
+
+# Team
+
+"teams.pelican" : "鹈鹕"
+"end.pelican" : "鹈鹕%EXTRA%胜利"
+
+# State
+
+"state.digestion" : "消化"

@@ -1,0 +1,43 @@
+# Assignable
+
+"role.raven.name" : "Raven"
+"role.raven.short" : "Rn"
+"role.raven.blurb" : "Killer in the Night"
+
+# Document
+
+"document.tip.winCond.raven.title" : "Kill Trigger"
+"document.tip.winCond.raven" : "Raven wins by killing anyone."
+
+"role.raven.doc" : "Raven can kill outside of meetings and also has special ways to win."
+
+# Options
+
+"options.role.raven.detail" : "Raven can kill outside of meetings."
+"options.role.raven.killCooldown" : "Kill Cooldown"
+"options.role.raven.hasDeadBodyArrow" : "Has Dead Body Arrow"
+"options.role.raven.group.raventime" : "Raven Time Settings"
+"options.role.raven.RavenTime" : "Raven Time"
+"options.role.raven.RavenTimeAlived" : "Num of RT. Alived"
+"options.role.raven.RavenTimeDuration" : "RT. Duration"
+"options.role.raven.meetingEndEnterRavenTimeDisperse" : "Meeting End Enter RT. Disperse"
+
+# Button
+
+"button.label.raven.leavemeeting" : "Leave"
+"button.label.raven.returnmeeting" : "Return"
+
+# UI
+
+"role.raven.killtarget" : "Kill the %ROLE%."
+"role.raven.raventime" : "Kill or Killed.(%TIME%)"
+"role.raven.meetingButtonText" : "Night falls, and you feel fear..."
+
+# Team
+
+"teams.raven" : "Raven"
+"end.raven" : "Raven Wins%EXTRA%"
+
+# State
+
+"state.missing" : "Missing"
