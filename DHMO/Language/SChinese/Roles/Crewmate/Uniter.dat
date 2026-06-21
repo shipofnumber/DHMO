@@ -1,0 +1,21 @@
+# Assignable
+
+"role.uniter.name" : "统票者"
+"role.uniter.short" : "统"
+"role.uniter.blurb" : "引导大家的投票"
+
+# Document
+
+"role.uniter.doc" : "统票者可以将其他玩家的投票统领到自己的投票目标上。"
+"role.uniter.tips" : "・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.uniter.detail" : "统票者可以统领其他人的投票。"
+"options.role.uniter.numOfuniting" : "统领使用次数"
+"options.role.uniter.numOfcanUnit" : "可统领人数"
+"options.role.uniter.maxLeftVotingTimeForUniting" : "可进行统领最大会议剩余时间"
+
+# Game
+
+"roles.uniter.leftUniting" : "剩余统领次数"

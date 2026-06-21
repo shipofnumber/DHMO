@@ -1,7 +1,7 @@
 ﻿namespace DHMO.Patches;
 
 [HarmonyPatch]
-public static class HudPatch
+public class HudPatch
 {
     [HarmonyPatch(typeof(HudManagerExtension), "UpdateHudContent"), HarmonyPostfix]
     public static void UpdateHudContent(HudManager manager)

@@ -1,11 +1,11 @@
-﻿namespace DHMO.Roles;
+﻿namespace DHMO.Roles.Crewmate;
 
 public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Ability>, DefinedRole, HasCitation, IAssignableDocument
 {
-    private LucidDreamer() : base("lucidDreamer", new(176, 175, 255), RoleCategory.CrewmateRole, Crewmate.MyTeam, [NumOfLeaveOption, LeavingDuration, CanLeaveMultiple, MaxLeftVotingTimeForLeaving, NumOfCanCompleteTasks]) 
+    private LucidDreamer() : base("lucidDreamer", new(176, 175, 255), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam, [NumOfLeaveOption, LeavingDuration, CanLeaveMultiple, MaxLeftVotingTimeForLeaving, NumOfCanCompleteTasks]) 
     {
         ConfigurationHolder?.AddTags(ConfigurationTags.TagFunny);
-        ConfigurationHolder?.Illustration = NebulaAPI.AddonAsset.GetResource("LucidDreamerImage.png")?.AsImage(300f);
+        ConfigurationHolder?.Illustration = NebulaAPI.AddonAsset.GetResource("Image/LucidDreamerImage.png")?.AsImage(300f);
     }
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.GetAsBool(0), arguments.Get(1, NumOfLeaveOption));
     AbilityAssignmentStatus DefinedRole.AssignmentStatus => AbilityAssignmentStatus.CanLoadToMadmate;
@@ -32,9 +32,9 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         yield return new("%NUM%", NumOfCanCompleteTasks.GetValue().ToString());
     }
 
-    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("LucidDreamerIcon.png")?.AsImage(80f);
+    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/LucidDreamerIcon.png")?.AsImage(80f);
 
-    private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("LucidDreamerMeetingButton.png")?.AsImage();
+    private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("Button/LucidDreamerMeetingButton.png")?.AsImage();
 
     public Citation? Citation => DHMOCitations.GGD;
 
@@ -44,7 +44,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
         TimerImpl? leavingTime = null;
         private int leftLeave = NumOfLeaveOption;
-        public int completedTasks = NumOfCanCompleteTasks;
+        public int canCompleteTasks = NumOfCanCompleteTasks;
         bool canLeave;
 
         private GameObject? gameObject = null;
@@ -77,9 +77,9 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             {
                 leavingTime = new TimerImpl(LeavingDuration).Register(this);
 
-                var modUseButton = new ModAbilityButtonImpl(alwaysShow: true).Register(this).KeyBind(NebulaInput.GetInput(VirtualKeyInput.Use));
-                modUseButton.Visibility = _ => !MyPlayer.IsDead && AddonHelper.IsOutMeeting();
-                modUseButton.Availability = _ => MyPlayer.CanMove && MyPlayer.VanillaPlayer.closest != null && completedTasks > 0 && coroutine == null;
+                var modUseButton = new ModAbilityButtonImpl(alwaysShow: true).Register(this);
+                modUseButton.Visibility = _ => MyPlayer.IsAlive && AddonHelper.IsOutMeeting();
+                modUseButton.Availability = _ => MyPlayer.CanMove && MyPlayer.VanillaPlayer.closest != null && canCompleteTasks > 0 && coroutine == null;
                 modUseButton.OnClick = _ =>
                 {
                     if (MyPlayer.VanillaPlayer.closest != null)
@@ -102,10 +102,15 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                         vanillaUseButton.buttonLabelText.fontSharedMaterial = settings.FontMaterial;
                         vanillaUseButton.buttonLabelText.text = DestroyableSingleton<TranslationController>.Instance.GetString(settings.Text, []);
                     }
+
+#if PC
+                    if (Input.GetKeyDown(AddonHelper.GetKeyCode(6)))
+                        modUseButton.DoClick();
+#endif
                 };
 
                 var meetingButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true).BindKey(VirtualKeyInput.SidekickAction).SetColorLabel(MyRole.RoleColor).SetImage(buttonImage!);
-                meetingButton.Visibility = _ => !MyPlayer.IsDead && AmongUsUtil.InMeeting;
+                meetingButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting;
                 meetingButton.Availability = _ => leftLeave > 0 && AddonHelper.ModAbilityMeetingButton() && coroutine == null && (CanLeaveMultiple || canLeave) && MeetingHudExtension.VotingTimer > MaxLeftVotingTimeForLeaving;
                 meetingButton.SetAsUsurpableButton(this);
                 meetingButton.SetUsesIcon(MyRole.RoleColor, leftLeave.ToString(), out _ , out var usesText);
@@ -128,10 +133,8 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                     {
                         timeText.SetText(Mathn.CeilToInt(leavingTime?.CurrentTime ?? 0f).ToString());
                         if (leavingTime != null)
-                            if (((MeetingHudExtension.VotingTimer <= MaxLeftVotingTimeForLeaving) || !leavingTime.IsProgressing) && coroutine == null)
-                            {
+                            if (((MeetingHudExtension.VotingTimer <= MaxLeftVotingTimeForLeaving) || !leavingTime.IsProgressing || canCompleteTasks <= 0) && coroutine == null)
                                 LeaveOrJoinMeeting(false, usesText);
-                            }
                     }
                     meetingButton.SetLabel(AddonHelper.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
                 };
@@ -143,7 +146,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             if (!isLeaving)
             {
                 --leftLeave;
-                text.SetText(leftLeave.ToString());
+                text.text = leftLeave.ToString();
             }
             if (coroutine != null) return;
             coroutine = NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(isLeaving).WrapToIl2Cpp());
@@ -164,7 +167,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
 
             if (isLeaving)
             {
-                leavingTime?.Start();
+                leavingTime?.Reset().Start();
                 gameObject?.SetActive(true);
             }
             else
@@ -172,9 +175,8 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                 if (!CanLeaveMultiple)
                     canLeave = false;
 
-                leavingTime?.Pause();
+                leavingTime?.Pause().Reset();
                 gameObject?.SetActive(false);
-                leavingTime?.Reset();
             }
 
             yield return DestroyableSingleton<HudManager>.Instance.CoFadeFullScreen(Color.black, Color.clear, 1f, false);
@@ -190,19 +192,19 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             if (!CanLeaveMultiple)
                 canLeave = true;
 
-            completedTasks = NumOfCanCompleteTasks;
+            canCompleteTasks = NumOfCanCompleteTasks;
         }
 
         [OnlyMyPlayer]
         void OnTaskComplete(PlayerTaskCompleteLocalEvent _)
         {
-            if (AddonHelper.IsOutMeeting() && !MyPlayer.IsDead)
-                --completedTasks;
+            if (AddonHelper.IsOutMeeting() && MyPlayer.IsAlive)
+                --canCompleteTasks;
         }
 
         void OnCameraUpdate(CameraUpdateEvent ev)
         {
-            if (AddonHelper.IsOutMeeting() && !MyPlayer.IsDead)
+            if (AddonHelper.IsOutMeeting() && MyPlayer.IsAlive)
                 ev.UpdateSaturation(0f, true);
         }
 
@@ -211,7 +213,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         public static RemoteProcess<(GamePlayer player, bool on)> RpcCamouflage = new("LucidDreamerCamouflage", (message, _) =>
         {
             if (NebulaGameManager.Instance is null || GamePlayer.LocalPlayer is null) return;
-            if (GamePlayer.LocalPlayer == message.player || GamePlayer.LocalPlayer.Role is not Raven.Instance) return;
+            if (GamePlayer.LocalPlayer == message.player || GamePlayer.LocalPlayer.Role is not global::DHMO.Roles.Neutral.Raven.Instance) return;
             var tag = $"LucidDreamer{GamePlayer.LocalPlayer?.PlayerId}";
             if (message.on)
                 message.player?.Unbox().AddOutfit(new OutfitCandidate(NebulaGameManager.Instance.UnknownOutfit, tag, 50, true));

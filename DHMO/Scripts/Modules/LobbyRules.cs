@@ -5,10 +5,7 @@
 public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
 {
     public LobbyRule() => ModSingleton<LobbyRule>.Instance = this;
-    static LobbyRule()
-    {
-        DIManager.Instance.RegisterModule(() => new LobbyRule());
-    }
+    static LobbyRule() => DIManager.Instance.RegisterModule(() => new LobbyRule());
     protected override void OnInjected(Game container) => this.Register(container);
 
     public static RemoteProcess<PlayerControl> RpcRequestRules = new("RequestRules", (requester, _) =>

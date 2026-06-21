@@ -5,16 +5,17 @@ namespace DHMO.Patches;
 [HarmonyPatch]
 public class MeetingStartPatch
 {
-    [HarmonyPatch(typeof(MeetingHudExtension), nameof(MeetingHudExtension.ModCoStartMeeting)), HarmonyPrefix]
-    public static bool ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
+    [HarmonyPatch(typeof(MeetingHudExtension), nameof(MeetingHudExtension.ModCoStartMeeting)), HarmonyPostfix]
+    public static void ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
     {
-        if (NebulaGameManager.Instance is not null)
+        try
         {
             __result = ModCoStartMeeting(reporter, deadBody, reportType);
-            return false;
         }
-        else
-            return true;
+        catch (Exception e)
+        {
+            DLog.Log(e);
+        }
     }
 
     private static IEnumerator ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo? deadBody, int reportType)
@@ -25,7 +26,16 @@ public class MeetingStartPatch
         DestroyableSingleton<HudManager>.Instance.InitMap();
         MapBehaviour.Instance.SetPreMeetingPosition(PlayerControl.LocalPlayer.transform.position, false);
         foreach (var player in GamePlayer.AllPlayers)
-            if (player.VanillaPlayer) ModResetForMeeting(player.VanillaPlayer, false);
+        {
+            try
+            {
+                if (player.VanillaPlayer) ModResetForMeeting(player.VanillaPlayer, false);
+            }
+            catch (Exception e)
+            {
+                DLog.Log(e);
+            }
+        }
 
         if (MapBehaviour.Instance) MapBehaviour.Instance.Close();
         if (Minigame.Instance) Minigame.Instance.ForceClose();

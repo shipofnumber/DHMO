@@ -1,7 +1,7 @@
 ﻿using Nebula.Roles.Assignment;
 
 [HarmonyPatch(typeof(RoleTable))]
-internal static class RoleAssignPatch
+internal class RoleAssignPatch
 {
     [HarmonyPrefix]
     [HarmonyPatch(nameof(RoleTable.SetRole))]

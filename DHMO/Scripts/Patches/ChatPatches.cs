@@ -1,7 +1,7 @@
 ﻿namespace DHMO.Patches;
 
 [HarmonyPatch]
-public static class ChatPatches
+public class ChatPatches
 {
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TextBoxTMP), nameof(TextBoxTMP.Start))]

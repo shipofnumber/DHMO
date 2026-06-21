@@ -1,0 +1,32 @@
+# Assignable
+
+"role.bomber.name" : "炸弹王"
+"role.bomber.short" : "炸"
+"role.bomber.blurb" : "嘿！一个暖和的礼物"
+
+# Document
+
+"role.bomber.doc" : "炸弹王可以通过点燃炸弹传递给其他玩家，如果在规定时间内没有传递给其他玩家，持有炸弹的人会直接爆炸死亡。"
+"role.bomber.tips" : "・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.bomber.detail" : "炸弹王可以通过炸弹炸死其他玩家。"
+"options.role.bomber.igniteBombCooldown" : "点燃冷却时间"
+"options.role.bomber.activatebombTime" : "炸弹激活时间"
+"options.role.bomber.bombExplodeTime" : "炸弹爆炸时间"
+"options.role.bomber.afterMeetingResetBomb" : "会议结束后重置炸弹爆炸时间"
+"options.role.bomber.bombkillleftDeadbody" : "炸弹击杀留下尸体"
+
+# GameAction
+
+"gameAction.bomber.passbomb" : "传递炸弹"
+
+# Button
+
+"button.label.bomber.ignitebomb" : "点燃"
+"button.label.game.passBomb" : "传递"
+
+# State
+
+"state.explosion" : "爆炸"

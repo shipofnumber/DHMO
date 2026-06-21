@@ -5,20 +5,10 @@
 public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 {
     static DHMOGameManager() => DIManager.Instance.RegisterModule(() => new DHMOGameManager());
-    public DHMOGameManager()
-    {
-        ModSingleton<DHMOGameManager>.Instance = this;
-    }
+    public DHMOGameManager() => ModSingleton<DHMOGameManager>.Instance = this;
     protected override void OnInjected(Game container) => this.Register(container);
 
     public static BoolConfiguration CanUseMark = NebulaAPI.Configurations.Configuration("options.meeting.canUseMark", true);
-
-    private readonly static List<string> allowedPlayer =
-        ["eggantique#7155", //Water
-         "primebling#0938", //饭团
-         "logospruce#7295", //Plana
-         "snaggyfin#5132", //Exe
-        ];
 
     void OnGameStart(GameStartEvent ev)
     {
@@ -28,11 +18,11 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 
         var markButton = new ModAbilityButtonImpl(true, alwaysShow: true).Register(NebulaAPI.CurrentGame);
         markButton.SetSprite(Mark?.GetSprite()).SetLabel("mark");
-        markButton.Visibility = _ => !GamePlayer.LocalPlayer.IsDead && AmongUsUtil.InMeeting && (CanUseMark || allowedPlayer.Contains(GamePlayer.LocalPlayer.VanillaPlayer.FriendCode));
+        markButton.Visibility = _ => GamePlayer.LocalPlayer.IsAlive && AmongUsUtil.InMeeting && CanUseMark;
         markButton.Availability = _ => !Minigame.Instance && MeetingHud.Instance && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !AddonHelper.IsOutMeeting();
         markButton.OnClick = _ =>
         {
-            RoleMarkMenu.Open(null, selectedPlayer =>
+            RoleMarkMenu.Open(selectedPlayer =>
             {
                 LastMarkWindow = RoleMarkWindow.OpenRoleSelectWindow(Nebula.Roles.Roles.AllRoles.Where(r => r.ShowOnHelpScreen && r.ShowOnFreeplayScreen), null, true, string.Empty,
                     role =>
@@ -54,7 +44,7 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         };
     }
 
-    static readonly Image? Mark = NebulaAPI.AddonAsset?.GetResource("mark.png")?.AsImage();
+    static readonly Image? Mark = NebulaAPI.AddonAsset?.GetResource("Button/MarkButton.png")?.AsImage();
 
     public static MetaScreen? LastMarkWindow = null;
 
@@ -74,7 +64,7 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         var game = NebulaGameManager.Instance;
         var local = GamePlayer.LocalPlayer;
 
-        if (game == null || local == null || (local != ev.Player && !game.CanSeeAllInfo)) return;
+        if (game is null || local is null || (local != ev.Player && !game.CanSeeAllInfo)) return;
 
         NebulaManager.Instance.ScheduleDelayAction(() => AnimationEffects.CoPlayRoleNameEffect(ev.Player.RoleText.transform, new Vector3(0f, 0f, -0.1f), ev.NextRole.Color.ToUnityColor(), ev.Player.RoleText.gameObject.layer, 1.42857146f).StartOnScene());
     }

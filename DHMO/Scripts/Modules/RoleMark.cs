@@ -96,7 +96,7 @@ static public class RoleMarkWindow
     }
 }
 
-public sealed class RoleMarkMenu : Minigame
+public class RoleMarkMenu : Minigame
 {
     internal UiElement? backButton;
     private int currentPage;
@@ -121,10 +121,10 @@ public sealed class RoleMarkMenu : Minigame
 
     public void OnDisable() => ControllerManager.Instance.CloseOverlayMenu(name);
 
-    public static void Open(Func<PlayerControl, bool>? playerMatch, Action<PlayerControl?>? onClick, Action<TextMeshPro, PlayerControl?>? updateRoleText)
+    public static void Open(Action<PlayerControl?>? onClick, Action<TextMeshPro, PlayerControl?>? updateRoleText)
     {
         var menu = RoleMarkMenu.Create();
-        menu.Begin(playerMatch, onClick, updateRoleText);
+        menu.Begin(onClick, updateRoleText);
     }
 
     public static RoleMarkMenu Create()
@@ -237,11 +237,11 @@ public sealed class RoleMarkMenu : Minigame
         return uiElements;
     }
 
-    public void Begin(Func<PlayerControl, bool>? playerMatch, Action<PlayerControl?>? onClick, Action<TextMeshPro, PlayerControl?>? updateRoleText)
+    public void Begin(Action<PlayerControl?>? onClick, Action<TextMeshPro, PlayerControl?>? updateRoleText)
     {
         this.BeginInternal(null!);
 
-        List<PlayerControl> players = playerMatch == null ? [.. PlayerControl.AllPlayerControls.GetFastEnumerator()] : [.. PlayerControl.AllPlayerControls.GetFastEnumerator().Where(playerMatch)];
+        var players = PlayerControl.AllPlayerControls.GetFastEnumerator().ToList();
 
         potentialVictims = [];
         allEntries = [];

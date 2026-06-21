@@ -1,4 +1,8 @@
-﻿namespace DHMO.Utilities;
+﻿using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using Nebula.VoiceChat;
+using static Nebula.VoiceChat.NoSVCRoom;
+
+namespace DHMO.Utilities;
 
 public static class ModAbilityButtonExtensions
 {
@@ -19,6 +23,7 @@ public static class ModAbilityButtonExtensions
         renderer.color = color.ToUnityColor();
         var textMesh = usesObject.transform.GetChild(0).GetComponent<TMPro.TextMeshPro>();
         textMesh.text = text;
+
         uses = usesObject;
         tmPro = textMesh;
     }
@@ -26,20 +31,22 @@ public static class ModAbilityButtonExtensions
 
 public static class AddonHelper
 {
+    internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.scriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
+
     public static (int totalAlive, List<GamePlayer> alivePlayers) GetAlivePlayers()
     {
         int totalAlive = 0;
         List<GamePlayer> alivePlayers = [];
 
-        foreach (var player in GameData.Instance.AllPlayers)
+        if (NebulaGameManager.Instance is not null)
         {
-            if (player == null || player.Object == null) continue;
+            foreach (var player in NebulaGameManager.Instance.AllPlayerInfo)
+            {
+                if (player is null || player.IsDead) continue;
 
-            var p = player.Object.ToGamePlayer();
-            if (p == null || p.IsDead) continue;
-
-            totalAlive++;
-            alivePlayers.Add(p);
+                totalAlive++;
+                alivePlayers.Add(player);
+            }
         }
 
         return (totalAlive, alivePlayers);
@@ -56,10 +63,31 @@ public static class AddonHelper
     {
         if (AmongUsUtil.InMeeting && MeetingHud.Instance.state is not MeetingHud.VoteStates.Animating and not MeetingHud.VoteStates.Discussion and not MeetingHud.VoteStates.Results and not MeetingHud.VoteStates.Proceeding)
             return true;
-        else return false;
+        else
+            return false;
     }
 
     public static bool IsOutMeeting() => MeetingHud.Instance && MeetingHud.Instance.gameObject.transform.localPosition.x > 15;
+
+    static KeyCode cacheKey = KeyCode.None;
+
+    public static KeyCode GetKeyCode(int index)
+    {
+        var keyboardMap = Rewired.ReInput.mapping.GetKeyboardMapInstanceSavedOrDefault(0, 0, 0);
+        Il2CppReferenceArray<Rewired.ActionElementMap> actionArray;
+        Rewired.ActionElementMap actionMap;
+        actionArray = keyboardMap.GetButtonMapsWithAction(index);
+        if (actionArray.Count > 0)
+        {
+            actionMap = actionArray[0];
+            cacheKey = actionMap.keyCode;
+            if (cacheKey != KeyCode.None)
+                return cacheKey;
+            else
+                return actionMap.keyCode;
+        }
+        return KeyCode.None;
+    }
 
     public static void AddCustomChat(PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
     {

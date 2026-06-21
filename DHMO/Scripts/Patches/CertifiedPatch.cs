@@ -1,64 +1,71 @@
-﻿namespace DHMO.Patches;
+﻿using Hazel;
+using Il2CppSystem.Runtime.Remoting.Messaging;
+
+namespace DHMO.Patches;
 
 [NebulaRPCHolder]
 [HarmonyPatch]
 public class CertifiedPatch
 {
     public static string text = string.Empty;
-    public static Dictionary<string, int> addonDictionary = [];
+    public static List<AddonInfo> addonsList = [];
 
-    private static readonly RemoteProcess<(PlayerControl player, int epoch, int build, string[] ids, int[] hashes)> RpcHandshake = new(
+    private static RemoteProcess<(PlayerControl player, int epoch, int build, AddonInfo[] addons)> RpcHandshake = new(
         "DHMOHandshake", (message, _) =>
         {
-            if (message.player.gameObject.TryGetComponent<UncertifiedPlayer>(out var certification))
+            if (message.player.gameObject.TryGetComponent<UncertifiedPlayer>(out var component))
             {
                 if (message.epoch != NebulaPlugin.PluginEpoch)
-                    certification.Reject(UncertifiedReason.UnmatchedEpoch);
+                    component.Reject(UncertifiedReason.UnmatchedEpoch);
                 else if (message.build != NebulaPlugin.PluginBuildNum)
-                    certification.Reject(UncertifiedReason.UnmatchedBuild);
+                    component.Reject(UncertifiedReason.UnmatchedBuild);
                 else
                 {
-                    HashSet<string> paramIdSet = [.. message.ids];
-                    List<string> redundant = new(addonDictionary.Count);
-
-                    foreach (var key in addonDictionary.Keys)
-                    {
-                        if (!paramIdSet.Contains(key))
-                            redundant.Add(key);
-                    }
-
-                    List<string> missing = new(message.ids.Length);
-                    List<string> unmatched = new(message.hashes.Length);
-                    for (int i = 0; i < message.ids.Length; i++)
-                    {
-                        var id = message.ids[i];
-                        if (!addonDictionary.TryGetValue(id, out int clientHash))
-                        {
-                            missing.Add(id);
-                            continue;
-                        }
-                        if (clientHash != message.hashes[i])
-                            unmatched.Add(id);
-                    }
-                    if (redundant.Count > 0 || missing.Count > 0 || unmatched.Count > 0)
-                    {
-                        certification.Reject(UncertifiedReason.UnmatchedAddon);
-                        AddonInfo(redundant, missing, unmatched);
-                    }
-                    else
-                        certification.Certify();
+                    component.StartCoroutine(CoCheckAddon(component, message.addons));
                 }
             }
         }, false);
+
+    static IEnumerator CoCheckAddon(UncertifiedPlayer component, AddonInfo[] addons)
+    {
+        yield return component;
+        HashSet<string> paramIdSet = [.. addons.Select(a => a.Id)];
+        List<AddonInfo> redundant = [];
+
+        foreach (var key in addonsList)
+        {
+            var id = key.Id;
+            if (!paramIdSet.Contains(id))
+                redundant.Add(key);
+        }
+
+        List<AddonInfo> missing = [];
+        List<AddonInfo> unmatched = [];
+        for (int i = 0; i < addons.Length; i++)
+        {
+            var id = addons[i].Id;
+            if (!addonsList.Exists(a => a.Id == id))
+            {
+                missing.Add(addons[i]);
+                continue;
+            }
+            if (!addonsList.Exists(a => a.Hash == addons[i].Hash))
+                unmatched.Add(addons[i]);
+        }
+        if (redundant.Count > 0 || missing.Count > 0 || unmatched.Count > 0)
+        {
+            component.Reject(UncertifiedReason.UnmatchedAddon);
+            UnmatchedAddonInfo(redundant, missing, unmatched);
+        }
+        else
+            component.Certify();
+    }
 
     [HarmonyPatch(typeof(Certification), nameof(Certification.Handshake))]
     [HarmonyPrefix]
     public static bool HandshakePrefix()
     {
-        var ids = addonDictionary.Keys.ToArray();
-        var hashes = addonDictionary.Values.ToArray();
-
-        RpcHandshake.Invoke((PlayerControl.LocalPlayer, NebulaPlugin.PluginEpoch, NebulaPlugin.PluginBuildNum, ids, hashes));
+        RpcHandshake.Invoke((PlayerControl.LocalPlayer, NebulaPlugin.PluginEpoch, NebulaPlugin.PluginBuildNum, addonsList.ToArray()));
         Certification.RpcShareAchievement.Invoke((PlayerControl.LocalPlayer.PlayerId, NebulaAchievementManager.MyTitleData));
         ModSingleton<ShowUp>.Instance?.ShareLocalAfk();
         Nebula.Modules.Cosmetics.DynamicPalette.RpcShareMyColor();
@@ -87,26 +94,30 @@ public class CertifiedPatch
         });
     }
 
-    internal static string AddonInfo(List<string> redundant, List<string> missing, List<string> unmatched)
+    internal static string UnmatchedAddonInfo(params List<AddonInfo>[] addonLists)
     {
+        var redundant = addonLists[0];
+        var missing = addonLists[1];
+        var unmatched = addonLists[2];
+
         StringBuilder builder = new();
         if (redundant.Count > 0)
         {
             builder.AppendLine($"<b>{Language.Translate(AmongUsClient.Instance.AmHost ? "certification.unmatchedAddon.missing" : "certification.unmatchedAddon.redundant")}:</b>");
-            foreach (var id in redundant)
-                builder.AppendLine($"- <color=red><b>{id}</b></color>");
+            foreach (var addon in redundant)
+                builder.AppendLine($"- <color=red><b>{addon.Name}({addon.Version})</b></color>");
         }
         if (missing.Count > 0)
         {
             builder.AppendLine($"<b>{Language.Translate(AmongUsClient.Instance.AmHost ? "certification.unmatchedAddon.redundant" : "certification.unmatchedAddon.missing")}:</b>");
-            foreach (var id in missing)
-                builder.AppendLine($"- <color=red><b>{id}</b></color>");
+            foreach (var addon in missing)
+                builder.AppendLine($"- <color=red><b>{addon.Name}({addon.Version})</b></color>");
         }
         if (unmatched.Count > 0)
         {
             builder.AppendLine($"<b>{Language.Translate("certification.unmatchedAddon.unmatched")}:</b>");
-            foreach (var id in unmatched)
-                builder.AppendLine($"- <color=red><b>{id}</b></color>");
+            foreach (var addon in unmatched)
+                builder.AppendLine($"- <color=red><b>{addon.Name}({addon.Version})</b></color>");
         }
         return text = builder.ToString();
     }
@@ -114,9 +125,6 @@ public class CertifiedPatch
     internal static string UnmatchedDetail(UncertifiedReason reason) => reason == UncertifiedReason.UnmatchedAddon ? "<br>" + text : string.Empty;
     internal static int AddonHash(NebulaAddon addon)
     {
-        if (addonDictionary.TryGetValue(addon.Id, out int cachedHash))
-            return cachedHash;
-
         try
         {
             using var md5 = MD5.Create();
@@ -139,12 +147,45 @@ public class CertifiedPatch
                 return addon.HandshakeHash;
 
             int hash = BitConverter.ToString(md5.Hash).ComputeConstantHash();
-            addonDictionary[addon.Id] = hash;
             return hash;
         }
         catch
         {
             return addon.HandshakeHash;
+        }
+    }
+
+    public class AddonInfo
+    {
+        public string Name { get; set; }
+        public string Id { get; set; }
+        public string Version { get; set; }
+        public int Hash { get; set; }
+        
+        public AddonInfo(NebulaAddon addon)
+        {
+            Name = addon.AddonName;
+            Id = addon.Id;
+            Version = addon.Version;
+            Hash = AddonHash(addon);
+        }
+
+        public AddonInfo(string name, string id, string version, int hash)
+        {
+            Name = name;
+            Id = id;
+            Version = version;
+            Hash = hash;
+        }
+
+        static AddonInfo() => new RemoteProcessArgument<AddonInfo>((write, val) => val?.Serializer(write), reader => new(reader.ReadString(), reader.ReadString(), reader.ReadString(), reader.ReadInt32()));
+
+        public void Serializer(MessageWriter write)
+        {
+            write.Write(Name);
+            write.Write(Id);
+            write.Write(Version);
+            write.Write(Hash);
         }
     }
 }

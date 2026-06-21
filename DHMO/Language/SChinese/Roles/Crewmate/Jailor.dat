@@ -1,0 +1,33 @@
+# Assignable
+
+"role.jailor.name" : "典狱长"
+"role.jailor.short" : "典"
+"role.jailor.blurb" : "逮捕罪犯"
+
+# Document
+
+"role.jailor.doc" : "典狱长可以关押其他玩家来逼问信息。"
+"role.jailor.tips" : "・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.jailor.detail" : "典狱长通过关押其他玩家来获得额外信息。"
+"options.role.jailor.jailCooldown" : "关押冷却时间"
+"options.role.jailor.jailDuration" : "关押所需时间"
+"options.role.jailor.numOfexecute" : "处决次数"
+"options.role.jailor.jailinArow" : "连续关押"
+"options.role.jailor.hasjailorchat" : "典狱长会议聊天"
+"options.role.jailor.cannotexecute" : "处决船员后无法处决"
+
+# Button
+
+"button.label.jailor.jail" : "关押"
+"button.label.jailor.execute" : "处决"
+
+# Chat
+
+"chat.jailortext" : "审讯室"
+
+# State
+
+"state.execution" : "处决"

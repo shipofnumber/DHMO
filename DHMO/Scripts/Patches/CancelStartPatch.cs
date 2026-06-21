@@ -1,7 +1,7 @@
 ﻿namespace DHMO.Patches;
 
 [HarmonyPatch]
-public static class CancelStartPatch
+public class CancelStartPatch
 {
     [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.ResetStartState))]
     [HarmonyPrefix]

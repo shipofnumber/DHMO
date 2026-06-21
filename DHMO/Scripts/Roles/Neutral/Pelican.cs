@@ -1,4 +1,4 @@
-﻿namespace DHMO.Roles;
+﻿namespace DHMO.Roles.Neutral;
 
 public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
@@ -12,7 +12,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
     public static readonly IntegerConfiguration ReduceTime = NebulaAPI.Configurations.Configuration("options.role.pelican.reduceTime", (1, 10), 3, () => CanReduceCDOption);
     static private readonly IVentConfiguration VentConfiguration = NebulaAPI.Configurations.NeutralVentConfiguration("role.pelican.vent", true);
 
-    private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("DevourButton.png")?.AsImage(115f);
+    private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("Button/DevourButton.png")?.AsImage(115f);
     public static TranslatableTag Digestion = new("state.digestion");
     public static readonly Pelican MyRole = new();
 
@@ -48,15 +48,15 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
 
         void BlockTriggerEnd(EndCriteriaPreMetEvent ev)
         {
-            if (ev.GameEnd != NebulaGameEnd.LoversWin && ev.GameEnd != PelicanTeamWin && !MyPlayer.IsDead && ev.EndReason == GameEndReason.Situation)
+            if (ev.GameEnd != NebulaGameEnd.LoversWin && ev.GameEnd != PelicanTeamWin && MyPlayer.IsAlive && ev.EndReason == GameEndReason.Situation)
                 ev.Reject();
         }
 
         [OnlyMyPlayer]
         void OnCheckWin(PlayerCheckWinEvent ev)
         {
-            var totalAlive = AddonHelper.GetAlivePlayers().alivePlayers.Where(p => !p.WillDie).Count();
-            ev.SetWinIf(ev.GameEnd == PelicanTeamWin && !MyPlayer.IsDead && totalAlive <= 1);
+            var totalAlive = AddonHelper.GetAlivePlayers().totalAlive;
+            ev.SetWinIf(ev.GameEnd == PelicanTeamWin && MyPlayer.IsAlive && totalAlive <= 1);
         }
 
         [OnlyHost]
@@ -64,9 +64,9 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
         {
             try
             {
-                var totalAlive = AddonHelper.GetAlivePlayers().alivePlayers.Where(p => !p.WillDie).Count();
-                if (!MyPlayer.IsDead && totalAlive <= 1)
-                    NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin!, GameEndReason.Situation, BitMasks.AsPlayer().Add(MyPlayer));
+                var totalAlive = AddonHelper.GetAlivePlayers().totalAlive;
+                if (MyPlayer.IsAlive && (totalAlive <= 1 || devouredPlayers.Count >= (totalAlive - 1)) && PelicanTeamWin is not null)
+                    NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin, GameEndReason.Situation, BitMasks.AsPlayer().Add(MyPlayer));
             }
             catch (Exception e)
             {
@@ -96,13 +96,13 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                 var devourTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, p => ObjectTrackers.PlayerlikeStandardPredicate(p), MyRole.UnityColor, false, false);
 
                 var devourButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false).BindKey(VirtualKeyInput.Kill).SetImage(buttonImage!).SetLabel("pelican.devour").SetColorLabel(MyRole.RoleColor);
-                devourButton.Visibility = _ => !MyPlayer.IsDead;
-                devourButton.Availability = _ => devourTracker.CurrentTarget != null && MyPlayer.CanMove && !MyPlayer.WillDie;
+                devourButton.Visibility = _ => MyPlayer.IsAlive;
+                devourButton.Availability = _ => devourTracker.CurrentTarget is not null && MyPlayer.CanMove;
                 devourButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, DevourCooldown.Cooldown).SetAsKillCoolTimer().Start();
                 devourButton.OnClick = _ =>
                 {
                     var target = devourTracker.CurrentTarget;
-                    if (target != null)
+                    if (target is not null)
                     {
                         if (target is IFakePlayer fake)
                             MyPlayer.MurderPlayer(fake, Digestion, EventDetails.Kill, KillParameter.RemoteKill);

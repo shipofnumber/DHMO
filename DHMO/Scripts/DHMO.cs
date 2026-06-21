@@ -1,4 +1,5 @@
-﻿using Virial.Runtime;
+﻿using Nebula.Scripts;
+using Virial.Runtime;
 
 namespace DHMO;
 
@@ -10,7 +11,7 @@ public class DHMO
     public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
     {
         yield return preprocessor;
-        CertifiedPatch.addonDictionary = NebulaAddon.AllAddons.Where(a => a.NeedHandshake).ToDictionary(a => a.Id, CertifiedPatch.AddonHash);
+        CertifiedPatch.addonsList = NebulaAddon.AllAddons.Where(a => a.NeedHandshake).Select(a => new CertifiedPatch.AddonInfo(a)).ToList();
     }
 
     static DHMO()
@@ -20,6 +21,7 @@ public class DHMO
         NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).CanSpawnInCurrentGame, "raven", null);
         NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame, "pelican", null);
     }
+
 }
 
 public class DLog

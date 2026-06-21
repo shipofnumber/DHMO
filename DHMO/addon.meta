@@ -3,8 +3,8 @@
 	"Name" : "DHMO",
 	"Author" : "Water",
 	"Description" : "A addon added some interesting roles and features.<br>Icon Sponsor: Exeupres<br>Original author: Plana",
-	"Version" : "1.7.6",
-	"Build" : 1400,
+	"Version" : "1.7.8",
+	"Build" : 1500,
 	"Dependency" : [
 	],
 	"Hidden" : False
