@@ -11,3 +11,7 @@
 "ui.lobby.rule" : "房规"
 "ui.lobby.error" : "输入框不能为空。"
 "lobby.rule.error" : "房规无内容。"
+
+# Action
+
+"input.passAction" : "传递行动"

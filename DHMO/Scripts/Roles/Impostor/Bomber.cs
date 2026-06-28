@@ -13,6 +13,7 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
     public static readonly BoolConfiguration AfterMeetingResetBombTime = NebulaAPI.Configurations.Configuration("options.role.bomber.afterMeetingResetBomb", true);
     public static readonly BoolConfiguration BombKillLeftDeadBody = NebulaAPI.Configurations.Configuration("options.role.bomber.bombkillleftDeadbody", false);
 
+    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/BomberIcon.png")?.AsImage();
     Citation? HasCitation.Citation => DHMOCitations.GGD;
 
     static public Bomber MyRole = new();
@@ -26,7 +27,6 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
     {
         public static ModAbilityButton? igniteBomb;
         bool IPlayerAbility.HideKillButton => igniteBomb != null && !igniteBomb.IsBroken;
-
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
 
         public Ability(GamePlayer player, bool isUsurped) : base(player, isUsurped)
@@ -38,10 +38,10 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
                  .SetLabelType(ModAbilityButton.LabelType.Impostor)
                  .SetAsUsurpableButton(this);
 
-                igniteBomb.Visibility = _ => !MyPlayer.IsDead;
-                igniteBomb.Availability = _ => MyPlayer.CanMove && !Bomb.HasBomb.Contains(MyPlayer.PlayerId);
+                igniteBomb.Visibility = _ => MyPlayer.IsAlive;
+                igniteBomb.Availability = _ => MyPlayer.CanMove;
                 igniteBomb.SetImage(igniteBombImage!);
-                igniteBomb.CoolDownTimer = NebulaAPI.Modules.Timer(this, IgniteBombCooldown.Cooldown).SetAsAbilityTimer().Start(null);
+                igniteBomb.CoolDownTimer = NebulaAPI.Modules.Timer(this, IgniteBombCooldown.Cooldown).SetAsAbilityTimer().Start();
 
                 igniteBomb.OnClick = _ =>
                 {

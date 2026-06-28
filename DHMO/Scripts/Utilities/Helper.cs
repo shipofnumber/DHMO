@@ -1,8 +1,4 @@
-﻿using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using Nebula.VoiceChat;
-using static Nebula.VoiceChat.NoSVCRoom;
-
-namespace DHMO.Utilities;
+﻿namespace DHMO.Utilities;
 
 public static class ModAbilityButtonExtensions
 {
@@ -14,8 +10,8 @@ public static class ModAbilityButtonExtensions
         usesObject.transform.localScale = template.localScale;
         if (isRight) 
         {
-            usesObject.transform.localPosition = new Vector3(0.5096f, -0.3513f, template.localPosition.z * 1.2f);
-            usesObject.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+            usesObject.transform.localPosition = new VVector3(0.5096f, -0.3513f, template.localPosition.z * 1.2f);
+            usesObject.transform.localScale = new VVector3(0.8f, 0.8f, 0.8f);
         }
         else usesObject.transform.localPosition = template.localPosition * 1.2f;
 
@@ -33,23 +29,14 @@ public static class AddonHelper
 {
     internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.scriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
 
-    public static (int totalAlive, List<GamePlayer> alivePlayers) GetAlivePlayers()
+    public static int GetAlivePlayers()
     {
-        int totalAlive = 0;
+        int totalAlive = 25;
         List<GamePlayer> alivePlayers = [];
 
-        if (NebulaGameManager.Instance is not null)
-        {
-            foreach (var player in NebulaGameManager.Instance.AllPlayerInfo)
-            {
-                if (player is null || player.IsDead) continue;
-
-                totalAlive++;
-                alivePlayers.Add(player);
-            }
-        }
-
-        return (totalAlive, alivePlayers);
+        if (NebulaGameManager.Instance != null)
+            totalAlive = NebulaGameManager.Instance.AllPlayerInfo.Count(p => p.IsAlive);
+        return totalAlive;
     }
 
     public static void RemoveAllListeners(this PassiveButton button)
@@ -67,43 +54,23 @@ public static class AddonHelper
             return false;
     }
 
-    public static bool IsOutMeeting() => MeetingHud.Instance && MeetingHud.Instance.gameObject.transform.localPosition.x > 15;
+    public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.gameObject.transform.localPosition.x > 15;
 
-    static KeyCode cacheKey = KeyCode.None;
-
-    public static KeyCode GetKeyCode(int index)
+    public static void AddCustomChat(this ChatController chatController, PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
     {
-        var keyboardMap = Rewired.ReInput.mapping.GetKeyboardMapInstanceSavedOrDefault(0, 0, 0);
-        Il2CppReferenceArray<Rewired.ActionElementMap> actionArray;
-        Rewired.ActionElementMap actionMap;
-        actionArray = keyboardMap.GetButtonMapsWithAction(index);
-        if (actionArray.Count > 0)
-        {
-            actionMap = actionArray[0];
-            cacheKey = actionMap.keyCode;
-            if (cacheKey != KeyCode.None)
-                return cacheKey;
-            else
-                return actionMap.keyCode;
-        }
-        return KeyCode.None;
-    }
+        AmongUsLLImpl.TryGetLocalPlayer(out var localPlayer);
 
-    public static void AddCustomChat(PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
-    {
-        if (sourcePlayer == null || PlayerControl.LocalPlayer == null || string.IsNullOrEmpty(chatText)) return;
+        if (sourcePlayer == null || string.IsNullOrEmpty(chatText) || !chatController.AsBoolFast()) return;
 
-        ChatController chatController = UnityEngine.Object.FindObjectOfType<ChatController>();
-        NetworkedPlayerInfo sourcePlayerData = sourcePlayer.Data;
-        NetworkedPlayerInfo cosmeticsData = cosmetics?.Data ?? sourcePlayerData;
+        var sourcePlayerData = sourcePlayer.Data;
         ChatBubble pooledBubble = chatController.GetPooledBubble();
 
         try
         {
             pooledBubble.transform.SetParent(chatController.scroller.Inner);
-            pooledBubble.transform.localScale = Vector3.one;
+            pooledBubble.transform.localScale = VVector3.One;
 
-            bool isLocalPlayer = sourcePlayer == PlayerControl.LocalPlayer;
+            bool isLocalPlayer = sourcePlayer == localPlayer;
             if (isLocalPlayer)
                 pooledBubble.SetRight();
             else
@@ -111,10 +78,10 @@ public static class AddonHelper
 
             bool didVote = MeetingHud.Instance != null && MeetingHud.Instance.DidVote(sourcePlayer.PlayerId);
 
-            pooledBubble.SetCosmetics(cosmeticsData);
+            pooledBubble.SetCosmetics(cosmetics.Data);
             pooledBubble.SetName(title ?? sourcePlayerData.PlayerName, sourcePlayerData.IsDead, didVote, PlayerNameColor.Get(sourcePlayerData));
 
-            if (censor && AmongUs.Data.DataManager.Settings?.Multiplayer?.CensorChat == true)
+            if (censor && AmongUs.Data.DataManager.Settings.Multiplayer.CensorChat == true)
                 chatText = BlockedWords.CensorWords(chatText, false);
 
             pooledBubble.SetText(chatText);
@@ -136,9 +103,9 @@ public static class AddonHelper
                 chatController.chatNotification?.SetUp(sourcePlayer, chatText);
             }
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            DLog.Log(ex);
+            DLog.Log(e);
             if (pooledBubble != null && chatController.chatBubblePool != null)
                 chatController.chatBubblePool.Reclaim(pooledBubble);
         }
@@ -169,38 +136,16 @@ public static class APICompat
 
     public static void DestroyImmediate(this UnityEngine.Object obj) => UnityEngine.Object.DestroyImmediate(obj);
 
-    static public GamePlayer? ToGamePlayer(this PlayerControl player) => GamePlayer.GetPlayer(player.PlayerId);
-
-    public static IEnumerable<T> ToEnumerable<T>(this IEnumerator<T> enumerator)
+    static public void TryGetOrAddComponent<T>(this GameObject gameObject, out T component) where T : Component
     {
-        while (enumerator.MoveNext())
-            yield return enumerator.Current;
-    }
-    public static void AddValueV2(this Dictionary<byte, int> self, byte target, int num)
-    {
-        if (self.TryGetValue(target, out var last))
-            self[target] = last + num;
+        gameObject.TryGetComponent<T>(out var component1);
+        if (component1 == null)
+            component = gameObject.AddComponent<T>();
         else
-            self[target] = num;
+            component = component1;
     }
-    public static KeyValuePair<byte, int> MaxPairV2(this Dictionary<byte, int> self, out bool tie)
-    {
-        tie = true;
-        KeyValuePair<byte, int> result = new(PlayerVoteArea.SkippedVote, 0);
-        foreach (KeyValuePair<byte, int> keyValuePair in self)
-        {
-            if (keyValuePair.Value > result.Value)
-            {
-                result = keyValuePair;
-                tie = false;
-            }
-            else if (keyValuePair.Value == result.Value)
-            {
-                tie = true;
-            }
-        }
-        return result;
-    }
+
+    static public GamePlayer? ToGamePlayer(this PlayerControl player) => GamePlayer.GetPlayer(player.PlayerId);
 
     static public FieldInfo? GetPrivateFieldInfo(this object instance, string fieldname)
     {

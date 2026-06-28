@@ -1,7 +1,7 @@
 ﻿namespace DHMO.Patches;
 
 [HarmonyPatch]
-public class CancelStartPatch
+public static class CancelStartPatch
 {
     [HarmonyPatch(typeof(GameStartManager), nameof(GameStartManager.ResetStartState))]
     [HarmonyPrefix]
@@ -10,8 +10,8 @@ public class CancelStartPatch
         if (__instance.startState == GameStartManager.StartingStates.Countdown)
         {
             SoundManager.Instance.StopSound(__instance.gameStartSound);
-            if (AmongUsClient.Instance.AmHost)
-                GameManager.Instance.LogicOptions.SyncOptions();
+            if (AmongUsLLImpl.AmongUsClientInstance.AmHost)
+                AmongUsLLImpl.GameManagerInstance.LogicOptions.SyncOptions();
         }
     }
 }

@@ -13,18 +13,21 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
 
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.GetAsBool(0), arguments.Get(1, NumOfUnitingOption));
     Citation? HasCitation.Citation => DHMOCitations.DHMO;
-    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/UniterIcon.png")?.AsImage(120f);
+    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/UniterIcon.png")?.AsImage(115f);
 
     public static readonly Uniter MyRole = new();
 
     bool IAssignableDocument.HasTips => true;
 
     [NebulaRPCHolder]
-    public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility, IBindPlayer, IGameOperator, IGameComponent, ILifespan
+    public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
     {
         Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(120f);
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
         int leftUniting = NumOfUnitingOption;
+
+        private HashSet<byte> selected = [];
+
         public Ability(GamePlayer player, bool isUsurped, int leftUses) : base(player, isUsurped)
         {
             leftUniting = leftUses;
@@ -32,16 +35,16 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
             if (AmOwner)
             {
                 string prefix = Language.Translate("roles.uniter.leftUniting");
-                Helpers.TextHudContent("UniterText", this, (tmPro) => tmPro.text = prefix + ": " + leftUniting, true);
+                Helpers.TextHudContent("UniterText", this, (tmPro) => tmPro.text = $"{prefix}: {leftUniting}", true);
             }
         }
 
-        List<byte> selected = [];
-
-        void OnMeetingStart(MeetingStartEvent _)
+        [Local]
+        void OnMeetingStart(MeetingStartEvent ev)
         {
             if (leftUniting <= 0) return;
             selected.Clear();
+
             var buttonManager = NebulaAPI.CurrentGame?.GetModule<MeetingPlayerButtonManager>();
             buttonManager?.RegisterMeetingAction(new(buttonImage!, state =>
             {
@@ -64,7 +67,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
         }
 
         [OnlyMyPlayer]
-        void OnVote(PlayerVoteCastLocalEvent _) { if (selected.Count > 0) --leftUniting; }
+        void OnVote(PlayerVoteCastLocalEvent ev) { if (selected.Count > 0) --leftUniting; }
 
         void FixVote(PlayerFixVoteHostEvent ev)
         {

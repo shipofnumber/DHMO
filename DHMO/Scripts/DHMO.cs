@@ -1,4 +1,4 @@
-﻿using Nebula.Scripts;
+﻿using DHMO.Roles.Abilities;
 using Virial.Runtime;
 
 namespace DHMO;
@@ -11,17 +11,16 @@ public class DHMO
     public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
     {
         yield return preprocessor;
-        CertifiedPatch.addonsList = NebulaAddon.AllAddons.Where(a => a.NeedHandshake).Select(a => new CertifiedPatch.AddonInfo(a)).ToList();
+        CertifiedPatch.AddonsList = [.. NebulaAddon.AllAddons.Where(a => a.NeedHandshake).Select(a => new CertifiedPatch.AddonInfo(a))];
     }
 
     static DHMO()
     {
         harmony?.PatchAll();
-        GeneralConfigurations.MeetingOptions.AppendConfiguration(DHMOGameManager.CanUseMark);
+        GeneralConfigurations.MeetingOptions.AppendConfiguration(RoleMarkAbility.CanUseMark);
         NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).CanSpawnInCurrentGame, "raven", null);
         NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame, "pelican", null);
     }
-
 }
 
 public class DLog

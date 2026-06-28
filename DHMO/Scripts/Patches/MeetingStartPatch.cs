@@ -3,18 +3,20 @@
 namespace DHMO.Patches;
 
 [HarmonyPatch]
-public class MeetingStartPatch
+public static class MeetingStartPatch
 {
-    [HarmonyPatch(typeof(MeetingHudExtension), nameof(MeetingHudExtension.ModCoStartMeeting)), HarmonyPostfix]
-    public static void ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
+    [HarmonyPatch(typeof(MeetingHudExtension), nameof(MeetingHudExtension.ModCoStartMeeting)), HarmonyPrefix]
+    public static bool ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
     {
         try
         {
             __result = ModCoStartMeeting(reporter, deadBody, reportType);
+            return false;
         }
         catch (Exception e)
         {
             DLog.Log(e);
+            return true;
         }
     }
 
@@ -23,8 +25,8 @@ public class MeetingStartPatch
         while (!MeetingHud.Instance) yield return null;
 
         MeetingRoomManager.Instance.RemoveSelf();
-        DestroyableSingleton<HudManager>.Instance.InitMap();
-        MapBehaviour.Instance.SetPreMeetingPosition(PlayerControl.LocalPlayer.transform.position, false);
+        AmongUsLLImpl.HudManagerInstance.InitMap();
+        MapBehaviour.Instance.SetPreMeetingPosition(AmongUsLLImpl.LocalPlayer.transform.position, false);
         foreach (var player in GamePlayer.AllPlayers)
         {
             try
@@ -39,7 +41,7 @@ public class MeetingStartPatch
 
         if (MapBehaviour.Instance) MapBehaviour.Instance.Close();
         if (Minigame.Instance) Minigame.Instance.ForceClose();
-        ShipStatus.Instance.OnMeetingCalled();
+        AmongUsLLImpl.ShipStatusInstance.OnMeetingCalled();
         KillAnimation.SetMovement(reporter, true);
         GameData.TimeLastMeetingStarted = Time.realtimeSinceStartup;
 
@@ -54,7 +56,7 @@ public class MeetingStartPatch
         {
             player.MyPhysics.ExitAllVents();
             if (spawn)
-                ShipStatus.Instance.SpawnPlayer(player, GameData.Instance.PlayerCount, false);
+                AmongUsLLImpl.ShipStatusInstance.SpawnPlayer(player, GameData.Instance.PlayerCount, false);
         }
         player.RemoveProtection();
         player.NetTransform.enabled = true;
@@ -74,17 +76,17 @@ public class MeetingStartPatch
             if (player.cosmetics.petHiddenByViper)
             {
                 player.cosmetics.TogglePet(true);
-                Vector2 vector = player.transform.position;
-                if (ShipStatus.Instance is AirshipStatus)
+                VVector2 vector = player.transform.position;
+                if (AmongUsLLImpl.ShipStatusInstance is AirshipStatus)
                 {
-                    List<Vector2> list =
+                    List<VVector2> list =
                     [
-                        new Vector2(8.2f, 15.2f),
-                        new Vector2(8.25f, 15.9f),
-                        new Vector2(8.2f, 14.3f),
-                        new Vector2(11f, 14.3f),
-                        new Vector2(9.8f, 14.3f),
-                        new Vector2(13f, 14.3f)
+                        new VVector2(8.2f, 15.2f),
+                        new VVector2(8.25f, 15.9f),
+                        new VVector2(8.2f, 14.3f),
+                        new VVector2(11f, 14.3f),
+                        new VVector2(9.8f, 14.3f),
+                        new VVector2(13f, 14.3f)
                     ];
                     vector = list[Random.Range(0, list.Count)];
                 }

@@ -1,9 +1,12 @@
-﻿namespace DHMO.Roles.Neutral;
+﻿using DHMO.Roles.Script;
+
+namespace DHMO.Roles.Neutral;
 
 public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingleAssignable, DefinedCategorizedAssignable, DefinedAssignable, IRoleID, ISpawnable, RuntimeAssignableGenerator<RuntimeRole>, IGuessed, AssignableFilterHolder, IAssignableDocument
 {
-    public static readonly Team PelicanTeam = new("teams.pelican", new(0, 153, 76), TeamRevealType.OnlyMe);
+    public static readonly RoleTeam PelicanTeam = NebulaAPI.Preprocessor!.CreateTeam("teams.pelican", new(0, 153, 76), TeamRevealType.OnlyMe);
     private Pelican() : base("pelican", PelicanTeam.Color, RoleCategory.NeutralRole, PelicanTeam, [DevourCooldown, CanReduceCDOption, ReduceTime, VentConfiguration]) { }
+
     Citation? HasCitation.Citation => DHMOCitations.GGD;
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(Player player, int[] arguments) => new Instance(player);
 
@@ -19,156 +22,139 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
     bool IAssignableDocument.HasAbility => true;
     bool IAssignableDocument.HasTips => true;
     bool IAssignableDocument.HasWinCondition => true;
-
-    IEnumerable<AssignableDocumentImage> IAssignableDocument.GetDocumentImages()
-    {
-        yield return new(buttonImage!, "role.pelican.ability.devour");
-    }
+    IEnumerable<AssignableDocumentImage> IAssignableDocument.GetDocumentImages() { yield return new(buttonImage!, "role.pelican.ability.devour"); }
 
     [NebulaRPCHolder]
     public class Instance(GamePlayer player) : RuntimeVentRoleTemplate(player, VentConfiguration), RuntimeRole
     {
         public static GameEnd? PelicanTeamWin = NebulaAPI.Preprocessor?.CreateEnd("pelican", MyRole.RoleColor);
         public override DefinedRole Role => MyRole;
+        HashSet<byte> devouredPlayers = [];
 
         int[]? RuntimeAssignable.RoleArguments
         {
             get
             {
                 int mask = 0;
-                foreach (var p in devouredPlayers)
-                {
-                    mask |= 1 << p.PlayerId;
-                }
+                foreach (var id in devouredPlayers) mask |= 1 << id;
                 return [mask];
             }
         }
 
-        static List<GamePlayer> devouredPlayers = [];
-
-        void BlockTriggerEnd(EndCriteriaPreMetEvent ev)
+        void ClaimKillerTeamRemaining(KillerTeamCallback callback)
         {
-            if (ev.GameEnd != NebulaGameEnd.LoversWin && ev.GameEnd != PelicanTeamWin && MyPlayer.IsAlive && ev.EndReason == GameEndReason.Situation)
-                ev.Reject();
+            if (callback.ExcludedTeam == Pelican.PelicanTeam) return;
+            if (MyPlayer.IsAlive) callback.MarkRemaining();
         }
 
         [OnlyMyPlayer]
         void OnCheckWin(PlayerCheckWinEvent ev)
         {
-            var totalAlive = AddonHelper.GetAlivePlayers().totalAlive;
-            ev.SetWinIf(ev.GameEnd == PelicanTeamWin && MyPlayer.IsAlive && totalAlive <= 1);
+            var totalAlive = AddonHelper.GetAlivePlayers();
+            ev.SetWinIf(ev.GameEnd == PelicanTeamWin && MyPlayer.IsAlive && (totalAlive <= 1 || devouredPlayers.Count >= totalAlive - 1));
         }
 
         [OnlyHost]
-        void WinCheck(GameUpdateEvent _)
+        void WinCheck(GameUpdateEvent ev)
         {
-            try
-            {
-                var totalAlive = AddonHelper.GetAlivePlayers().totalAlive;
-                if (MyPlayer.IsAlive && (totalAlive <= 1 || devouredPlayers.Count >= (totalAlive - 1)) && PelicanTeamWin is not null)
-                    NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin, GameEndReason.Situation, BitMasks.AsPlayer().Add(MyPlayer));
-            }
-            catch (Exception e)
-            {
-                DLog.Log(e);
-            }
+            var totalAlive = AddonHelper.GetAlivePlayers();
+            if (MyPlayer.IsAlive && (totalAlive <= 1 || devouredPlayers.Count >= totalAlive - 1))
+                NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin!, GameEndReason.Situation, BitMasks.AsPlayer(1u << MyPlayer.PlayerId));
         }
 
         public override void OnActivated()
         {
-            GameOperatorManager.Instance?.Subscribe<PlayerDieEvent>(ev =>
-            {
-                if (!AmongUsUtil.InMeeting)
-                    if (devouredPlayers.Contains(ev.Player))
-                    {
-                        RPCSetCam.Invoke((ev.Player, null, (MyPlayer.TruePosition.x, MyPlayer.TruePosition.y)));
-                        devouredPlayers.Remove(ev.Player);
-                    }
-            }, this);
-            GameOperatorManager.Instance?.Subscribe<PlayerUpdateVisibilityEvent>(ev =>
-            {
-                if (devouredPlayers.Contains(ev.Player))
-                    ev.SetInvisible();
-            }, this);
-
+            RpcUpdateStatus.Invoke((MyPlayer, MyPlayer, 0));
             if (AmOwner)
             {
                 var devourTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, p => ObjectTrackers.PlayerlikeStandardPredicate(p), MyRole.UnityColor, false, false);
 
-                var devourButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false).BindKey(VirtualKeyInput.Kill).SetImage(buttonImage!).SetLabel("pelican.devour").SetColorLabel(MyRole.RoleColor);
+                var devourButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false)
+                    .BindKey(VirtualKeyInput.Kill).SetImage(buttonImage!).SetLabel("pelican.devour").SetColorLabel(MyRole.RoleColor);
+
                 devourButton.Visibility = _ => MyPlayer.IsAlive;
                 devourButton.Availability = _ => devourTracker.CurrentTarget is not null && MyPlayer.CanMove;
-                devourButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, DevourCooldown.Cooldown).SetAsKillCoolTimer().Start();
+                devourButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, DevourCooldown.Cooldown).SetAsAbilityTimer().Start();
+
                 devourButton.OnClick = _ =>
                 {
                     var target = devourTracker.CurrentTarget;
-                    if (target is not null)
+                    if (target == null) return;
+
+                    if (target is IFakePlayer fake)
+                        MyPlayer.MurderPlayer(fake, Digestion, EventDetails.Kill, KillParameter.RemoteKill);
+                    else if (target is GamePlayer p)
                     {
-                        if (target is IFakePlayer fake)
-                            MyPlayer.MurderPlayer(fake, Digestion, EventDetails.Kill, KillParameter.RemoteKill);
-                        else if (target is GamePlayer player)
+                        if (p.TryGetAbility<Bait.Ability>(out var a) || p.Modifiers.Any(m => m.Modifier.InternalName.Contains("bait")))
                         {
-                            devouredPlayers.Add(player);
-                            RPCSetCam.Invoke((player, MyPlayer, (10f, 10f)));
-                            devourButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, GetCurrentCooldown()).SetAsKillCoolTimer();
+                            var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                            if (!(cancelable?.IsCanceled ?? false))
+                                MyPlayer.MurderPlayer(target, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
+
+                            if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
+                            return;
                         }
-                        devourButton.StartCoolDown();
+                        RpcUpdateStatus.Invoke((MyPlayer, p, 1));
+                        RPCSetCam.Invoke((p, MyPlayer, new VVector2(-100f, 10f)));
+                        devourButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, GetCurrentCooldown()).SetAsAbilityTimer();
                     }
+                    devourButton.StartCoolDown();
                 };
 
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(devourButton.GetKillButtonLike());
             }
+
+            GameOperatorManager.Instance?.Subscribe<BombExplodeEvent>(ev => { if (devouredPlayers.Contains(ev.Player.PlayerId)) ev.Recycle(MyPlayer); }, this);
+            GameOperatorManager.Instance?.Subscribe<PlayerUpdateVisibilityEvent>(ev => { if (devouredPlayers.Contains(ev.Player.PlayerId)) ev.SetInvisible(); }, this);
         }
 
-        protected override void OnReleased()
+        protected override void OnReleased() => KillDevouredPlayer();
+        float GetCurrentCooldown() => Mathn.Max(DevourCooldown.Cooldown - devouredPlayers.Count * ReduceTime, 0f);
+
+        public void KillDevouredPlayer()
         {
-            base.OnReleased();
-            for (int i = 0; i < devouredPlayers.Count; i++)
+            foreach (var id in devouredPlayers)
             {
-                var player = devouredPlayers[i];
+                var player = GamePlayer.GetPlayer(id);
+                if (player == null) continue;
+
                 MyPlayer.MurderPlayer(player, Digestion, EventDetails.Kill, KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE, KillCondition.BothAlive);
-                RPCSetCam.Invoke((player, null, (MyPlayer.TruePosition.x, MyPlayer.TruePosition.y)));
+                RPCSetCam.Invoke((player, null, MyPlayer.Position));
             }
-            devouredPlayers = [];
+            RpcUpdateStatus.Invoke((MyPlayer, MyPlayer, 0));
         }
 
-        static float GetCurrentCooldown()
-        {
-            var time = Mathf.Max(DevourCooldown.Cooldown - (devouredPlayers.Count * ReduceTime.GetValue()));
-            if (time < 0f)
-                return 0f;
-            else return time;
-        }
+        void OnMeetingPreStart(MeetingPreStartEvent ev) => KillDevouredPlayer();
 
-        void OnMeetingPreStart(MeetingPreStartEvent _)
+        void OnPlayerDieOrDisconnect(PlayerDieOrDisconnectEvent ev)
         {
-            for (int i = 0; i < devouredPlayers.Count; i++)
+            if (devouredPlayers.Contains(ev.Player.PlayerId))
             {
-                var player = devouredPlayers[i];
-                MyPlayer.MurderPlayer(player, Digestion, EventDetails.Kill, KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE, KillCondition.BothAlive);
-                RPCSetCam.Invoke((player, null, (MyPlayer.TruePosition.x, MyPlayer.TruePosition.y)));
+                RpcUpdateStatus.Invoke((MyPlayer, ev.Player, 2));
+                RPCSetCam.Invoke((ev.Player, null, MyPlayer.Position));
             }
-            devouredPlayers = [];
-            
-        }
-
-        [OnlyMyPlayer]
-        void OnDeadOrDisconnect(PlayerDieOrDisconnectEvent _)
-        {
-            for (int i = 0; i < devouredPlayers.Count; i++)
+            if (ev.Player == MyPlayer)
             {
-                var player = devouredPlayers[i];
-                RPCSetCam.Invoke((player, null, (MyPlayer.TruePosition.x, MyPlayer.TruePosition.y)));
+                foreach (var id in devouredPlayers)
+                    if (GamePlayer.GetPlayer(id) is GamePlayer p) RPCSetCam.Invoke((p, null, MyPlayer.Position));
+                RpcUpdateStatus.Invoke((MyPlayer, MyPlayer, 0));
             }
-            devouredPlayers = [];
         }
 
-        public readonly static RemoteProcess<(GamePlayer player, GamePlayer? pelican, (float x, float y) position)> RPCSetCam = new("PelicanSetCamTarget", (message, b) =>
+        public readonly static RemoteProcess<(GamePlayer player, GamePlayer? pelican, VVector2 vector)> RPCSetCam = new("PelicanSetCamTarget", (message, _) =>
         {
-            if (message.player.AmOwner)
-                AmongUsUtil.SetCamTarget(message.pelican?.VanillaPlayer);
+            message.player.Logic.SnapTo(message.vector);
+            if (message.player.AmOwner) AmongUsUtil.SetCamTarget(message.pelican?.VanillaPlayer);
+        });
 
-            message.player.Logic.SnapTo(new Vector2(message.position.x, message.position.y));
-        }, false);
+        static private readonly RemoteProcess<(GamePlayer pelican, GamePlayer target, int parameter)> RpcUpdateStatus = new("UpdatePelican", (message, _) => {
+            if (message.pelican.Role is not Instance pelican) return;
+            switch (message.parameter)
+            {
+                case 0: pelican.devouredPlayers.Clear(); break;
+                case 1: pelican.devouredPlayers.Add(message.target.PlayerId); break;
+                case 2: pelican.devouredPlayers.Remove(message.target.PlayerId); break;
+            }
+        });
     }
 }
