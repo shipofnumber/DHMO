@@ -53,7 +53,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 var jailButton = NebulaAPI.Modules.EffectButton(this, MyPlayer, VirtualKeyInput.Ability, JailCooldownOption, JailDurationOption, "jailor.jail", jailImage)
                     .SetLabelType(ModAbilityButton.LabelType.Impostor).SetColorLabel(MyRole.UnityColor);
                 jailButton.Availability = _ => MyPlayer.CanMove && tracker.CurrentTarget != null && !IsOthersJailed(tracker.CurrentTarget) && jailed == null;
-                jailButton.Visibility = _ => MyPlayer.IsAlive;
+                jailButton.Visibility = _ => MyPlayer.IsAlive && leftJail > 0;
                 jailButton.OnEffectStart = _ => tracker.KeepAsLongAsPossible = true;
                 jailButton.SetUsesIcon(MyRole.Color, leftJail.ToString(), out _, out tmPro);
 
@@ -80,8 +80,8 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 var executeButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
                     .BindKey(VirtualKeyInput.SidekickAction).SetLabel("jailor.execute")
                     .SetLabelType(ModAbilityButton.LabelType.Impostor).SetColorLabel(MyRole.UnityColor);
-                executeButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting && leftJail > 0 && jailed != null;
-                executeButton.Availability = _ => jailed!.IsAlive && AddonHelper.ModAbilityMeetingButton();
+                executeButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting && jailed != null;
+                executeButton.Availability = _ => jailed != null && jailed.IsAlive && AddonHelper.ModAbilityMeetingButton();
                 executeButton.SetImage(executeImage!);
                 executeButton.OnClick = _ =>
                 {
@@ -125,8 +125,11 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 RpcJail.Invoke((MyPlayer, jailed, true));
             else
             {
-                --leftJail;
-                tmPro?.text = leftJail.ToString();
+                if (leftJail != 0)
+                {
+                    --leftJail;
+                    tmPro?.text = leftJail.ToString();
+                }
             }
         }
 

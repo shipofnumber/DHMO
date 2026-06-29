@@ -47,11 +47,6 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         public Ability(GamePlayer player, bool isUsurped, int leave) : base(player, isUsurped)
         {
             leftLeave = leave;
-            GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
-            {
-                if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
-                    NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
-            }, this);
             GameOperatorManager.Instance?.Subscribe<MeetingPreEndEvent>(ev => RpcCamouflage.Invoke((MyPlayer, false)), this);
             GameOperatorManager.Instance?.RegisterOnReleased(() =>
             {
@@ -61,6 +56,12 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
 
             if (!AmOwner) return;
             leavingTime = new TimerImpl(LeavingDuration).Register(this);
+
+            GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
+            {
+                if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
+                    NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
+            }, this);
 
             var meetingButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
                 .BindKey(VirtualKeyInput.SidekickAction).SetColorLabel(MyRole.RoleColor).SetImage(buttonImage!);
@@ -139,7 +140,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             canCompleteTasks = NumOfCanCompleteTasks;
         }
 
-        [Local, OnlyMyPlayer]
+        [OnlyMyPlayer]
         void OnTaskComplete(PlayerTaskCompleteLocalEvent ev)
         {
             if (AddonHelper.IsOutMeeting() && MyPlayer.IsAlive) --canCompleteTasks;

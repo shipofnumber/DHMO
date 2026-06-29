@@ -65,6 +65,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
         public override void OnActivated()
         {
             RpcUpdateStatus.Invoke((MyPlayer, MyPlayer, 0));
+
             if (AmOwner)
             {
                 var devourTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, p => ObjectTrackers.PlayerlikeStandardPredicate(p), MyRole.UnityColor, false, false);
@@ -102,10 +103,19 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                 };
 
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(devourButton.GetKillButtonLike());
+
             }
 
-            GameOperatorManager.Instance?.Subscribe<BombExplodeEvent>(ev => { if (devouredPlayers.Contains(ev.Player.PlayerId)) ev.Recycle(MyPlayer); }, this);
-            GameOperatorManager.Instance?.Subscribe<PlayerUpdateVisibilityEvent>(ev => { if (devouredPlayers.Contains(ev.Player.PlayerId)) ev.SetInvisible(); }, this);
+            GameOperatorManager.Instance?.Subscribe<BombExplodeEvent>(ev =>
+            {
+                if (devouredPlayers.Contains(ev.Player.PlayerId))
+                    ev.Recycle(MyPlayer);
+            }, this);
+            GameOperatorManager.Instance?.Subscribe<PlayerUpdateVisibilityEvent>(ev =>
+            {
+                if (devouredPlayers.Contains(ev.Player.PlayerId))
+                    ev.SetInvisible();
+            }, this);
         }
 
         protected override void OnReleased() => KillDevouredPlayer();

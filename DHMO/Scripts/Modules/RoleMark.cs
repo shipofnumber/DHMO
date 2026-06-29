@@ -1,5 +1,6 @@
 ﻿using AmongUs.GameOptions;
 using DHMO.Roles.Abilities;
+using Il2CppInterop.Runtime.Attributes;
 using Il2CppInterop.Runtime.Injection;
 
 namespace DHMO.Modules;
@@ -161,12 +162,26 @@ public class RoleMarkMenu : Minigame
         return passive;
     }
 
+    [HideFromIl2Cpp]
     private static int GetTotalPages(int itemCount) => Mathn.Max(1, Mathn.CeilToInt(itemCount / (float)ItemsPerPage));
     internal void RefreshControllerOverlay(List<UiElement> list) => ControllerManager.Instance.OpenOverlayMenu(name, backButton, defaultButtonSelected, list.ToIl2CppList());
 
-    private void NextPage() { currentPage = (currentPage + 1) % GetTotalPages(AllPanels.Count); RefreshControllerOverlay(ShowPage()); }
-    private void PreviousPage() { var total = GetTotalPages(AllPanels.Count); currentPage = (currentPage - 1 + total) % total; RefreshControllerOverlay(ShowPage()); }
+    [HideFromIl2Cpp]
+    private void NextPage()
+    {
+        currentPage = (currentPage + 1) % GetTotalPages(AllPanels.Count);
+        RefreshControllerOverlay(ShowPage());
+    }
 
+    [HideFromIl2Cpp]
+    private void PreviousPage()
+    {
+        var total = GetTotalPages(AllPanels.Count);
+        currentPage = (currentPage - 1 + total) % total;
+        RefreshControllerOverlay(ShowPage());
+    }
+
+    [HideFromIl2Cpp]
     public List<UiElement> ShowPage()
     {
         foreach (var panel in AllPanels) panel.gameObject.SetActive(false);
@@ -185,11 +200,13 @@ public class RoleMarkMenu : Minigame
         return uiElements;
     }
 
+    [HideFromIl2Cpp]
     public void Begin(Action<GamePlayer> onClick, Action<TextMeshPro, GamePlayer> textUpdate)
     {
         this.BeginInternal(null!);
 
-        var players = GamePlayer.AllPlayers.ToList();
+        var players = GamePlayer.AllPlayers.OrderByDescending(p => p.IsAlive).ThenBy(p => p.PlayerId).ToList();
+
         AllPanels = [];
         currentPage = 0;
 
@@ -199,19 +216,19 @@ public class RoleMarkMenu : Minigame
             var panel = Instantiate(panelPrefab, transform);
             panel?.transform.localPosition = new VVector3(xStart + i % ColumnsPerPage * xOffset, yStart + i / ColumnsPerPage * yOffset, -1f);
             panel?.SetPlayer(i, player.VanillaPlayer.Data, (Action)(() => onClick?.Invoke(player)));
-            panel?.NameText.color = VColor.White;
-            panel?.ColorBlindName.gameObject.SetActive(false);
+            panel?.NameText.color = player == GamePlayer.LocalPlayer ? GamePlayer.LocalPlayer.Role.Role.Color : VColor.White;
+            panel?.ColorBlindName.transform.localPosition = new VVector3(-0.9616f, -0.1666f, -0.1f);
 
-            var nameText = panel?.NameText;
-            var roleText = GameObject.Instantiate(nameText, nameText?.transform);
+            TextMeshPro? nameText = panel?.NameText;
+            TextMeshPro? roleText = GameObject.Instantiate(nameText, nameText?.transform);
             roleText?.name = "RoleMarkText";
-            roleText?.text = string.Empty;
+            roleText?.text = "";
             roleText?.transform.localPosition = new VVector3(0f, -0.1611f, 0f);
             roleText?.transform.localScale = new VVector3(0.6333f, 0.6333f);
             roleText?.rectTransform.sizeDelta += new UVector2(0.35f, 0f);
             roleText?.UseRoleIcon();
 
-            var script = panel?.gameObject.AddComponent<ScriptBehaviour>();
+            ScriptBehaviour? script = panel?.gameObject.AddComponent<ScriptBehaviour>();
             if (roleText != null) script?.UpdateHandler += () => textUpdate.Invoke(roleText, player);
 
             var namePlate = panel?.gameObject.transform.FindChild("Nameplate");

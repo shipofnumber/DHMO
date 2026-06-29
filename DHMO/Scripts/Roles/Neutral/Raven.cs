@@ -264,16 +264,17 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
             IsInRavenTime = false;
             RavenTimeLeft = RavenTimeDuration;
 
-            GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
-            {
-                if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
-                    NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
-            }, this);
             GameOperatorManager.Instance?.Subscribe<MeetingPreEndEvent>(ev => RpcCamouflage.Invoke((MyPlayer, false)), this);
             GameOperatorManager.Instance?.RegisterOnReleased(() => { IsInRavenTime = false; RavenTimeLeft = RavenTimeDuration; }, this);
 
             if (!AmOwner) return;
             IgnoreBubble.IsIgnore = p => p.PlayerId == MyPlayer.PlayerId && IsInRavenTime;
+
+            GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
+            {
+                if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
+                    NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
+            }, this);
 
             if (HasDeadBodyArrow)
             {
@@ -381,7 +382,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
         void OnUpdateVisibility(PlayerUpdateVisibilityEvent ev)
         {
-            if (MyPlayer.AmOwner && AddonHelper.IsOutMeeting() && ev.Visibility == PlayerUpdateVisibilityEvent.VisibilityLevel.Invisible)
+            if (AddonHelper.IsOutMeeting() && ev.Visibility == PlayerUpdateVisibilityEvent.VisibilityLevel.Invisible)
                 ev.SetSemitransparent();
         }
 

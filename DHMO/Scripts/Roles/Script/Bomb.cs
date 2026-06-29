@@ -16,8 +16,6 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
     public TimerImpl? Timer { get; private set; }
 
     GamePlayer IBindPlayer.MyPlayer => Owner;
-    public static IEnumerable<byte> HasBomb => hasBomb;
-    internal static List<byte> hasBomb { get; private set; } = [];
 
     public GameActionType PassBombAction = new("bomber.passbomb", Roles.Impostor.Bomber.MyRole);
     public static Image passBombImage = NebulaAPI.AddonAsset.GetResource("Button/PassBombButton.png")?.AsImage(115f)!;
@@ -96,8 +94,6 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
         else Timer?.Resume();
     }
 
-    void IGameOperator.OnReleased() => RPCRemovePlayer(Owner);
-
     public readonly static RemoteProcess<(GamePlayer player, GamePlayer bomber, float duration)> RPCSetBomb = new("BomberSetBomb", (message, _) =>
     {
         if (!message.player.AmOwner) return;
@@ -105,14 +101,10 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
         if (NebulaAPI.CurrentGame != null) bomb.Bind(NebulaAPI.CurrentGame);
 
         bomb.RegisterSelf();
-        hasBomb.Add(message.player.PlayerId);
     }, false);
 
     static private RemoteProcess<VVector2> RpcExplode = new("PlayBombExplode", (message, _) =>
         NebulaManager.Instance.StartCoroutine(CoPlayExplosion(message).WrapToIl2Cpp()));
-
-    [NebulaRPC]
-    public static void RPCRemovePlayer(GamePlayer player) => hasBomb.Remove(player.PlayerId);
 }
 
 public class BombExplodeEvent(Player player) : Virial.Events.Player.AbstractPlayerEvent(player) { }

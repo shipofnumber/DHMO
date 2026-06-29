@@ -8,7 +8,7 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
     public static Dictionary<byte, HashSet<DefinedAssignable>>? MarkRoleDic { get; set; }
     public static MetaScreen? LastMarkWindow = null;
 
-    private GamePlayer Owner {  get; set; }
+    private GamePlayer Owner { get; set; }
     public GamePlayer MyPlayer => Owner;
 
     public RoleMarkAbility(ILifespan lifespan, GamePlayer player) : base(lifespan)
@@ -22,7 +22,7 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
         var assignables = Nebula.Roles.Roles.AllAssignables().Where(a => a is not DefinedGhostRole && a.ShowOnHelpScreen);
 
         var markButton = NebulaAPI.Modules.AbilityButton(this, isLeftSideButton: true, alwaysShow: true).SetImage(MarkImage!).SetLabel("mark");
-        markButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting && CanUseMark;
+        markButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting;
         markButton.Availability = _ => !Minigame.Instance.AsBoolFast() && MeetingHud.Instance.AsBoolFast() && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !AddonHelper.IsOutMeeting();
         markButton.OnClick = _ =>
         {
@@ -63,9 +63,9 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
         var modifiers = MarkRoleDic[player.PlayerId].Where(a => a is DefinedModifier);
         if (modifiers.Any() && modifiers != null)
         {
-            string text = $"<b>{Language.Translate("help.rolePreview.inner.modifiers")}</b>";
+            string text = $"{Language.Translate("help.rolePreview.inner.modifiers").Bold()}";
             foreach (var modifier in modifiers)
-                text += $"<br>{modifier.GetRoleIconTag()}<b>{modifier.DisplayColoredName}</b>";
+                text += $"<br>{modifier.GetRoleIconTag()}{modifier.DisplayColoredName.Bold()}";
 
             return text;
         }
@@ -78,10 +78,10 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
 
         return
         [
-          ("<b>" + Language.Translate("help.rolePreview.category.impostor").Color(NebulaTeams.ImpostorTeam.Color) + "</b>", IsRoleOfCategory(RoleCategory.ImpostorRole)),
-          ("<b>" + Language.Translate("help.rolePreview.category.neutral").Color(new VColor(255, 178, 0)) + "</b>", IsRoleOfCategory(RoleCategory.NeutralRole)),
-          ("<b>" + Language.Translate("help.rolePreview.category.crewmate").Color(NebulaTeams.CrewmateTeam.Color) + "</b>", IsRoleOfCategory(RoleCategory.CrewmateRole)),
-          ("<b>" + Language.Translate("help.rolePreview.inner.modifiers") + "</b>", a => a is DefinedModifier),
+          (Language.Translate("help.rolePreview.category.impostor").Color(NebulaTeams.ImpostorTeam.Color).Bold(), IsRoleOfCategory(RoleCategory.ImpostorRole)),
+          (Language.Translate("help.rolePreview.category.neutral").Color(new VColor(255, 178, 0)).Bold(), IsRoleOfCategory(RoleCategory.NeutralRole)),
+          (Language.Translate("help.rolePreview.category.crewmate").Color(NebulaTeams.CrewmateTeam.Color).Bold(), IsRoleOfCategory(RoleCategory.CrewmateRole)),
+          (Language.Translate("help.rolePreview.inner.modifiers").Bold(), a => a is DefinedModifier),
         ];
     }
 }

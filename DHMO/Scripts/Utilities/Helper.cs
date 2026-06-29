@@ -1,4 +1,7 @@
-﻿namespace DHMO.Utilities;
+﻿using System.Collections.Concurrent;
+using System.Linq.Expressions;
+
+namespace DHMO.Utilities;
 
 public static class ModAbilityButtonExtensions
 {
@@ -29,15 +32,7 @@ public static class AddonHelper
 {
     internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.scriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
 
-    public static int GetAlivePlayers()
-    {
-        int totalAlive = 25;
-        List<GamePlayer> alivePlayers = [];
-
-        if (NebulaGameManager.Instance != null)
-            totalAlive = NebulaGameManager.Instance.AllPlayerInfo.Count(p => p.IsAlive);
-        return totalAlive;
-    }
+    public static int GetAlivePlayers() => NebulaGameManager.Instance?.AllPlayerInfo.Count(p => p.IsAlive) ?? int.MaxValue;
 
     public static void RemoveAllListeners(this PassiveButton button)
     {
@@ -135,15 +130,6 @@ public static class APICompat
     public static void Destroy(this UnityEngine.Object obj) => UnityEngine.Object.Destroy(obj);
 
     public static void DestroyImmediate(this UnityEngine.Object obj) => UnityEngine.Object.DestroyImmediate(obj);
-
-    static public void TryGetOrAddComponent<T>(this GameObject gameObject, out T component) where T : Component
-    {
-        gameObject.TryGetComponent<T>(out var component1);
-        if (component1 == null)
-            component = gameObject.AddComponent<T>();
-        else
-            component = component1;
-    }
 
     static public GamePlayer? ToGamePlayer(this PlayerControl player) => GamePlayer.GetPlayer(player.PlayerId);
 
