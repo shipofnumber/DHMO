@@ -1,5 +1,4 @@
-﻿using AmongUs.GameOptions;
-using DHMO.Roles.Abilities;
+﻿using DHMO.Roles.Abilities;
 using Il2CppInterop.Runtime.Attributes;
 using Il2CppInterop.Runtime.Injection;
 
@@ -44,20 +43,21 @@ static public class RoleMarkWindow
                 PostBuilder = (button, renderer, text) =>
                 {
                     var dic = RoleMarkAbility.MarkRoleDic;
+
                     renderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
-                    renderer.color = dic != null && dic[player.PlayerId].Contains(a) ? VColor.White : new(0.14f, 0.14f, 0.14f);
-                    button.transform.localPosition += new UVector3(0.05f, 0f, 0f);
-                    text.transform.localPosition += new UVector3(0.072f, 0f, 0f);
+                    renderer.color = dic != null && dic[player.PlayerId].Contains(a) ? VColor.White.ToUnityColor() : new(0.14f, 0.14f, 0.14f);
+                    button.ModGameObject().LocalPosition += new VVector3(0.05f, 0f, 0f);
+                    text.ModGameObject().LocalPosition += new VVector3(0.072f, 0f, 0f);
 
                     var icon = UnityHelper.CreateObject<SpriteRenderer>("Icon", button.transform, new(-0.65f, 0f, -0.1f));
                     icon.sprite = a.GetRoleIcon()?.GetSprite();
                     icon.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
                     icon.material = RoleIcon.GetRoleIconMaterial(a, 0.8f);
-                    icon.transform.localScale = new(0.253f, 0.253f, 1f);
+                    icon.ModGameObject().LocalScale = new(0.253f, 0.253f, 1f);
                     icon.SetBothOrder(15);
 
                     button.OnMouseOut.RemoveAllListeners();
-                    button.OnMouseOut.AddListener(() => renderer.color = dic != null && dic[player.PlayerId].Contains(a) ? VColor.White : new(0.14f, 0.14f, 0.14f));
+                    button.OnMouseOut.AddListener(() => renderer.color = dic != null && dic[player.PlayerId].Contains(a) ? VColor.White.ToUnityColor() : new(0.14f, 0.14f, 0.14f));
                     button.OnClick.AddListener(() => onSelected.Invoke(a, renderer));
                 }
             }), 4, -1, 0, 0.59f);
@@ -77,7 +77,7 @@ static public class RoleMarkWindow
         if (MeetingHud.Instance.AsBoolFast(out var hud))
             while (hud.state != MeetingHud.VoteStates.Results) yield return null;
         else
-            while (!MeetingHud.Instance.AsBoolFast()) yield return null;
+            while (!hud.AsBoolFast()) yield return null;
         window.CloseScreen();
     }
 }
@@ -106,9 +106,12 @@ public class RoleMarkMenu : Minigame
 
     public static RoleMarkMenu Create()
     {
-        var originalMenu = RoleManager.Instance.GetRole(RoleTypes.Shapeshifter).TryCast<ShapeshifterRole>()!.ShapeshifterMenu;
+        var originalMenu = AmongUsUtil.GetRolePrefab<ShapeshifterRole>()!.ShapeshifterMenu;
         var newMenu = Instantiate(originalMenu);
-        var customMenu = newMenu.gameObject.AddComponent<RoleMarkMenu>();
+        var customMenu = newMenu.ModGameObject(false).AddComponent<RoleMarkMenu>();
+
+        var customMenuObj = customMenu.ModGameObject(false);
+        var menuTransform = customMenuObj.GetUnityTransform();
 
         customMenu.panelPrefab = newMenu.PanelPrefab;
         customMenu.xStart = newMenu.XStart;
@@ -123,38 +126,40 @@ public class RoleMarkMenu : Minigame
         customMenu.logger = newMenu.logger;
         customMenu.OpenSound = newMenu.OpenSound;
 
-        var backBtn = MetaScreen.InstantiateCloseButton(customMenu.transform, new VVector3(-4.79f, 2.48f, 0f));
-        backBtn.transform.localScale = new VVector3(0.75f, 0.75f, 1f);
+        var backBtn = MetaScreen.InstantiateCloseButton(menuTransform, new VVector3(-4.79f, 2.48f, 0f));
+        backBtn.ModGameObject(false).LocalScale = new VVector3(0.75f, 0.75f, 1f);
         backBtn.OnClick.AddListener(customMenu.CloseInternal);
 
         newMenu.DestroyImmediate();
-        customMenu.transform.SetParent(Camera.main.transform, false);
-        customMenu.transform.localPosition = new VVector3(0f, 0f, -60f);
+        menuTransform.SetParent(NebulaGameManager.Instance?.WideCamera.myCameraObj.GetUnityTransform(), false);
+        customMenuObj.LocalPosition = new VVector3(0f, 0f, -60f);
 
-        var nextButton = CreateArrowButton(customMenu, new VVector3(1.85f, -2.185f, -60f), "RightArrowButton", false);
+        var nextButton = CreateArrowButton(menuTransform, new VVector3(1.85f, -2.185f, -60f), "RightArrowButton", false);
         nextButton.OnClick.AddListener(customMenu.NextPage);
-        var prevButton = CreateArrowButton(customMenu, new VVector3(-1.85f, -2.185f, -60f), "LeftArrowButton", true);
+        var prevButton = CreateArrowButton(menuTransform, new VVector3(-1.85f, -2.185f, -60f), "LeftArrowButton", true);
         prevButton.OnClick.AddListener(customMenu.PreviousPage);
 
-        var phoneUI = customMenu.transform.TryDig("PhoneUI");
-        if (phoneUI != null)
+        var phoneUI = menuTransform.TryDig("PhoneUI");
+        if (phoneUI.AsBoolFast())
         {
             var bodyMat = GamePlayer.LocalPlayer?.VanillaCosmetics.currentBodySprite.BodySprite.material;
-            phoneUI.GetChild(0)?.GetComponent<SpriteRenderer>()?.SetMaterial(bodyMat);
-            phoneUI.GetChild(1)?.GetComponent<SpriteRenderer>()?.SetMaterial(bodyMat);
+            phoneUI?.GetChild(0)?.GetComponent<SpriteRenderer>()?.SetMaterial(bodyMat);
+            phoneUI?.GetChild(1)?.GetComponent<SpriteRenderer>()?.SetMaterial(bodyMat);
         }
 
         return customMenu;
     }
 
-    private static PassiveButton CreateArrowButton(RoleMarkMenu parent, VVector3 position, string name, bool flipX)
+    private static PassiveButton CreateArrowButton(Transform parent, VVector3 position, string name, bool flipX)
     {
-        var button = MetaScreen.InstantiateCloseButton(parent.transform, position);
+        var button = MetaScreen.InstantiateCloseButton(parent, position);
         button.transform.localScale = new VVector3(0.65f, 0.65f, 1f);
         button.name = name;
+
         var sprite = button.GetComponent<SpriteRenderer>();
         sprite.sprite = NextButton?.GetSprite();
         sprite.flipX = flipX;
+
         var passive = button.GetComponent<PassiveButton>();
         passive.RemoveAllListeners();
         passive.OnMouseOver.AddListener(() => sprite.sprite = NextButtonActive?.GetSprite());
@@ -184,7 +189,7 @@ public class RoleMarkMenu : Minigame
     [HideFromIl2Cpp]
     public List<UiElement> ShowPage()
     {
-        foreach (var panel in AllPanels) panel.gameObject.SetActive(false);
+        foreach (var panel in AllPanels) panel.ModGameObject(false).SetActive(false);
         var totalPages = GetTotalPages(AllPanels.Count);
         currentPage = Mathn.Clamp(currentPage, 0, totalPages - 1);
         var pageEntries = AllPanels.Skip(currentPage * ItemsPerPage).Take(ItemsPerPage).ToList();
@@ -193,8 +198,10 @@ public class RoleMarkMenu : Minigame
         for (int i = 0; i < pageEntries.Count; i++)
         {
             var panel = pageEntries[i];
-            panel.transform.localPosition = new VVector3(xStart + i % ColumnsPerPage * xOffset, yStart + i / ColumnsPerPage * yOffset, -1f);
-            panel.gameObject.SetActive(true);
+            var panelObj = panel.ModGameObject(false);
+
+            panelObj.LocalPosition = new VVector3(xStart + i % ColumnsPerPage * xOffset, yStart + i / ColumnsPerPage * yOffset, -1f);
+            panelObj.SetActive(true);
             uiElements.Add(panel.Button);
         }
         return uiElements;
@@ -213,28 +220,37 @@ public class RoleMarkMenu : Minigame
         for (int i = 0; i < players.Count; i++)
         {
             var player = players[i];
+            if (player.AmOwner) continue;
+
             var panel = Instantiate(panelPrefab, transform);
-            panel?.transform.localPosition = new VVector3(xStart + i % ColumnsPerPage * xOffset, yStart + i / ColumnsPerPage * yOffset, -1f);
+            var panelObj = panel?.ModGameObject(false);
+
+            panelObj?.LocalPosition = new VVector3(0f, 0f, -1f);
             panel?.SetPlayer(i, player.VanillaPlayer.Data, (Action)(() => onClick?.Invoke(player)));
-            panel?.NameText.color = player == GamePlayer.LocalPlayer ? GamePlayer.LocalPlayer.Role.Role.Color : VColor.White;
-            panel?.ColorBlindName.transform.localPosition = new VVector3(-0.9616f, -0.1666f, -0.1f);
+            panel?.NameText.color = VColor.White.ToUnityColor();
+            panel?.ColorBlindName.ModGameObject(false).SetActive(false);
 
             TextMeshPro? nameText = panel?.NameText;
             TextMeshPro? roleText = GameObject.Instantiate(nameText, nameText?.transform);
+            var textObj = roleText?.ModGameObject(false);
+
             roleText?.name = "RoleMarkText";
             roleText?.text = "";
-            roleText?.transform.localPosition = new VVector3(0f, -0.1611f, 0f);
-            roleText?.transform.localScale = new VVector3(0.6333f, 0.6333f);
+
+            textObj?.LocalPosition = new VVector3(0f, -0.1611f, 0f);
+            textObj?.LocalScale = new VVector3(0.6333f, 0.6333f);
+
             roleText?.rectTransform.sizeDelta += new UVector2(0.35f, 0f);
             roleText?.UseRoleIcon();
 
-            ScriptBehaviour? script = panel?.gameObject.AddComponent<ScriptBehaviour>();
+            ScriptBehaviour? script = panelObj?.AddComponent<ScriptBehaviour>();
+
             if (roleText != null) script?.UpdateHandler += () => textUpdate.Invoke(roleText, player);
 
-            var namePlate = panel?.gameObject.transform.FindChild("Nameplate");
+            var namePlate = panelObj?.GetUnityTransform().FindChild("Nameplate");
             var button = namePlate?.GetComponent<PassiveButton>();
 
-            button?.OnMouseOver.AddListener(() => NebulaManager.Instance.SetHelpWidget(button, RoleMarkAbility.GetModifierString(player)));
+            button?.OnMouseOver.AddListener(() => NebulaManager.Instance.SetHelpWidget(button, RoleMarkAbility.GetModifierString(player.PlayerId)));
             button?.OnMouseOut.AddListener(() => NebulaManager.Instance.HideHelpWidgetIf(button));
             namePlate?.FindChild("Highlight")?.Find("ShapeshifterIcon").gameObject.SetActive(false);
 
@@ -250,7 +266,7 @@ public class RoleMarkMenu : Minigame
         if (MeetingHud.Instance.AsBoolFast(out var hud))
             while (hud.state != MeetingHud.VoteStates.Results) yield return null;
         else
-            while (!MeetingHud.Instance.AsBoolFast()) yield return null;
+            while (!hud.AsBoolFast()) yield return null;
         this.Close();
     }
 }

@@ -22,6 +22,7 @@
 
 "options.role.raven.detail" : "渡鸦可以在会议之外杀人。"
 "options.role.raven.killCooldown" : "击杀冷却时间"
+"options.role.raven.canMultipleKills" : "可以连续击杀"
 "options.role.raven.hasDeadBodyArrow" : "指向尸体的箭头"
 "options.role.raven.group.raventime" : "渡鸦时刻设置"
 "options.role.raven.RavenTime" : "渡鸦时刻"

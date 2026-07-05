@@ -1,38 +1,10 @@
-﻿using System.Collections.Concurrent;
-using System.Linq.Expressions;
-
-namespace DHMO.Utilities;
-
-public static class ModAbilityButtonExtensions
-{
-    public static void SetUsesIcon(this ModAbilityButton button, Virial.Color color, string text, out GameObject uses, out TextMeshPro tmPro, bool isRight = false)
-    {
-        Transform template = HudManager.Instance.AbilityButton.transform.GetChild(2);
-        var usesObject = GameObject.Instantiate(template.gameObject);
-        usesObject.transform.SetParent(((ModAbilityButtonImpl)button).VanillaButton.gameObject.transform);
-        usesObject.transform.localScale = template.localScale;
-        if (isRight) 
-        {
-            usesObject.transform.localPosition = new VVector3(0.5096f, -0.3513f, template.localPosition.z * 1.2f);
-            usesObject.transform.localScale = new VVector3(0.8f, 0.8f, 0.8f);
-        }
-        else usesObject.transform.localPosition = template.localPosition * 1.2f;
-
-        var renderer = usesObject.GetComponent<SpriteRenderer>();
-        renderer.color = color.ToUnityColor();
-        var textMesh = usesObject.transform.GetChild(0).GetComponent<TMPro.TextMeshPro>();
-        textMesh.text = text;
-
-        uses = usesObject;
-        tmPro = textMesh;
-    }
-}
+﻿namespace DHMO.Utilities;
 
 public static class AddonHelper
 {
     internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.scriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
 
-    public static int GetAlivePlayers() => NebulaGameManager.Instance?.AllPlayerInfo.Count(p => p.IsAlive) ?? int.MaxValue;
+    public static int GetAlivePlayers(Predicate<GamePlayer>? predicate = null) => GamePlayer.AllPlayers.Where(p => predicate == null || predicate(p)).Count(p => p.IsAlive);
 
     public static void RemoveAllListeners(this PassiveButton button)
     {
@@ -49,21 +21,23 @@ public static class AddonHelper
             return false;
     }
 
-    public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.gameObject.transform.localPosition.x > 15;
+    public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.ModGameObject(false).LocalPosition.x > 15;
 
     public static void AddCustomChat(this ChatController chatController, PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
     {
         AmongUsLLImpl.TryGetLocalPlayer(out var localPlayer);
 
-        if (sourcePlayer == null || string.IsNullOrEmpty(chatText) || !chatController.AsBoolFast()) return;
+        if (string.IsNullOrEmpty(chatText) || !chatController.AsBoolFast()) return;
 
         var sourcePlayerData = sourcePlayer.Data;
         ChatBubble pooledBubble = chatController.GetPooledBubble();
 
         try
         {
-            pooledBubble.transform.SetParent(chatController.scroller.Inner);
-            pooledBubble.transform.localScale = VVector3.One;
+            var bubbleObj = pooledBubble.ModGameObject();
+
+            bubbleObj.GetUnityTransform().SetParent(chatController.scroller.Inner);
+            bubbleObj.LocalScale = VVector3.One;
 
             bool isLocalPlayer = sourcePlayer == localPlayer;
             if (isLocalPlayer)
@@ -71,7 +45,7 @@ public static class AddonHelper
             else
                 pooledBubble.SetLeft();
 
-            bool didVote = MeetingHud.Instance != null && MeetingHud.Instance.DidVote(sourcePlayer.PlayerId);
+            bool didVote = MeetingHud.Instance.AsBoolFast(out var meetingHud) && meetingHud.DidVote(sourcePlayer.PlayerId);
 
             pooledBubble.SetCosmetics(cosmetics.Data);
             pooledBubble.SetName(title ?? sourcePlayerData.PlayerName, sourcePlayerData.IsDead, didVote, PlayerNameColor.Get(sourcePlayerData));

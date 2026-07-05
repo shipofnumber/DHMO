@@ -22,16 +22,17 @@ public static class MeetingStartPatch
 
     private static IEnumerator ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo? deadBody, int reportType)
     {
-        while (!MeetingHud.Instance) yield return null;
+        while (!MeetingHud.Instance.AsBoolFast()) yield return null;
 
         MeetingRoomManager.Instance.RemoveSelf();
         AmongUsLLImpl.HudManagerInstance.InitMap();
-        MapBehaviour.Instance.SetPreMeetingPosition(AmongUsLLImpl.LocalPlayer.transform.position, false);
+        MapBehaviour.Instance.SetPreMeetingPosition((GamePlayer.LocalPlayer?.Position ?? VVector2.Zero).AsUnityVector3(0f), false);
+
         foreach (var player in GamePlayer.AllPlayers)
         {
             try
             {
-                if (player.VanillaPlayer) ModResetForMeeting(player.VanillaPlayer, false);
+                if (player.VanillaPlayer.AsBoolFast(out var vanillaPlayer)) ModResetForMeeting(vanillaPlayer, false);
             }
             catch (Exception e)
             {
@@ -39,8 +40,9 @@ public static class MeetingStartPatch
             }
         }
 
-        if (MapBehaviour.Instance) MapBehaviour.Instance.Close();
-        if (Minigame.Instance) Minigame.Instance.ForceClose();
+        if (MapBehaviour.Instance.AsBoolFast(out var map)) map.Close();
+        if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.ForceClose();
+
         AmongUsLLImpl.ShipStatusInstance.OnMeetingCalled();
         KillAnimation.SetMovement(reporter, true);
         GameData.TimeLastMeetingStarted = Time.realtimeSinceStartup;
@@ -52,11 +54,13 @@ public static class MeetingStartPatch
 
     public static void ModResetForMeeting(PlayerControl player, bool spawn = true)
     {
+        if (!AmongUsLLImpl.TryGetShipStatus(out var ship)) return;
+
         if (!player.GetComponent<DummyBehaviour>().enabled)
         {
             player.MyPhysics.ExitAllVents();
-            if (spawn)
-                AmongUsLLImpl.ShipStatusInstance.SpawnPlayer(player, GameData.Instance.PlayerCount, false);
+            if (spawn && ship.AsBoolFast())
+                ship.SpawnPlayer(player, GameData.Instance.PlayerCount, false);
         }
         player.RemoveProtection();
         player.NetTransform.enabled = true;
@@ -77,7 +81,7 @@ public static class MeetingStartPatch
             {
                 player.cosmetics.TogglePet(true);
                 VVector2 vector = player.transform.position;
-                if (AmongUsLLImpl.ShipStatusInstance is AirshipStatus)
+                if (ship is AirshipStatus)
                 {
                     List<VVector2> list =
                     [

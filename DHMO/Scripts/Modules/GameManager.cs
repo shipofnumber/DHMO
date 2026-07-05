@@ -30,10 +30,8 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 
     void OnRoleChanged(PlayerTryToChangeRoleEvent ev)
     {
-        var game = NebulaGameManager.Instance;
         var local = GamePlayer.LocalPlayer;
-
-        if (game is null || local is null || (local != ev.Player && !game.CanSeeAllInfo)) return;
+        if (local is null || (local != ev.Player && (!NebulaGameManager.Instance?.CanSeeAllInfo ?? false))) return;
 
         NebulaManager.Instance.ScheduleDelayAction(() => AnimationEffects.CoPlayRoleNameEffect(ev.Player.RoleText.transform, new VVector3(0f, 0f, -0.1f), ev.NextRole.Color.ToUnityColor(), ev.Player.RoleText.gameObject.layer, 1.42857146f).StartOnScene());
     }

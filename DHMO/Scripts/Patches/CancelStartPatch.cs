@@ -10,7 +10,7 @@ public static class CancelStartPatch
         if (__instance.startState == GameStartManager.StartingStates.Countdown)
         {
             SoundManager.Instance.StopSound(__instance.gameStartSound);
-            if (AmongUsLLImpl.AmongUsClientInstance.AmHost)
+            if (AmongUsLLImpl.TryGetAmongUsClientInstance(out var client) && client.AmHost)
                 AmongUsLLImpl.GameManagerInstance.LogicOptions.SyncOptions();
         }
     }

@@ -37,11 +37,11 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
     public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility
     {
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
-        TimerImpl? leavingTime;
+
+        ModAbilityButton? meetingButton;
         private int leftLeave = NumOfLeaveOption;
         public int canCompleteTasks = NumOfCanCompleteTasks;
         bool canLeave;
-        private GameObject? gameObject;
         private Coroutine? coroutine;
 
         public Ability(GamePlayer player, bool isUsurped, int leave) : base(player, isUsurped)
@@ -55,7 +55,6 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             }, this);
 
             if (!AmOwner) return;
-            leavingTime = new TimerImpl(LeavingDuration).Register(this);
 
             GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
             {
@@ -63,67 +62,69 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                     NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
             }, this);
 
-            var meetingButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
-                .BindKey(VirtualKeyInput.SidekickAction).SetColorLabel(MyRole.RoleColor).SetImage(buttonImage!);
+            meetingButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
+                .BindKey(VirtualKeyInput.SidekickAction)
+                .SetColorLabel(MyRole.RoleColor)
+                .SetImage(buttonImage!)
+                .SetAsUsurpableButton(this);
 
             meetingButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting;
             meetingButton.Availability = _ => leftLeave > 0 && AddonHelper.ModAbilityMeetingButton() && coroutine == null && (CanLeaveMultiple || canLeave) && MeetingHudExtension.VotingTimer > MaxLeftVotingTimeForLeaving;
-            meetingButton.SetAsUsurpableButton(this);
+            meetingButton.EffectTimer = NebulaAPI.Modules.Timer(this, LeavingDuration);
+            meetingButton.ShowUsesIcon(3, leftLeave.ToString());
 
-            meetingButton.SetUsesIcon(MyRole.Color, leftLeave.ToString(), out _, out var usesText);
-            meetingButton.SetUsesIcon(MyRole.Color, Mathn.CeilToInt(leavingTime?.CurrentTime ?? 0f).ToString(), out gameObject, out var timeText, true);
-            gameObject.SetActive(false);
-
-            meetingButton.OnClick = _ => LeaveOrJoinMeeting(!AddonHelper.IsOutMeeting(), usesText);
-            meetingButton.OnUpdate = _ =>
+            meetingButton.OnClick = button =>
+            {
+                if (AddonHelper.IsOutMeeting())
+                    button.InterruptEffect();
+                else
+                    LeaveOrJoinMeeting(true);
+            };
+            meetingButton.OnEffectEnd = _ => LeaveOrJoinMeeting(!AddonHelper.IsOutMeeting());
+            meetingButton.OnUpdate = button =>
             {
                 if (AddonHelper.IsOutMeeting())
                 {
-                    timeText.SetText(Mathn.CeilToInt(leavingTime?.CurrentTime ?? 0f).ToString());
-                    if (leavingTime != null && (MeetingHudExtension.VotingTimer <= MaxLeftVotingTimeForLeaving || !leavingTime.IsProgressing || canCompleteTasks <= 0) && coroutine == null)
-                        LeaveOrJoinMeeting(false, usesText);
+                    if ((MeetingHudExtension.VotingTimer <= MaxLeftVotingTimeForLeaving || canCompleteTasks <= 0) && coroutine == null)
+                        LeaveOrJoinMeeting(false);
                 }
-                meetingButton.SetLabel(AddonHelper.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
+                button.SetLabel(AddonHelper.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
             };
         }
 
-        void LeaveOrJoinMeeting(bool isLeaving, TextMeshPro text)
+        void LeaveOrJoinMeeting(bool isLeaving)
         {
             if (!isLeaving)
             {
                 --leftLeave;
-                text.text = leftLeave.ToString();
+                meetingButton?.UpdateUsesIcon(leftLeave.ToString());
             }
+
             if (coroutine != null) return;
             coroutine = NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(isLeaving).WrapToIl2Cpp());
         }
 
         private IEnumerator CoLeaveOrJoinMeeting(bool isLeaving)
         {
-            AmongUsLLImpl.TryGetHudManager(out var hud);
-            if (Minigame.Instance.AsBoolFast()) Minigame.Instance.ForceClose();
+            if (!AmongUsLLImpl.TryGetHudManager(out var hud)) yield break;
+
+                if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.ForceClose();
             if (AmongUsUtil.MapIsOpen) MapBehaviour.Instance.Close();
             if (hud.GameMenu.IsOpen) hud.GameMenu.Close();
 
-            yield return hud.CoFadeFullScreen(VColor.Clear, VColor.Black, 1f, false);
-            MeetingHud.Instance.gameObject.transform.localPosition = new VVector3(isLeaving ? 17f : 0f, 0f);
+            yield return hud.CoFadeFullScreen(VColor.Clear.ToUnityColor(), VColor.Black.ToUnityColor(), 1f, false);
+            MeetingHud.Instance.ModGameObject(false).LocalPosition = new VVector3(isLeaving ? 17f : 0f, 0f);
             Camera.main.GetComponent<FollowerCamera>().Locked = !isLeaving;
 
             if (isLeaving)
-            {
-                leavingTime?.Reset().Start(); 
-                gameObject?.SetActive(true);
-            }
+                meetingButton?.StartEffect();
             else
             {
                 if (!CanLeaveMultiple)
                     canLeave = false;
-
-                leavingTime?.Pause().Reset();
-                gameObject?.SetActive(false);
             }
 
-            yield return hud.CoFadeFullScreen(VColor.Black, VColor.Clear, 1f, false);
+            yield return hud.CoFadeFullScreen(VColor.Black.ToUnityColor(), VColor.Clear.ToUnityColor(), 1f, false);
             coroutine = null;
         }
 
@@ -160,7 +161,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
 
             var tag = $"LucidDreamer{GamePlayer.LocalPlayer.PlayerId}";
             if (message.on)
-                message.player?.Unbox().AddOutfit(new OutfitCandidate(NebulaGameManager.Instance.UnknownOutfit, tag, 50, true));
+                message.player?.Unbox().AddOutfit(new OutfitCandidate(NebulaGameManager.Instance.UnknownOutfit, tag, 50, false));
             else
                 message.player?.Unbox().RemoveOutfit(tag);
         });

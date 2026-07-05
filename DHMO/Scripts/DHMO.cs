@@ -1,5 +1,4 @@
 ﻿using DHMO.Roles.Abilities;
-using Virial.Achievements;
 using Virial.Runtime;
 
 namespace DHMO;
@@ -12,7 +11,12 @@ public class DHMO
     public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
     {
         yield return preprocessor;
-        CertifiedPatch.AddonsList = [.. NebulaAddon.AllAddons.Where(a => a.NeedHandshake).Select(a => new CertifiedPatch.AddonInfo(a))];
+
+        int val = 0;
+        foreach (var addon in NebulaAddon.AllAddons)
+            if (addon.NeedHandshake) val ^= AddonHandshakeHashPatch.CalculateAddonHash(addon);
+
+        AddonHandshakeHashPatch.AddonHandshakeHash = val;
     }
 
     static DHMO()

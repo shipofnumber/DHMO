@@ -17,8 +17,7 @@ public class PrivateChat
 
         try
         {
-            if (registerMethod != null)
-                registerMethod?.Invoke(instance, [color, textfieldColor, chatid, localizedname, lifespan, useChannelPredicate, donotSendMessage, onSendMessage]);
+             registerMethod?.Invoke(instance, [color, textfieldColor, chatid, localizedname, lifespan, useChannelPredicate, donotSendMessage, onSendMessage]);
         }
         catch (Exception e)
         {

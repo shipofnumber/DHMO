@@ -38,7 +38,7 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
                             renderer.color = new(0.14f, 0.14f, 0.14f);
                         }
                         else
-                            renderer.color = VColor.White;
+                            renderer.color = VColor.White.ToUnityColor();
                     });
             },
             (tmPro, p) =>
@@ -57,10 +57,10 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
         };
     }
 
-    public static string GetModifierString(GamePlayer player)
+    public static string GetModifierString(byte id)
     {
         if (MarkRoleDic == null) return string.Empty;
-        var modifiers = MarkRoleDic[player.PlayerId].Where(a => a is DefinedModifier);
+        var modifiers = MarkRoleDic[id].Where(a => a is DefinedModifier);
         if (modifiers.Any() && modifiers != null)
         {
             string text = $"{Language.Translate("help.rolePreview.inner.modifiers").Bold()}";
@@ -78,10 +78,10 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
 
         return
         [
-          (Language.Translate("help.rolePreview.category.impostor").Color(NebulaTeams.ImpostorTeam.Color).Bold(), IsRoleOfCategory(RoleCategory.ImpostorRole)),
-          (Language.Translate("help.rolePreview.category.neutral").Color(new VColor(255, 178, 0)).Bold(), IsRoleOfCategory(RoleCategory.NeutralRole)),
-          (Language.Translate("help.rolePreview.category.crewmate").Color(NebulaTeams.CrewmateTeam.Color).Bold(), IsRoleOfCategory(RoleCategory.CrewmateRole)),
-          (Language.Translate("help.rolePreview.inner.modifiers").Bold(), a => a is DefinedModifier),
+          (Language.Translate("role.category.impostor").Color(NebulaTeams.ImpostorTeam.Color).Bold(), IsRoleOfCategory(RoleCategory.ImpostorRole)),
+          (Language.Translate("role.category.neutral").Color(new VColor(255, 178, 0)).Bold(), IsRoleOfCategory(RoleCategory.NeutralRole)),
+          (Language.Translate("role.category.crewmate").Color(NebulaTeams.CrewmateTeam.Color).Bold(), IsRoleOfCategory(RoleCategory.CrewmateRole)),
+          (Language.Translate("role.category.modifier").Bold(), a => a is DefinedModifier),
         ];
     }
 }

@@ -12,6 +12,9 @@
 # Options
 
 "options.role.bomber.detail" : "炸弹王可以通过炸弹炸死其他玩家。"
+"options.role.bomber.bombIgniteOf" : "炸弹点燃安装方式"
+"options.role.bomber.bombIgniteOf.self" : "自身"
+"options.role.bomber.bombIgniteOf.other" : "他人"
 "options.role.bomber.igniteBombCooldown" : "点燃冷却时间"
 "options.role.bomber.activatebombTime" : "炸弹激活时间"
 "options.role.bomber.bombExplodeTime" : "炸弹爆炸时间"
@@ -29,4 +32,4 @@
 
 # State
 
-"state.explosion" : "爆炸"
+"state.bomb.explosion" : "爆炸"

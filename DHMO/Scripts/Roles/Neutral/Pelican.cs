@@ -12,7 +12,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
 
     public static readonly IRelativeCooldownConfiguration DevourCooldown = NebulaAPI.Configurations.KillConfiguration("options.role.pelican.devourCooldown", CoolDownType.Immediate, (0f, 60f, 2.5f), 25f, (-40f, 40f, 2.5f), 0f, (0.125f, 2f, 0.125f), 1f);
     public static readonly BoolConfiguration CanReduceCDOption = NebulaAPI.Configurations.Configuration("options.role.pelican.canReduceCD", true);
-    public static readonly IntegerConfiguration ReduceTime = NebulaAPI.Configurations.Configuration("options.role.pelican.reduceTime", (1, 10), 3, () => CanReduceCDOption);
+    public static readonly FloatConfiguration ReduceTime = NebulaAPI.Configurations.Configuration("options.role.pelican.reduceTime", (0.5f, 10f, 0.5f), 3f, FloatConfigurationDecorator.Second, () => CanReduceCDOption);
     static private readonly IVentConfiguration VentConfiguration = NebulaAPI.Configurations.NeutralVentConfiguration("role.pelican.vent", true);
 
     private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("Button/DevourButton.png")?.AsImage(115f);
@@ -68,7 +68,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
 
             if (AmOwner)
             {
-                var devourTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, p => ObjectTrackers.PlayerlikeStandardPredicate(p), MyRole.UnityColor, false, false);
+                var devourTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, p => ObjectTrackers.PlayerlikeLocalKillablePredicate(p), MyRole.UnityColor, false, false);
 
                 var devourButton = NebulaAPI.Modules.AbilityButton(this, false, true, 0, false)
                     .BindKey(VirtualKeyInput.Kill).SetImage(buttonImage!).SetLabel("pelican.devour").SetColorLabel(MyRole.RoleColor);
@@ -77,7 +77,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                 devourButton.Availability = _ => devourTracker.CurrentTarget is not null && MyPlayer.CanMove;
                 devourButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, DevourCooldown.Cooldown).SetAsAbilityTimer().Start();
 
-                devourButton.OnClick = _ =>
+                devourButton.OnClick = button =>
                 {
                     var target = devourTracker.CurrentTarget;
                     if (target == null) return;
@@ -88,18 +88,19 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                     {
                         if (p.TryGetAbility<Bait.Ability>(out var a) || p.Modifiers.Any(m => m.Modifier.InternalName.Contains("bait")))
                         {
-                            var cancelable = GameOperatorManager.Instance?.Run(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                            var cancelable = NebulaAPI.RunEvent(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
                             if (!(cancelable?.IsCanceled ?? false))
                                 MyPlayer.MurderPlayer(target, PlayerState.Dead, EventDetail.Kill, KillParameter.NormalKill);
 
                             if (cancelable?.ResetCooldown ?? false) NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
                             return;
                         }
+
                         RpcUpdateStatus.Invoke((MyPlayer, p, 1));
                         RPCSetCam.Invoke((p, MyPlayer, new VVector2(-100f, 10f)));
-                        devourButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, GetCurrentCooldown()).SetAsAbilityTimer();
+                        button.CoolDownTimer?.Start(GetCurrentCooldown());
                     }
-                    devourButton.StartCoolDown();
+                    button.StartCoolDown();
                 };
 
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(devourButton.GetKillButtonLike());

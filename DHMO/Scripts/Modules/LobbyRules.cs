@@ -6,6 +6,10 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
 {
     public LobbyRule() => ModSingleton<LobbyRule>.Instance = this;
     static LobbyRule() => DIManager.Instance.RegisterModule(() => new LobbyRule());
+
+    private static MetaScreen? lastWindow;
+    public static bool IsShown => lastWindow != null;
+
     protected override void OnInjected(Game container) => this.Register(container);
 
     public static RemoteProcess<PlayerControl> RpcRequestRules = new("RequestRules", (requester, _) =>
@@ -17,18 +21,15 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
     public static RemoteProcess<(PlayerControl host, PlayerControl target, string rulesText)> RpcShowRules = new("ShowRules", (message, _) =>
     {
         if (!message.host.AmHost() || AmongUsLLImpl.LocalPlayer.PlayerId != message.target.PlayerId) return;
-        ModSingleton<LobbyRule>.Instance.OpenClientRuleScreen(HudManager.Instance.transform, message.rulesText);
+        ModSingleton<LobbyRule>.Instance.OpenClientRuleScreen(message.rulesText);
     });
-
-    private static MetaScreen? lastWindow;
-    public static bool IsShown => lastWindow != null;
 
     void OnUpdate(UpdateEvent ev)
     {
         if (!PreloadManager.FinishedPreload || !((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.U))
             || AmongUsLLImpl.AmongUsClientInstance.GameState == InnerNet.InnerNetClient.GameStates.NotJoined || IsShown) return;
 
-        if (AmongUsLLImpl.LocalPlayer.AmHost()) OpenHostRuleScreen(HudManager.Instance.transform);
+        if (AmongUsLLImpl.LocalPlayer.AmHost()) OpenHostRuleScreen();
         else RpcRequestRules.Invoke(PlayerControl.LocalPlayer);
     }
 
@@ -38,9 +39,9 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
         return string.IsNullOrEmpty(dir) ? string.Empty : Path.Combine(dir, "LobbyRules.txt");
     }
 
-    private (MetaScreen window, string hostName, GUIWidget titleWidget) CreateRuleWindow(Transform transform)
+    private (MetaScreen window, string hostName, GUIWidget titleWidget) CreateRuleWindow()
     {
-        var window = MetaScreen.GenerateWindow(new VVector2(7.5f, 4.6f), transform, new VVector3(0f, 0f, -200f), true, false, true, BackgroundSetting.Modern);
+        var window = MetaScreen.GenerateWindow(new VVector2(7.5f, 4.6f), AmongUsLLImpl.HudManagerInstance.transform, new VVector3(0f, 0f, -200f), true, false, true, BackgroundSetting.Modern);
         lastWindow = window;
         var host = AmongUsLLImpl.AmongUsClientInstance.GetHost().Character;
         var hostName = $"<b>{Language.Translate("lobby.host")}</b>: <b>{host.name.Color(MyContainer.GetColor(host.PlayerId).MainColor)}</b>";
@@ -52,11 +53,11 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
         return (window, hostName, titleWidget);
     }
 
-    internal MetaScreen? OpenClientRuleScreen(Transform transform, string? rule)
+    internal MetaScreen? OpenClientRuleScreen(string? rule)
     {
         if (string.IsNullOrEmpty(rule)) { DebugScreen.Push(Language.Translate("lobby.rule.error"), 1f); return null; }
 
-        var (window, _, titleWidget) = CreateRuleWindow(transform);
+        var (window, _, titleWidget) = CreateRuleWindow();
 
         var ruleWidget = NebulaAPI.GUI.VerticalHolder(GUIAlignment.Center, titleWidget,
             NebulaAPI.GUI.RawText(GUIAlignment.Center, AttributeAsset.DocumentStandard, $"<size=125%>{rule}</size>"),
@@ -66,9 +67,9 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
         return window;
     }
 
-    internal MetaScreen? OpenHostRuleScreen(Transform transform)
+    internal MetaScreen? OpenHostRuleScreen()
     {
-        var (window, _, titleWidget) = CreateRuleWindow(transform);
+        var (window, _, titleWidget) = CreateRuleWindow();
         var inputField = new GUITextField(GUIAlignment.Center, new Virial.Compat.Size(7f, 3.25f))
         {
             IsSharpField = false,

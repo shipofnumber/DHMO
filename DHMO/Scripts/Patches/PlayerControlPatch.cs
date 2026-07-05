@@ -7,7 +7,7 @@ public static class PlayerControlPatch
     [HarmonyPostfix]
     public static void PlayerCanMovePatch(ref bool __result)
     {
-        if (Minigame.Instance || AmongUsLLImpl.HudManagerBridge.Chat.IsOpenOrOpening || AmongUsLLImpl.HudManagerInstance.KillOverlay.IsOpen || AmongUsLLImpl.HudManagerInstance.GameMenu.IsOpen) return;
+        if (Minigame.Instance.AsBoolFast() || AmongUsLLImpl.HudManagerBridge.Chat.IsOpenOrOpening || AmongUsLLImpl.HudManagerInstance.KillOverlay.IsOpen || AmongUsLLImpl.HudManagerInstance.GameMenu.IsOpen) return;
         if (GamePlayer.LocalPlayer is null) return;
         if (!__result && AddonHelper.IsOutMeeting() && NebulaAPI.CurrentGame != null && (GamePlayer.LocalPlayer.Role is Raven.Instance || GamePlayer.LocalPlayer.TryGetAbility<LucidDreamer.Ability>(out _)))
             __result = true;
@@ -21,6 +21,7 @@ public static class PlayerControlPatch
         try
         {
             if (target == null) return true;
+
             var reporter = __instance.ToGamePlayer();
             var reported = GamePlayer.GetPlayer(target.PlayerId);
             if (reporter != null && reported != null && reporter.Role.GetAbility<Bomber.Ability>() != null)

@@ -1,7 +1,7 @@
 ﻿namespace DHMO.Roles.Script;
 
 [NebulaPreprocess(PreprocessPhase.PostRoles)]
-public class BombEvidence(VVector2 pos) : NebulaSyncStandardObject(pos, NebulaSyncStandardObject.ZOption.Back, true, evidenceSprite.GetSprite(), false), IGameOperator
+public class BombEvidence(VVector2 pos) : NebulaSyncStandardObject(pos, NebulaSyncStandardObject.ZOption.Back, false, evidenceSprite.GetSprite(), false), IGameOperator
 {
     static BombEvidence() => RegisterInstantiater(MyTag, args => new BombEvidence(new VVector2(args[0], args[1])));
     public static string MyTag = "BomberEvidence";
@@ -20,7 +20,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
     public GameActionType PassBombAction = new("bomber.passbomb", Roles.Impostor.Bomber.MyRole);
     public static Image passBombImage = NebulaAPI.AddonAsset.GetResource("Button/PassBombButton.png")?.AsImage(115f)!;
     public static IDividedSpriteLoader ExplosionSprite = DividedSpriteLoader.FromResource("Nebula.Resources.ExplosionAnim.png", 120f, 4, 2);
-    public static TranslatableTag explosion = new("state.bomber.explosion");
+    public static TranslatableTag explosion = new("state.bomb.explosion");
 
     public Bomb(GamePlayer owner, GamePlayer bomber, float duration)
     {
@@ -38,7 +38,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
             passButton.Visibility = _ => Owner.IsAlive && (Owner.PlayerId == Bomber.PlayerId || Timer.CurrentTime <= global::DHMO.Roles.Impostor.Bomber.BombExplodeTime);
             passButton.Availability = _ => Owner.CanMove && passTracker.CurrentTarget != null;
             passButton.PlayFlashWhile = _ => true;
-            passButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, 3f).SetAsAbilityTimer().Start(null);
+            passButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, Owner.PlayerId == Bomber.PlayerId ? 0f : 3f).SetAsAbilityTimer().Start(null);
 
             passButton.OnClick = _ =>
             {
@@ -51,14 +51,14 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
             passButton.OnUpdate = _ => passButton.UpdateUsesIcon(GetBombTime().ToString());
         }
 
-        GameOperatorManager.Instance?.Subscribe<MeetingStartEvent>(ev => Timer?.Pause(), this);
+        GameOperatorManager.Instance?.Subscribe<MeetingPreStartEvent>(ev => Timer?.Pause(), this);
     }
 
     int GetBombTime() => Mathn.CeilToInt(Timer?.CurrentTime ?? 0f);
 
     private static IEnumerator CoPlayExplosion(VVector2 pos)
     {
-        NebulaAsset.PlaySE(NebulaAudioClip.ExplosionNear, pos, 20f, 20f);
+        NebulaAsset.PlaySE(NebulaAudioClip.ExplosionNear, pos, 5f, 5f);
         var explosion = UnityHelper.CreateObject<SpriteRenderer>("Explosion", null, pos.AsVector3(-10f));
         for (int i = 0; i < 8; i++)
         {
@@ -78,9 +78,9 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 
     internal static void BombExplode(GamePlayer bomber, GamePlayer owner)
     {
-        var killParam = KillParameter.RemoteKill | KillParameter.WithoutSelfSE & ~KillParameter.WithOverlay;
-        if (!Impostor.Bomber.BombKillLeftDeadBody)
-            killParam &= ~KillParameter.WithDeadBody;
+        var killParam = KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE;
+        if (Impostor.Bomber.BombKillLeftDeadBody)
+            killParam |= KillParameter.WithDeadBody;
 
         var ev = NebulaAPI.RunEvent(new BombExplodeEvent(owner));
         bomber.MurderPlayer(ev.Player, explosion, EventDetails.Kill, killParam, KillCondition.TargetAlive | KillCondition.InTaskPhase);
