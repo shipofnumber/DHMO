@@ -22,14 +22,15 @@ public static class PlayerControlPatch
         {
             if (target == null) return true;
 
-            var reporter = __instance.ToGamePlayer();
+            var reporter = __instance.GetModInfo();
             var reported = GamePlayer.GetPlayer(target.PlayerId);
             if (reporter != null && reported != null && reporter.Role.GetAbility<Bomber.Ability>() != null)
             {
                 if (reported.Role.GetAbility<Bait.Ability>() != null || reported.Modifiers.Any(r => r.Modifier.InternalName.Contains("bait")))
                 {
-                    if (NebulaGameManager.Instance != null && NebulaGameManager.Instance.HavePassed(reported.DeathTime ?? NebulaGameManager.Instance.CurrentTime, Mathf.Min(0.5f, (NebulaAPI.Configurations.GetSharableVariable<int>("options.role.bait.reportDelay")?.Value ?? 0f) + NebulaAPI.Configurations.GetSharableVariable<int>("options.role.bait.reportDelayDispersion")?.Value ?? 0f) + 1f))
+                    if (NebulaGameManager.Instance != null && NebulaGameManager.Instance.HavePassed(reported.DeathTime ?? NebulaGameManager.Instance.CurrentTime, Mathn.Min(0.5f, (NebulaAPI.Configurations.GetSharableVariable<int>("options.role.bait.reportDelay")?.Value ?? 0f) + NebulaAPI.Configurations.GetSharableVariable<int>("options.role.bait.reportDelayDispersion")?.Value ?? 0f) + 1f))
                         return true;
+
                     return false;
                 }
             }
@@ -47,7 +48,7 @@ public static class PlayerControlPatch
         if (!amDead && NebulaAPI.CurrentGame != null)
         {
             PlayerControl playerControl = __instance.myPlayer;
-            var player = playerControl.ToGamePlayer();
+            var player = playerControl.GetModInfo();
             bool outMeet = AddonHelper.IsOutMeeting();
             bool forceGhost = false;
 

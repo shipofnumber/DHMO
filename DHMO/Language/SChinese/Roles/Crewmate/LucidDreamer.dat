@@ -17,7 +17,7 @@
 "options.role.lucidDreamer.detail" : "清醒梦可以离开会议获得信息或完成任务。"
 "options.role.lucidDreamer.numOfLeave" : "离开会议次数"
 "options.role.lucidDreamer.leavingDuration" : "离开持续时间"
-"options.role.lucidDreamer.canLeaveMultiple" : "一轮会议可以多次离开"
+"options.role.lucidDreamer.canLeaveMultiple" : "会议时可以多次离开"
 "options.role.lucidDreamer.maxLeftVotingTimeForLeaving" : "可离开最大会议剩余时间"
 "options.role.lucidDreamer.numOfCanCompleteTasks" : "离开期间最大可完成任务数"
 

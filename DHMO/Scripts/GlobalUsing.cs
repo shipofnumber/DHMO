@@ -1,6 +1,7 @@
 ﻿global using BepInEx.Unity.IL2CPP.Utils;
 global using BepInEx.Unity.IL2CPP.Utils.Collections;
 global using DHMO;
+global using DHMO.Behaviour;
 global using DHMO.Modules;
 global using DHMO.Patches;
 global using DHMO.Roles.Crewmate;

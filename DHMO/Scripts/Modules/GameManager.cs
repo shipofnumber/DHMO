@@ -19,12 +19,11 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         }
     }
 
-    void OnMeetingPreEnd(MeetingVoteEndEvent ev)
+    void OnMeetingPreEnd(MeetingPreEndEvent ev)
     {
-        if (NebulaAPI.CurrentGame is null) return;
         foreach (var player in GamePlayer.AllPlayers)
         {
-            if (player.VanillaPlayer) MeetingStartPatch.ModResetForMeeting(player.VanillaPlayer);
+            if (player.VanillaPlayer.AsBoolFast(out var vanillaPlayer)) MeetingStartPatch.ModResetForMeeting(vanillaPlayer);
         }
     }
 

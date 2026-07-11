@@ -1,4 +1,6 @@
-﻿namespace DHMO.Roles.Crewmate;
+﻿using Sentry.Internal;
+
+namespace DHMO.Roles.Crewmate;
 
 public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Ability>, DefinedRole, HasCitation, IAssignableDocument
 {
@@ -54,42 +56,71 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                     NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
             }, this);
 
-            if (!AmOwner) return;
-
             GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
             {
                 if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
                     NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
             }, this);
 
-            meetingButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
-                .BindKey(VirtualKeyInput.SidekickAction)
-                .SetColorLabel(MyRole.RoleColor)
-                .SetImage(buttonImage!)
-                .SetAsUsurpableButton(this);
-
-            meetingButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting;
-            meetingButton.Availability = _ => leftLeave > 0 && AddonHelper.ModAbilityMeetingButton() && coroutine == null && (CanLeaveMultiple || canLeave) && MeetingHudExtension.VotingTimer > MaxLeftVotingTimeForLeaving;
-            meetingButton.EffectTimer = NebulaAPI.Modules.Timer(this, LeavingDuration);
-            meetingButton.ShowUsesIcon(3, leftLeave.ToString());
-
-            meetingButton.OnClick = button =>
+            if (AmOwner)
             {
-                if (AddonHelper.IsOutMeeting())
-                    button.InterruptEffect();
-                else
-                    LeaveOrJoinMeeting(true);
-            };
-            meetingButton.OnEffectEnd = _ => LeaveOrJoinMeeting(!AddonHelper.IsOutMeeting());
-            meetingButton.OnUpdate = button =>
-            {
-                if (AddonHelper.IsOutMeeting())
+                var modUseButton = new ModAbilityButtonImpl(alwaysShow: true).Register(this);
+                modUseButton.Visibility = _ => MyPlayer.IsAlive && AddonHelper.IsOutMeeting() && coroutine == null;
+                modUseButton.Availability = _ => MyPlayer.CanMove && MyPlayer.VanillaPlayer.closest != null && canCompleteTasks > 0;
+                modUseButton.OnClick = _ => MyPlayer.VanillaPlayer.UseClosest();
+                modUseButton.OnUpdate = button =>
                 {
-                    if ((MeetingHudExtension.VotingTimer <= MaxLeftVotingTimeForLeaving || canCompleteTasks <= 0) && coroutine == null)
-                        LeaveOrJoinMeeting(false);
-                }
-                button.SetLabel(AddonHelper.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
-            };
+                    if (!AmongUsLLImpl.TryGetHudManager(out var hud, out var bridge)) return;
+
+                    ImageNames imageNames;
+
+                    if (bridge.UseButton.currentTarget == null)
+                        imageNames = ImageNames.UseButton;
+                    else
+                        imageNames = bridge.UseButton.currentTarget.UseIcon;
+
+                    if (!bridge.UseButtonVanillaSettings.ContainsKey(imageNames))
+                        imageNames = ImageNames.UseButton;
+
+                    var settings = bridge.UseButtonVanillaSettings[imageNames];
+
+                    if (settings.AsBoolFast())
+                    {
+                        button.SetSprite(settings.Image);
+                        button.VanillaButton.buttonLabelText.SetSharedMaterial(settings.FontMaterial);
+                        button.SetRawLabel(VanillaTranslationCache.GetString(settings.Text));
+                    }
+                };
+
+                meetingButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
+                    .BindKey(VirtualKeyInput.SidekickAction)
+                    .SetColorLabel(MyRole.RoleColor)
+                    .SetImage(buttonImage!)
+                    .SetAsUsurpableButton(this);
+
+                meetingButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting && leftLeave > 0;
+                meetingButton.Availability = _ => AddonHelper.ModAbilityMeetingButton() && coroutine == null && (CanLeaveMultiple || canLeave) && MeetingHudExtension.VotingTimer > MaxLeftVotingTimeForLeaving;
+                meetingButton.EffectTimer = NebulaAPI.Modules.Timer(this, LeavingDuration);
+                meetingButton.ShowUsesIcon(3, leftLeave.ToString());
+
+                meetingButton.OnClick = button =>
+                {
+                    if (AddonHelper.IsOutMeeting())
+                        button.InterruptEffect();
+                    else
+                        LeaveOrJoinMeeting(true);
+                };
+                meetingButton.OnEffectEnd = _ => LeaveOrJoinMeeting(!AddonHelper.IsOutMeeting());
+                meetingButton.OnUpdate = button =>
+                {
+                    if (AddonHelper.IsOutMeeting())
+                    {
+                        if ((MeetingHudExtension.VotingTimer <= MaxLeftVotingTimeForLeaving || canCompleteTasks <= 0) && coroutine == null)
+                            LeaveOrJoinMeeting(false);
+                    }
+                    button.SetLabel(AddonHelper.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
+                };
+            }
         }
 
         void LeaveOrJoinMeeting(bool isLeaving)
@@ -106,9 +137,9 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
 
         private IEnumerator CoLeaveOrJoinMeeting(bool isLeaving)
         {
-            if (!AmongUsLLImpl.TryGetHudManager(out var hud)) yield break;
+            yield return AmongUsLLImpl.TryGetHudManager(out var hud);
 
-                if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.ForceClose();
+            if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.ForceClose();
             if (AmongUsUtil.MapIsOpen) MapBehaviour.Instance.Close();
             if (hud.GameMenu.IsOpen) hud.GameMenu.Close();
 
@@ -154,13 +185,13 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
 
         bool IPlayerAbility.EyesightIgnoreWalls => AddonHelper.IsOutMeeting() && MyPlayer.IsAlive;
 
-        public static RemoteProcess<(GamePlayer player, bool on)> RpcCamouflage = new("LucidDreamerCamouflage", (message, _) =>
+        public static RemoteProcess<(GamePlayer player, bool add)> RpcCamouflage = new("LucidDreamerCamouflage", (message, _) =>
         {
             if (NebulaGameManager.Instance is null || GamePlayer.LocalPlayer is null) return;
             if (message.player.AmOwner || GamePlayer.LocalPlayer.Role is not Raven.Instance) return;
 
             var tag = $"LucidDreamer{GamePlayer.LocalPlayer.PlayerId}";
-            if (message.on)
+            if (message.add)
                 message.player?.Unbox().AddOutfit(new OutfitCandidate(NebulaGameManager.Instance.UnknownOutfit, tag, 50, false));
             else
                 message.player?.Unbox().RemoveOutfit(tag);

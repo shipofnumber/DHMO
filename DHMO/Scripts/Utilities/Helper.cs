@@ -2,7 +2,7 @@
 
 public static class AddonHelper
 {
-    internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.scriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
+    internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.ScriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
 
     public static int GetAlivePlayers(Predicate<GamePlayer>? predicate = null) => GamePlayer.AllPlayers.Where(p => predicate == null || predicate(p)).Count(p => p.IsAlive);
 
@@ -26,8 +26,6 @@ public static class AddonHelper
     public static void AddCustomChat(this ChatController chatController, PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
     {
         AmongUsLLImpl.TryGetLocalPlayer(out var localPlayer);
-
-        if (string.IsNullOrEmpty(chatText) || !chatController.AsBoolFast()) return;
 
         var sourcePlayerData = sourcePlayer.Data;
         ChatBubble pooledBubble = chatController.GetPooledBubble();
@@ -63,20 +61,16 @@ public static class AddonHelper
 
             if (!isLocalPlayer && !chatController.IsOpenOrOpening)
             {
-                if (SoundManager.Instance != null && chatController.messageSound != null)
-                {
-                    var soundPlayer = SoundManager.Instance.PlaySound(chatController.messageSound, false, 1f, null);
-                    soundPlayer.pitch = 0.5f + sourcePlayer.PlayerId / 15f;
-                }
+                var soundPlayer = AmongUsLLImpl.SoundManagerInstance.PlaySound(chatController.messageSound, false, 1f, null);
+                soundPlayer.pitch = 0.5f + sourcePlayer.PlayerId / 15f;
 
-                chatController.chatNotification?.SetUp(sourcePlayer, chatText);
+                chatController.chatNotification.SetUp(sourcePlayer, chatText);
             }
         }
         catch (Exception e)
         {
             DLog.Log(e);
-            if (pooledBubble != null && chatController.chatBubblePool != null)
-                chatController.chatBubblePool.Reclaim(pooledBubble);
+            chatController.chatBubblePool.Reclaim(pooledBubble);
         }
     }
 }
@@ -104,51 +98,4 @@ public static class APICompat
     public static void Destroy(this UnityEngine.Object obj) => UnityEngine.Object.Destroy(obj);
 
     public static void DestroyImmediate(this UnityEngine.Object obj) => UnityEngine.Object.DestroyImmediate(obj);
-
-    static public GamePlayer? ToGamePlayer(this PlayerControl player) => GamePlayer.GetPlayer(player.PlayerId);
-
-    static public FieldInfo? GetPrivateFieldInfo(this object instance, string fieldname)
-    {
-        return instance.GetType().GetField(fieldname, BindingFlags.Instance | BindingFlags.NonPublic);
-    }
-    static public T? GetPrivateField<T>(this object instance, string fieldname)
-    {
-        return (T?)instance.GetPrivateFieldInfo(fieldname)?.GetValue(instance);
-    }
-    static public void SetPrivateField(this object instance, string fieldname, object value)
-    {
-        instance.GetPrivateFieldInfo(fieldname)?.SetValue(instance, value);
-    }
-    static public MethodInfo? GetPrivateMethodInfo(this object instance, string method)
-    {
-        if (instance is Type)
-        {
-            return (instance as Type)!.GetPrivateMethodInfoType(method);
-        }
-        return instance.GetType().GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic);
-    }
-    static public MethodInfo? GetPrivateMethodInfoType(this Type type, string method)
-    {
-        return type.GetMethod(method, BindingFlags.Instance | BindingFlags.NonPublic);
-    }
-    static public MethodInfo? GetPrivateStaticMethodInfo(this object instance, string method)
-    {
-        return instance.GetType().GetMethod(method, BindingFlags.Static | BindingFlags.NonPublic);
-    }
-    static public MethodInfo? GetPrivateStaticMethodInfoType(this Type type, string method)
-    {
-        return type.GetMethod(method, BindingFlags.Static | BindingFlags.NonPublic);
-    }
-    static public T? CallPrivateMethod<T>(this object instance, string method, params object[] param)
-    {
-        return (T?)instance.GetPrivateMethodInfo(method)?.Invoke(instance, param);
-    }
-    static public T? CallPrivateStaticMethod<T>(this object instance, string method, params object[] param)
-    {
-        return (T?)instance.GetPrivateStaticMethodInfo(method)?.Invoke(instance, param);
-    }
-    static public Type? GetPrivateChildType(this Type t, string name)
-    {
-        return t.GetNestedType(name, BindingFlags.NonPublic);
-    }
 }
