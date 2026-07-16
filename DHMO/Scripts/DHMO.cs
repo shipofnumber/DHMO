@@ -30,7 +30,7 @@ public class DHMO
 
 public class DLog
 {
-    public static void Log(object? message)
+    public static void Log(object message)
     {
         var log = NebulaAPI.Logging.NebulaLogger("DHMO");
         var text = message?.ToString() ?? string.Empty;

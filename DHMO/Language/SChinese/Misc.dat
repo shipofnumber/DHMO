@@ -1,16 +1,17 @@
-# Certification
-
-"certification.unmatchedAddon.redundant" : "多余插件"
-"certification.unmatchedAddon.missing" : "缺失插件"
-"certification.unmatchedAddon.unmatched" : "哈希不匹配"
-
 # LobbyRule
 
-"lobby.host.rule" : "房间规则"
-"lobby.host" : "主持人"
-"ui.lobby.rule" : "房规"
-"ui.lobby.error" : "输入框不能为空。"
-"lobby.rule.error" : "房规无内容。"
+"ui.lobbyRules.noTitle" : "房间规则"
+"ui.lobbyRules.host" : "主持人"
+"ui.lobbyRules.confirmation" : "确认"
+"ui.lobbyRules.return" : "返回"
+"ui.lobbyRules.rule" : "请填写房规。"
+"ui.lobbyRules.fieldNoText" : "输入框不能为空。"
+"ui.lobbyRules.selectFileSuccessfully" : "已将%FILE%设为当前房规。"
+"ui.lobbyRules.noTextError" : "房规无内容。"
+
+# Help
+
+"help.command.showRule" : "显示房规"
 
 # Action
 

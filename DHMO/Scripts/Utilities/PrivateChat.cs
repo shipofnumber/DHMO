@@ -25,4 +25,9 @@ public class PrivateChat
 
         }
     }
+
+    public static void SetPredicate()
+    {
+
+    }
 }

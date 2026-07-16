@@ -70,9 +70,11 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             this.leftUses = uses;
 
             if (HasPrivateChat)
+            {
                 PrivateChat.RegisterPublicChannel(MyRole.Color, MyRole.Color, $"Jailor{MyPlayer.PlayerId}", Language.Translate("chat.jailortext"), this,
                     () => AmongUsUtil.InMeeting && jailed != null && jailed.IsAlive && (MyPlayer.AmOwner || jailed.AmOwner), true,
                     text => RpcSendChat.Invoke((MyPlayer, GamePlayer.LocalPlayer ?? MyPlayer, text)));
+            }
 
             if (AmOwner)
             {
@@ -238,14 +240,14 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
         private static readonly RemoteProcess<(GamePlayer jailor, GamePlayer sender, string text)> RpcSendChat = new("JailorSendChat", (message, _) =>
         {
             if (string.IsNullOrEmpty(message.text) || NebulaGameManager.Instance == null || !message.jailor.TryGetAbility<Jailor.Ability>(out var ability) || ability.jailed == null) return;
-            if (message.jailor.AmOwner && ability.jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo) return;
+            if (!message.jailor.AmOwner && !ability.jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo) return;
 
             var chat = AmongUsLLImpl.HudManagerBridge.Chat;
             VColor color = Jailor.MyRole.Color;
             string tag = Language.Translate("chat.jailortext");
             GamePlayer sender = message.sender;
 
-            if (sender == message.jailor && GamePlayer.LocalPlayer == ability.jailed && !NebulaGameManager.Instance.CanSeeAllInfo)
+            if (sender == message.jailor && ability.jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo)
                 chat.AddCustomChat(sender.VanillaPlayer, ability.jailed.VanillaPlayer, $"{(Jailor.MyRole as DefinedAssignable).DisplayName}({tag})".Color(color), message.text);
             else
                 chat.AddCustomChat(sender.VanillaPlayer, sender.VanillaPlayer, $"{sender.Name}{$"({tag})".Color(color)}", message.text);

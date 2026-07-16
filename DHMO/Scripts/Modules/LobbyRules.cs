@@ -1,84 +1,106 @@
-﻿namespace DHMO.Modules;
+﻿using BepInEx;
 
-[NebulaPreprocess(PreprocessPhase.PostBuildNoS)]
+namespace DHMO.Modules;
+
 [NebulaRPCHolder]
-public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
+public class LobbyRules
 {
-    public LobbyRule() => ModSingleton<LobbyRule>.Instance = this;
-    static LobbyRule() => DIManager.Instance.RegisterModule(() => new LobbyRule());
+    static LobbyRules()
+    {
+        var dirPath = Path.Combine(Paths.GameRootPath, "LobbyRules");
+        if (!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
 
+        var files = Directory.GetFiles(dirPath, "*.txt", SearchOption.AllDirectories);
+
+        if (!System.IO.File.Exists(setting))
+            System.IO.File.WriteAllText(setting, "");
+
+        if (files.Length == 0)
+        {
+            string ruleFile = Path.Combine(dirPath, "lobbyRule.txt");
+            selectedPath = ruleFile;
+
+            System.IO.File.WriteAllText(setting, ruleFile);
+            System.IO.File.WriteAllText(ruleFile, string.Empty);
+        }
+        else
+        {
+            var path = System.IO.File.ReadAllText(setting);
+            if (System.IO.File.Exists(path))
+                selectedPath = path;
+            else
+                selectedPath = files.FirstOrDefault();
+        }
+    }
+
+    static string setting = Path.Combine(Path.Combine(Paths.GameRootPath, "LobbyRules"), "setting.dat");
     private static MetaScreen? lastWindow;
-    public static bool IsShown => lastWindow != null;
+    internal static bool IsShown => lastWindow.AsBoolFast();
+    internal static string? currentPath = "";
+    internal static string? selectedPath = "";
 
-    protected override void OnInjected(Game container) => this.Register(container);
-
-    public static RemoteProcess<PlayerControl> RpcRequestRules = new("RequestRules", (requester, _) =>
+    public static RemoteProcess<byte> RpcRequestRules = new("RequestRules", (requester, _) =>
     {
         if (!AmongUsLLImpl.AmongUsClientInstance.AmHost) return;
-        RpcShowRules?.Invoke((AmongUsLLImpl.LocalPlayer, requester, GetLobbyRulesText()));
+        RpcShowRules?.Invoke((AmongUsLLImpl.LocalPlayer.OwnerId, requester, GetLobbyRulesText(selectedPath), Path.GetFileNameWithoutExtension(selectedPath)));
     });
 
-    public static RemoteProcess<(PlayerControl host, PlayerControl target, string rulesText)> RpcShowRules = new("ShowRules", (message, _) =>
+    public static RemoteProcess<(int host, byte target, string rulesText, string title)> RpcShowRules = new("ShowRules", (message, _) =>
     {
-        if (!message.host.AmHost() || AmongUsLLImpl.LocalPlayer.PlayerId != message.target.PlayerId) return;
-        ModSingleton<LobbyRule>.Instance.OpenClientRuleScreen(message.rulesText);
+        if (AmongUsLLImpl.AmongUsClientInstance.HostId != message.host || AmongUsLLImpl.LocalPlayer.PlayerId != message.target) return;
+        LobbyRules.OpenClientRuleScreen(message.rulesText, message.title);
     });
 
-    void OnUpdate(UpdateEvent ev)
-    {
-        if (!PreloadManager.FinishedPreload || !((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && Input.GetKeyDown(KeyCode.U))
-            || AmongUsLLImpl.AmongUsClientInstance.GameState == InnerNet.InnerNetClient.GameStates.NotJoined || IsShown) return;
-
-        if (AmongUsLLImpl.LocalPlayer.AmHost()) OpenHostRuleScreen();
-        else RpcRequestRules.Invoke(PlayerControl.LocalPlayer);
-    }
-
-    private static string GetLobbyRulesPath()
-    {
-        var dir = new DirectoryInfo(Application.dataPath).Parent?.FullName ?? Application.dataPath;
-        return string.IsNullOrEmpty(dir) ? string.Empty : Path.Combine(dir, "LobbyRules.txt");
-    }
-
-    private (MetaScreen window, string hostName, GUIWidget titleWidget) CreateRuleWindow()
+    private static (MetaScreen window, GUIWidget titleWidget) CreateRuleWindow(string? title)
     {
         var window = MetaScreen.GenerateWindow(new VVector2(7.5f, 4.6f), AmongUsLLImpl.HudManagerInstance.transform, new VVector3(0f, 0f, -200f), true, false, true, BackgroundSetting.Modern);
         lastWindow = window;
         var host = AmongUsLLImpl.AmongUsClientInstance.GetHost().Character;
-        var hostName = $"<b>{Language.Translate("lobby.host")}</b>: <b>{host.name.Color(MyContainer.GetColor(host.PlayerId).MainColor)}</b>";
+        var hostName = $"<b>{Language.Translate("ui.lobbyRules.host")}</b>: <b>{host.name}</b>";
 
         var titleWidget = NebulaAPI.GUI.VerticalHolder(GUIAlignment.Center,
-            NebulaAPI.GUI.RawText(GUIAlignment.Center, AttributeAsset.DocumentTitle, Language.Translate("lobby.host.rule")),
-            NebulaAPI.GUI.RawText(GUIAlignment.Center, AttributeAsset.DocumentStandard, hostName));
+            NebulaAPI.GUI.RawText(GUIAlignment.Center, AttributeAsset.DocumentTitle, title ?? Language.Translate("ui.lobbyRules.noTitle")),
+            NebulaAPI.GUI.RawText(GUIAlignment.Center, AttributeAsset.DocumentBold, hostName));
 
-        return (window, hostName, titleWidget);
+        return (window, titleWidget);
     }
 
-    internal MetaScreen? OpenClientRuleScreen(string? rule)
+    internal static MetaScreen? OpenClientRuleScreen(string? rule, string? title)
     {
-        if (string.IsNullOrEmpty(rule)) { DebugScreen.Push(Language.Translate("lobby.rule.error"), 1f); return null; }
+        if (string.IsNullOrEmpty(rule)) { DebugScreen.Push(Language.Translate("ui.lobbyRules.noTextError"), 1f); return null; }
 
-        var (window, _, titleWidget) = CreateRuleWindow();
+        var (window, titleWidget) = CreateRuleWindow(title);
 
         var ruleWidget = NebulaAPI.GUI.VerticalHolder(GUIAlignment.Center, titleWidget,
-            NebulaAPI.GUI.RawText(GUIAlignment.Center, AttributeAsset.DocumentStandard, $"<size=125%>{rule}</size>"),
+            NebulaAPI.GUI.RawText(GUIAlignment.Center, AttributeAsset.DocumentStandard, $"<size=150%>{rule}</size>"),
             NebulaAPI.GUI.VerticalMargin(0.15f));
 
         window.SetWidget(ruleWidget, new VVector2(0.5f, 1f), out _);
         return window;
     }
 
-    internal MetaScreen? OpenHostRuleScreen()
+    internal static MetaScreen? OpenHostRuleScreen()
     {
-        var (window, _, titleWidget) = CreateRuleWindow();
-        var inputField = new GUITextField(GUIAlignment.Center, new Virial.Compat.Size(7f, 3.25f))
+        var (window, titleWidget) = CreateRuleWindow(Path.GetFileNameWithoutExtension(currentPath));
+
+        var button = new GUIModernButton(Virial.Media.GUIAlignment.TopLeft, AttributeAsset.OptionsButtonMedium, new TranslateTextComponent("ui.lobbyRules.return"))
+        {
+            OnClick = _ =>
+            {
+                window.CloseScreen();
+                CreateSelectFileScreen();
+            }
+        };
+
+        var inputField = new GUITextField(GUIAlignment.Center, new Virial.Compat.Size(6.5f, 3.5f))
         {
             IsSharpField = false,
-            MaxLines = 16,
-            FontSize = 1.4f,
-            DefaultText = GetLobbyRulesText(true) ?? "",
-            HintText = Language.Translate("ui.lobby.rule").Color(VColor.Gray)
+            MaxLines = 18,
+            FontSize = 1.7f,
+            DefaultText = GetLobbyRulesText(currentPath, true) ?? "",
+            HintText = Language.Translate("ui.lobbyRules.rule").Color(VColor.Gray)
         };
-        var confirmButton = new GUIModernButton(GUIAlignment.Center, AttributeAsset.OptionsButtonMedium, new TranslateTextComponent("ui.dialog.confirmation"))
+        var confirmButton = new GUIModernButton(GUIAlignment.TopRight, AttributeAsset.OptionsButtonMedium, new TranslateTextComponent("ui.lobbyRules.confirmation"))
         {
             OnClick = _ =>
             {
@@ -86,35 +108,69 @@ public class LobbyRule : AbstractModule<Virial.Game.Game>, IGameOperator
                 var text = field?.Text ?? "";
                 if (string.IsNullOrEmpty(text))
                 {
-                    field?.SetHint(Language.Translate("ui.lobby.error").Color(VColor.Red.RGBMultiplied(0.7f)).Bold());
+                    field?.SetHint(Language.Translate("ui.lobbyRules.fieldNoText").Color(VColor.Red.RGBMultiplied(0.7f)).Bold());
                     return;
                 }
-                WriteLobbyRulesText(text);
+                WriteLobbyRulesText(currentPath, text);
                 window?.CloseScreen();
             }
         };
-        window.SetWidget(NebulaAPI.GUI.VerticalHolder(GUIAlignment.Center, titleWidget, inputField, confirmButton), new VVector2(0.5f, 1f), out _);
+
+        window.SetWidget(NebulaAPI.GUI.VerticalHolder(GUIAlignment.Center, NebulaAPI.GUI.HorizontalHolder(GUIAlignment.Center, button, confirmButton), titleWidget, inputField), new VVector2(0.5f, 1f), out _);
         return window;
     }
 
-    public static string GetLobbyRulesText(bool isHost = false)
+    internal static MetaScreen CreateSelectFileScreen()
     {
-        var path = GetLobbyRulesPath();
-        if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) return string.Empty;
-        try
+        var window = MetaScreen.GenerateWindow(new(7.5f, 4.6f), AmongUsLLImpl.HudManagerInstance.transform, new(0f, 0f, -200f), true, false, background: BackgroundSetting.Modern);
+        lastWindow = window;
+
+        List<Virial.Media.GUIWidget> widgets = [];
+        string[] txtPath = Directory.GetFiles(Path.Combine(Paths.GameRootPath, "LobbyRules"), "*.txt", SearchOption.AllDirectories);
+
+        foreach (var path in txtPath)
         {
-            var content = System.IO.File.ReadAllText(path);
-            return isHost ? content : content.Replace("\r", "\n");
+            var name = Path.GetFileNameWithoutExtension(path);
+
+            widgets.Add(NebulaAPI.GUI.HorizontalHolder(Virial.Media.GUIAlignment.Center,
+        new NoSGUIFramed(GUIAlignment.Left,NebulaAPI.GUI.VerticalHolder(GUIAlignment.Left, NebulaAPI.GUI.HorizontalMargin(5.75f), NebulaAPI.GUI.RawText(GUIAlignment.Left, AttributeAsset.DocumentBold, name)),
+        new(0.1f, 0.1f), new(0.3f, 0.3f, 0.3f, 0.2f))
+        {
+            OnClicked = () =>
+            {
+                currentPath = path;
+                window.CloseScreen();
+                OpenHostRuleScreen();
+            }
         }
-        catch { return string.Empty; }
+        , new GUIModernButton(Virial.Media.GUIAlignment.Right, AttributeAsset.OptionsButtonMedium, new TranslateTextComponent("ui.lobbyRules.confirmation"))
+        {
+            OnClick = clickable =>
+            {
+                selectedPath = path;
+                WriteLobbyRulesText(setting, path);
+                window.CloseScreen();
+                DebugScreen.Push(Language.Translate("ui.lobbyRules.selectFileSuccessfully").Replace("%FILE%", name), 1f);
+            },
+        }));
+        }
+
+        var scrollView = new GUIScrollView(GUIAlignment.Center, new(7.4f, 4.1f - 0.9f), NebulaAPI.GUI.VerticalHolder(GUIAlignment.Left, widgets));
+        window.SetWidget(NebulaAPI.GUI.VerticalHolder(GUIAlignment.Center, scrollView), new VVector2(0.5f, 1f), out _);
+        return window;
     }
 
-    public static void WriteLobbyRulesText(string text)
+    public static string GetLobbyRulesText(string? path, bool isHost = false)
     {
-        if (string.IsNullOrEmpty(text)) return;
-        var path = GetLobbyRulesPath();
+        if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) return string.Empty;
 
-        if (string.IsNullOrEmpty(path) || !System.IO.File.Exists(path)) return;
-        try { System.IO.File.WriteAllText(path, text); } catch { }
+        var content = System.IO.File.ReadAllText(path);
+        return isHost ? content : content.Replace("\r", "\n");
+    }
+
+    public static void WriteLobbyRulesText(string? path, string text)
+    {
+        if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(path)) return;
+        System.IO.File.WriteAllText(path, text);
     }
 }

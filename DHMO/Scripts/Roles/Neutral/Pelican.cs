@@ -47,12 +47,6 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
             if (MyPlayer.IsAlive) callback.MarkRemaining();
         }
 
-        [OnlyMyPlayer]
-        void OnCheckWin(PlayerCheckWinEvent ev)
-        {
-            ev.SetWinIf(ev.GameEnd == PelicanTeamWin && MyPlayer.IsAlive);
-        }
-
         [OnlyHost]
         void WinCheck(GameUpdateEvent ev)
         {
@@ -60,7 +54,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
             if (NebulaAPI.RunEvent(new KillerTeamCallback(PelicanTeam)).RemainingOtherTeam && devouredPlayers.Count < totalAlive - 1) return;
 
             if (MyPlayer.IsAlive && PelicanTeamWin != null && (totalAlive <= 1 || devouredPlayers.Count >= totalAlive - 1))
-                NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin, GameEndReason.Situation);
+                NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin, GameEndReason.Situation, BitMasks.AsPlayer(1u << MyPlayer.PlayerId));
         }
 
         public override void OnActivated() 
@@ -95,7 +89,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSin
                             return;
                         }
 
-                        p.VanillaPlayer.NetTransform.RpcSnapTo(new VVector2(-100f, 10f));
+                        p.VanillaPlayer.NetTransform.RpcSnapTo(new VVector2(-1000f, 10f));
                         RpcUpdateStatus.Invoke((MyPlayer, p, 1));
                         RPCSetCam.Invoke((p, MyPlayer));
                         button.CoolDownTimer = NebulaAPI.Modules.Timer(this, GetCurrentCooldown()).SetAsKillCoolTimer().Start();

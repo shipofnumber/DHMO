@@ -1,29 +1,28 @@
-﻿namespace DHMO.Roles.Abilities;
+﻿using Virial.Runtime;
 
-public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
+namespace DHMO.Roles.Abilities;
+
+public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
 {
     static readonly Image? MarkImage = NebulaAPI.AddonAsset?.GetResource("Button/MarkButton.png")?.AsImage();
     public static BoolConfiguration CanUseMark = NebulaAPI.Configurations.Configuration("options.meeting.canUseMark", true);
 
     public static Dictionary<byte, HashSet<DefinedAssignable>>? MarkRoleDic { get; set; } = [];
     public static MetaScreen? LastMarkWindow = null;
+    private GamePlayer myPlayer { get; set; }
 
-    private GamePlayer Owner { get; set; }
-    public GamePlayer MyPlayer => Owner;
+    public GamePlayer MyPlayer => myPlayer;
 
     public RoleMarkAbility(ILifespan lifespan, GamePlayer player) : base(lifespan)
     {
         MarkRoleDic = [];
-        foreach (var p in GamePlayer.AllPlayers)
-            MarkRoleDic.Add(p.PlayerId, []);
-
-        Owner = player;
+        myPlayer = player;
 
         var assignables = Nebula.Roles.Roles.AllAssignables().Where(a => a is not DefinedGhostRole && a.ShowOnHelpScreen);
 
         var markButton = NebulaAPI.Modules.AbilityButton(this, isLeftSideButton: true, alwaysShow: true).SetImage(MarkImage!).SetLabel("mark");
         markButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting;
-        markButton.Availability = _ => !Minigame.Instance.AsBoolFast() && MeetingHud.Instance.AsBoolFast() && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !AddonHelper.IsOutMeeting();
+        markButton.Availability = _ => !Minigame.Instance.AsBoolFast() && AmongUsUtil.InMeeting && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !AddonHelper.IsOutMeeting();
         markButton.OnClick = _ =>
         {
             RoleMarkMenu.Open((p) =>
@@ -45,7 +44,7 @@ public class RoleMarkAbility : FlexibleLifespan, IGameOperator, IBindPlayer
             {
                 if (!MarkRoleDic.TryGetValue(p.PlayerId, out var assignablesSet)) return;
 
-                List<DefinedRole> roles = [];
+                HashSet<DefinedRole> roles = [];
                 foreach (var assignable in assignablesSet)
                 {
                     if (assignable is DefinedRole role)

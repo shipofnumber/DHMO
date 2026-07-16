@@ -100,7 +100,7 @@ public class RoleMarkMenu : PlayerMenuMinigame
             var player = players[i];
             if (player.AmOwner) continue;
 
-            var panel = Instantiate(panelPrefab, transform);
+            var panel = GameObject.Instantiate(panelPrefab, transform);
             var panelObj = panel?.ModGameObject(false);
 
             panelObj?.LocalPosition = new VVector3(0f, 0f, -1f);
@@ -134,7 +134,7 @@ public class RoleMarkMenu : PlayerMenuMinigame
 
             if (panel != null) AllPanels.Add(panel);
         }
-        base.CreatePageButtons();
+        base.ShowPageButtons();
 
         this.StartCoroutine(CoCloseOnResult().WrapToIl2Cpp());
         RefreshControllerOverlay(ShowPage());

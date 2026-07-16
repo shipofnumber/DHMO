@@ -25,8 +25,6 @@ public static class AddonHelper
 
     public static void AddCustomChat(this ChatController chatController, PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
     {
-        AmongUsLLImpl.TryGetLocalPlayer(out var localPlayer);
-
         var sourcePlayerData = sourcePlayer.Data;
         ChatBubble pooledBubble = chatController.GetPooledBubble();
 
@@ -37,7 +35,7 @@ public static class AddonHelper
             bubbleObj.GetUnityTransform().SetParent(chatController.scroller.Inner);
             bubbleObj.LocalScale = VVector3.One;
 
-            bool isLocalPlayer = sourcePlayer == localPlayer;
+            bool isLocalPlayer = sourcePlayer.AmOwner;
             if (isLocalPlayer)
                 pooledBubble.SetRight();
             else

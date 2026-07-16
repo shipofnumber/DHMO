@@ -4,16 +4,17 @@
 public static class PlayerControlPatch
 {
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CanMove), MethodType.Getter)]
+    [HarmonyPriority(1)]
     [HarmonyPostfix]
-    public static void PlayerCanMovePatch(ref bool __result)
+    public static void PlayerCanMovePatch(PlayerControl __instance, ref bool __result)
     {
         if (Minigame.Instance.AsBoolFast() || AmongUsLLImpl.HudManagerBridge.Chat.IsOpenOrOpening || AmongUsLLImpl.HudManagerInstance.KillOverlay.IsOpen || AmongUsLLImpl.HudManagerInstance.GameMenu.IsOpen) return;
-        if (GamePlayer.LocalPlayer is null) return;
-        if (!__result && AddonHelper.IsOutMeeting() && NebulaAPI.CurrentGame != null && (GamePlayer.LocalPlayer.Role is Raven.Instance || GamePlayer.LocalPlayer.TryGetAbility<LucidDreamer.Ability>(out _)))
+        var modInfo = __instance.GetModInfo();
+        if (modInfo != null && !__result && AddonHelper.IsOutMeeting() && NebulaAPI.CurrentGame != null && (modInfo.Role is Raven.Instance || modInfo.TryGetAbility<LucidDreamer.Ability>(out _)))
             __result = true;
     }
 
-    [HarmonyPatch(typeof(PlayerControl), "CmdReportDeadBody")]
+    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CmdReportDeadBody))]
     [HarmonyPrefix]
     public static bool ReportDeadBodyPatch(PlayerControl __instance, NetworkedPlayerInfo target)
     {
@@ -51,9 +52,6 @@ public static class PlayerControlPatch
             var player = playerControl.GetModInfo();
             bool outMeet = AddonHelper.IsOutMeeting();
             bool forceGhost = false;
-
-            if (player?.TryGetAbility<LucidDreamer.Ability>(out _) ?? false)
-                forceGhost = outMeet;
 
             if (player?.Role is Raven.Instance) 
                 forceGhost = outMeet || Raven.Instance.IsInRavenTime;

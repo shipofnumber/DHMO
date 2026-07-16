@@ -38,7 +38,7 @@
 # UI
 
 "role.raven.killtarget" : "杀死一个%ROLE%。"
-"role.raven.raventime" : "杀或者被杀。(%TIME%)"
+"timeMoment.raven" : "杀或者被杀。(%TIME%)"
 "role.raven.meetingButtonText" : "黑夜降临..."
 
 # Team

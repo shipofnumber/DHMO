@@ -6,7 +6,7 @@ namespace DHMO.Patches;
 public static class MeetingStartPatch
 {
     [HarmonyPatch(typeof(MeetingHudExtension), nameof(MeetingHudExtension.ModCoStartMeeting)), HarmonyPrefix]
-    public static bool ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
+    public static bool ModCoStartMeetingPrefix(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
     {
         try
         {
@@ -32,7 +32,7 @@ public static class MeetingStartPatch
         {
             try
             {
-                if (player.VanillaPlayer.AsBoolFast(out var vanillaPlayer)) ModResetForMeeting(vanillaPlayer, false);
+                if (player.VanillaPlayer.AsBoolFast()) player.VanillaPlayer.ModResetForMeeting(false);
             }
             catch (Exception e)
             {
@@ -52,7 +52,7 @@ public static class MeetingStartPatch
         yield break;
     }
 
-    public static void ModResetForMeeting(PlayerControl player, bool spawn = true)
+    public static void ModResetForMeeting(this PlayerControl player, bool spawn = true)
     {
         if (!AmongUsLLImpl.TryGetShipStatus(out var ship)) return;
 
@@ -65,17 +65,24 @@ public static class MeetingStartPatch
         player.RemoveProtection();
         player.NetTransform.enabled = true;
         player.MyPhysics.ResetMoveState(true);
-        for (int i = 0; i < player.currentRoleAnimations.Count; i++)
+
+        foreach (var anim in player.currentRoleAnimations.GetFastEnumerator())
         {
-            if (player.currentRoleAnimations[i] != null && player.currentRoleAnimations[i].gameObject != null)
+            if (anim == null)
             {
-                player.currentRoleAnimations[i].gameObject.Destroy();
+                player.logger.Error("Encountered a null Role Animation while destroying.", null);
+                continue;
+            }
+            if (anim.gameObject.AsBoolFast(out var obj))
+            {
+                obj.Destroy();
             }
         }
+
         player.inMovingPlat = false;
         player.isKilling = false;
         player.currentRoleAnimations.Clear();
-        if (player.cosmetics.CurrentPet != null)
+        if (player.cosmetics.CurrentPet.AsBoolFast(out var pet))
         {
             if (player.cosmetics.petHiddenByViper)
             {
@@ -94,10 +101,10 @@ public static class MeetingStartPatch
                     ];
                     vector = list[Random.Range(0, list.Count)];
                 }
-                player.cosmetics.CurrentPet.SetGettingPet(false, vector);
+                pet.SetGettingPet(false, vector);
                 return;
             }
-            player.cosmetics.CurrentPet.SetGettingPet(false, player.cosmetics.CurrentPet.transform.position);
+            pet.SetGettingPet(false, pet.transform.position);
         }
     }
 }

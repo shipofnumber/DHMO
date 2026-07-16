@@ -46,7 +46,7 @@ public abstract class PlayerMenuMinigame : Minigame
         backBtn.OnClick.AddListener(customMenu.CloseInternal);
 
         newMenu.DestroyImmediate();
-        menuTransform.SetParent(NebulaGameManager.Instance?.WideCamera.myCameraObj.GetUnityTransform(), false);
+        menuTransform.SetParent(Camera.main.transform, false);
         customMenuObj.LocalPosition = new VVector3(0f, 0f, -60f);
 
         var phoneUI = menuTransform.TryDig("PhoneUI");
@@ -111,7 +111,7 @@ public abstract class PlayerMenuMinigame : Minigame
         currentPage = 0;
     }
 
-    protected void CreatePageButtons()
+    protected void ShowPageButtons()
     {
         if (GetTotalPages(AllPanels.Count) > 1)
         {
@@ -120,22 +120,22 @@ public abstract class PlayerMenuMinigame : Minigame
             var prevButton = CreateArrowButton(this.transform, new VVector3(-1.85f, -2.185f, -60f), "LeftArrowButton", true);
             prevButton.OnClick.AddListener(this.PreviousPage);
         }
-    }
 
-    private static PassiveButton CreateArrowButton(Transform parent, VVector3 position, string name, bool flipX)
-    {
-        var button = MetaScreen.InstantiateCloseButton(parent, position);
-        button.transform.localScale = new VVector3(0.65f, 0.65f, 1f);
-        button.name = name;
+        PassiveButton CreateArrowButton(Transform parent, VVector3 position, string name, bool flipX)
+        {
+            var button = MetaScreen.InstantiateCloseButton(parent, position);
+            button.transform.localScale = new VVector3(0.65f, 0.65f, 1f);
+            button.name = name;
 
-        var sprite = button.GetComponent<SpriteRenderer>();
-        sprite.sprite = NextButton?.GetSprite();
-        sprite.flipX = flipX;
+            var sprite = button.GetComponent<SpriteRenderer>();
+            sprite.sprite = NextButton?.GetSprite();
+            sprite.flipX = flipX;
 
-        var passive = button.GetComponent<PassiveButton>();
-        passive.OnMouseOver.AddListener(() => sprite.sprite = NextButtonActive?.GetSprite());
-        passive.OnMouseOut.AddListener(() => sprite.sprite = NextButton?.GetSprite());
-        return passive;
+            var passive = button.GetComponent<PassiveButton>();
+            passive.OnMouseOver.AddListener(() => sprite.sprite = NextButtonActive?.GetSprite());
+            passive.OnMouseOut.AddListener(() => sprite.sprite = NextButton?.GetSprite());
+            return passive;
+        }
     }
 
     public void OnDisable() => ControllerManager.Instance.CloseOverlayMenu(name);

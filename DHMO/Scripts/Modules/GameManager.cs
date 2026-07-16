@@ -1,14 +1,38 @@
-﻿using DHMO.Roles.Abilities;
+﻿using BepInEx;
+using DHMO.Roles.Abilities;
 
 namespace DHMO.Modules;
 
-[NebulaPreprocess(PreprocessPhase.PostBuildNoS)]
+[NebulaPreprocess(PreprocessPhase.PostFixStructure)]
 [NebulaRPCHolder]
 public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 {
     static DHMOGameManager() => DIManager.Instance.RegisterModule(() => new DHMOGameManager());
     public DHMOGameManager() => ModSingleton<DHMOGameManager>.Instance = this;
-    protected override void OnInjected(Game container) => this.Register(container);
+    protected override void OnInjected(Game container)
+    {
+        this.Register(container);
+        NebulaManager.commands.Add(new NebulaManager.MetaCommand("help.command.showRule",
+            () => container != null && !LobbyRules.IsShown,
+            () =>
+            {
+                if (AmongUsLLImpl.LocalPlayer.AmHost())
+                {
+                    var files = Directory.GetFiles(Path.Combine(Paths.GameRootPath, "LobbyRules"), "*.txt", SearchOption.AllDirectories);
+                    if (files.Length > 1)
+                        LobbyRules.CreateSelectFileScreen();
+                    else
+                    {
+                        LobbyRules.currentPath = files.FirstOrDefault();
+                        LobbyRules.selectedPath = files.FirstOrDefault();
+                        LobbyRules.OpenHostRuleScreen();
+                    }
+                }
+                else
+                    LobbyRules.RpcRequestRules.Invoke(AmongUsLLImpl.LocalPlayer.PlayerId);
+            })
+        { DefaultKeyInput = new(KeyCode.F7), });
+    }
 
     void OnGameStart(GameStartEvent ev)
     {
@@ -23,7 +47,14 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
     {
         foreach (var player in GamePlayer.AllPlayers)
         {
-            if (player.VanillaPlayer.AsBoolFast(out var vanillaPlayer)) MeetingStartPatch.ModResetForMeeting(vanillaPlayer);
+            try
+            {
+                if (player.VanillaPlayer.AsBoolFast()) player.VanillaPlayer.ModResetForMeeting();
+            }
+            catch (Exception e)
+            {
+                DLog.Log(e);
+            }
         }
     }
 

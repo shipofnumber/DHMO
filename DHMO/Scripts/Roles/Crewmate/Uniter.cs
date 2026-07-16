@@ -11,7 +11,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
     static private readonly IntegerConfiguration NumOfCanUnitOption = NebulaAPI.Configurations.Configuration("options.role.uniter.numOfcanUnit", (1, 5), 2);
     static private readonly FloatConfiguration MaxLeftVotingTimeForUniting = NebulaAPI.Configurations.Configuration("options.role.uniter.maxLeftVotingTimeForUniting", (0f, 60f, 5f), 20f, FloatConfigurationDecorator.Second);
 
-    public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.GetAsBool(0), arguments.Get(1, NumOfUnitingOption));
+    public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.Get(0, NumOfUnitingOption));
     Citation? HasCitation.Citation => DHMOCitations.DHMO;
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/UniterIcon.png")?.AsImage(115f);
 
@@ -20,15 +20,14 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
     bool IAssignableDocument.HasTips => true;
 
     [NebulaRPCHolder]
-    public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
+    public class Ability : AbstractPlayerAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
     {
         Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(120f);
-        int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
         int leftUniting = NumOfUnitingOption;
 
         private HashSet<byte> selected = [];
 
-        public Ability(GamePlayer player, bool isUsurped, int leftUses) : base(player, isUsurped)
+        public Ability(GamePlayer player, int leftUses) : base(player)
         {
             leftUniting = leftUses;
 

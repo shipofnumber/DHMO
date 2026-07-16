@@ -11,40 +11,40 @@ public class BombEvidence(VVector2 pos) : NebulaSyncStandardObject(pos, NebulaSy
 [NebulaRPCHolder]
 public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 {
-    private GamePlayer Owner { get; set; }
+    private GamePlayer myPlayer { get; set; }
     public GamePlayer Bomber { get; private set; }
     public TimerImpl? Timer { get; private set; }
 
-    GamePlayer IBindPlayer.MyPlayer => Owner;
+    public GamePlayer MyPlayer => myPlayer;
 
-    public GameActionType PassBombAction = new("bomber.passbomb", Roles.Impostor.Bomber.MyRole);
+    public static GameActionType PassBombAction = new("bomber.passbomb", Roles.Impostor.Bomber.MyRole);
     public static Image passBombImage = NebulaAPI.AddonAsset.GetResource("Button/PassBombButton.png")?.AsImage(115f)!;
     public static IDividedSpriteLoader ExplosionSprite = DividedSpriteLoader.FromResource("Nebula.Resources.ExplosionAnim.png", 120f, 4, 2);
     public static TranslatableTag explosion = new("state.bomb.explosion");
 
-    public Bomb(GamePlayer owner, GamePlayer bomber, float duration)
+    public Bomb(GamePlayer player, GamePlayer bomber, float duration)
     {
-        Owner = owner;
+        this.myPlayer = player;
         Bomber = bomber;
 
-        if (Owner.AmOwner)
+        if (player.AmOwner)
         {
             Timer = new TimerImpl(0f, duration).Register(this).Start();
 
-            var passTracker = ObjectTrackers.ForPlayer(this, null, Owner, p => ObjectTrackers.StandardPredicate(p), null);
+            var passTracker = ObjectTrackers.ForPlayer(this, null, MyPlayer, p => ObjectTrackers.StandardPredicate(p), null);
             var passButton = NebulaAPI.Modules.AbilityButton(this, true, false)
                 .BindKey((VirtualKeyInput)120).SetLabel("game.passBomb").SetImage(passBombImage);
 
-            passButton.Visibility = _ => Owner.IsAlive && (Owner.PlayerId == Bomber.PlayerId || Timer.CurrentTime <= global::DHMO.Roles.Impostor.Bomber.BombExplodeTime);
-            passButton.Availability = _ => Owner.CanMove && passTracker.CurrentTarget != null;
+            passButton.Visibility = _ => MyPlayer.IsAlive && (MyPlayer.PlayerId == Bomber.PlayerId || Timer.CurrentTime <= global::DHMO.Roles.Impostor.Bomber.BombExplodeTime);
+            passButton.Availability = _ => MyPlayer.CanMove && passTracker.CurrentTarget != null;
             passButton.PlayFlashWhile = _ => true;
-            passButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, Owner.PlayerId == Bomber.PlayerId ? 0f : 3f).SetAsAbilityTimer().Start(null);
+            passButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, MyPlayer.PlayerId == Bomber.PlayerId ? 0f : 3f).SetAsAbilityTimer().Start(null);
 
             passButton.OnClick = _ =>
             {
                 if (passTracker.CurrentTarget == null) return;
                 RPCSetBomb.Invoke((passTracker.CurrentTarget, Bomber, Timer.CurrentTime));
-                NebulaGameManager.Instance?.RpcDoGameAction(Owner, Owner.Position, PassBombAction);
+                NebulaGameManager.Instance?.RpcDoGameAction(MyPlayer, MyPlayer.Position, PassBombAction);
                 this.Release();
             };
             passButton.ShowUsesIcon(0, GetBombTime().ToString());
@@ -71,7 +71,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
     void OnUpdate(GameUpdateEvent ev)
     {
         if (Timer == null || !Timer.isActive || GetBombTime() > 0f) return;
-        BombExplode(Bomber, Owner);
+        BombExplode(Bomber, MyPlayer);
         Release();
     }
 
@@ -97,9 +97,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
     {
         if (!message.player.AmOwner) return;
         var bomb = new Bomb(message.player, message.bomber, message.duration);
-        if (NebulaAPI.CurrentGame != null) bomb.Bind(NebulaAPI.CurrentGame);
-
-        bomb.RegisterSelf();
+        if (NebulaAPI.CurrentGame != null) bomb.Register(NebulaAPI.CurrentGame);
     }, false);
 
     static private RemoteProcess<VVector2> RpcExplode = new("PlayBombExplode", (message, _) =>
@@ -165,6 +163,8 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
                     else
                         Bomb.RPCSetBomb.Invoke((MyPlayer, MyPlayer, ActivateBombTime + BombExplodeTime));
 
+                    NebulaGameManager.Instance?.RpcDoGameAction(MyPlayer, MyPlayer.Position, Bomb.PassBombAction);
+
                     button.StartCoolDown();
                 };
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(igniteBomb.GetKillButtonLike());
@@ -173,9 +173,6 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
     }
 }
 
-public class BombExplodeEvent : Virial.Events.Player.AbstractPlayerEvent
+public class BombExplodeEvent(GamePlayer player) : Virial.Events.Player.AbstractPlayerEvent(player)
 {
-    public BombExplodeEvent(GamePlayer player) : base(player)
-    {
-    }
 }
