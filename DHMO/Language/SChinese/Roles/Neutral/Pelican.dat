@@ -6,26 +6,38 @@
 
 # Document
 
-"document.tip.winCond.pelican.title" : "吞噬胜利"
-"document.tip.winCond.pelican" : "鹈鹕吞噬场上所有玩家或者只剩鹈鹕一个时获胜。"
+"document.tip.winCond.pelican.devour.title" : "吞噬胜利"
+"document.tip.winCond.pelican.devour" : "吞噬场上所有玩家或只剩鹈鹕一人存活时获胜。"
+"document.tip.winCond.pelican.timeOver.title" : "时刻胜利"
+"document.tip.winCond.pelican.timeOver" : "在鹈鹕时刻结束时，鹈鹕仍然存活将会胜利。"
 
 "role.pelican.doc" : "鹈鹕可以将玩家吞进肚子里，并在会议时消化。"
-"role.pelican.winCond" : "场上除自身外无人幸存或没有被吞噬。"
+"role.pelican.winCond" : "场上除自身外无人幸存或没有被吞噬。%WIN%"
+"role.pelican.winCond.pelicanTimeOver" : "<br>另外，<var>鹈鹕时刻结束时仍然存活也可胜利</var>。"
 "role.pelican.ability.title" : "固有能力【无底线的胃口】"
-"role.pelican.ability.main" : "可以直接将玩家整个吞下，吞下的玩家不会死亡，而是会在开始会议的时候被消化（无尸体）。"
+"role.pelican.ability.main" : "可以直接将玩家整个吞下，吞下的玩家不会死亡，而是会在开始会议的时候被消化（无尸体）。%PELICANTIME%"
 "role.pelican.ability.devour" : "<title>吞噬</title>吞噬其他玩家。被吞噬后该玩家的视角会被锁定在鹈鹕上。"
-"role.pelican.tips" : "・本职业由<b>DHMO</b>添加。"
+"role.pelican.ability.pelicanTime" : "<br>当场上还剩余<var>%NUM%</var>名玩家时，鹈鹕会进入<b>“鹈鹕时刻”</b>，在鹈鹕时刻期间无法报告。<br>鹈鹕时刻持续<var>%DURATION%</var>秒，时间结束时若鹈鹕并未死亡，将会胜利。"
+"role.pelican.tips" : "・鹈鹕吞噬距离为设定击杀距离的<b>1.25倍</b>。<br>・本职业由<b>DHMO</b>添加。"
 
 # Options
 
 "options.role.pelican.detail" : "鹈鹕可以吞噬玩家。"
 "options.role.pelican.devourCooldown" : "吞噬冷却时间"
-"options.role.pelican.canReduceCD" : "吞噬玩家后减少冷却时间"
-"options.role.pelican.reduceTime" : "吞噬减少冷却时间"
+"options.role.pelican.increaseTime" : "吞噬增加冷却时间"
+"options.role.pelican.group.pelicanTime" : "鹈鹕时刻设置"
+"options.role.pelican.pelicanTime" : "鹈鹕时刻"
+"options.role.pelican.pelicanTimeAlived" : "鹈鹕时刻所需存活玩家数"
+"options.role.pelican.pelicanTimeDuration" : "鹈鹕时刻持续时间"
+"options.role.pelican.taskPhaseRestartEnterPelicanTimeDisperse" : "任务阶段重启时触发分散"
 
 # Button
 
 "button.label.pelican.devour" : "吞噬"
+
+# UI
+
+"timeMoment.pelican" : "无底线的盛宴... (%TIME%s)"
 
 # Team
 

@@ -8,7 +8,7 @@ public static class HudManagerPatch
     {
         var bridge = AmongUsLLImpl.HudManagerBridge;
 
-        if (Raven.Instance.IsInRavenTime)
+        if (ModSingleton<TimeMomentManager>.Instance.IsAnyTimeRun)
         {
             bridge.ReportButton.ToggleVisible(false);
             bridge.ImpostorVentButton.ToggleVisible(false);

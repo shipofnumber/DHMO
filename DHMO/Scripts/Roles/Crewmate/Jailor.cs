@@ -17,7 +17,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
     static internal readonly FloatConfiguration MaxLeftVotingTimeForExecuting = NebulaAPI.Configurations.Configuration("options.role.jailor.maxLeftVotingTimeForExecuting", (5f, 60f, 5f), 20f, FloatConfigurationDecorator.Second);
     static private readonly BoolConfiguration CanExecuteLoversOption = NebulaAPI.Configurations.Configuration("options.role.jailor.canExecuteLovers", false);
     static private readonly BoolConfiguration CannotJailAfterCrewmate = NebulaAPI.Configurations.Configuration("options.role.jailor.cannotJailAfterExecuteCrew", true);
-    static public readonly BoolConfiguration HasPrivateChat = NebulaAPI.Configurations.Configuration("options.role.jailor.hasJailorchat", true);
+    static public readonly BoolConfiguration HasPrivateChat = NebulaAPI.Configurations.Configuration("options.role.jailor.hasJailorchat", true, () => NebulaAPI.GetAddon("Plan17ResourcesPlana") != null);
 
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.Get(0, GetAbilityUses()));
 
@@ -137,22 +137,30 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
         void EditGuessable(PlayerCanGuessPlayerLocalEvent ev)
         {
-            if (ev.Guesser == MyPlayer && hasJailed.Test(ev.Target) && ev.Target.IsAlive) 
+            if (ev.Guesser == MyPlayer && hasJailed.Test(ev.Target) && ev.Target.IsAlive)
                 ev.CanGuess = false;
         }
 
+        private bool CanExecute(GamePlayer target)
+        {
+            bool canExecute;
+            if (target.Role.Role == Madmate.MyRole) canExecute = true;
+            else if (target.Role is JekyllAndHyde.Instance jah && !jah.AmJekyll) canExecute = true;
+            else if (target.TryGetModifier<Lover.Instance>(out _) && CanExecuteLoversOption) canExecute = true;
+            else if (target.Role.Role.Category == RoleCategory.CrewmateRole) canExecute = false;
+            else canExecute = true;
+
+            return GameOperatorManager.Instance?.Run(new SheriffCheckKillEvent(MyPlayer, target, canExecute)).CanKill ?? canExecute;
+        }
+
+        [Local]
         void CheckPlayerMurdered(PlayerMurderedEvent ev)
         {
             if (ev.Dead.PlayerId != jailed?.PlayerId || !AmongUsUtil.InMeeting) return;
             if (ev.Murderer == MyPlayer && ev.Dead.PlayerState == execution)
             {
-                bool canExecute = false;
+                var canExecute = this.CanExecute(ev.Dead);
 
-                if (!ev.Dead.IsTrueCrewmate) canExecute = true;
-                else if (ev.Dead.Role is JekyllAndHyde.Instance jah && !jah.AmJekyll) canExecute = true;
-                else if (ev.Dead.TryGetModifier<Lover.Instance>(out _) && CanExecuteLoversOption) canExecute = true;
-
-                if (!MyPlayer.AmOwner) return;
                 if (!canExecute && MyPlayer.IsTrueCrewmate)
                 {
                     leftUses = 0;
@@ -173,8 +181,8 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
         void OnPlayerDieOrDisconnect(PlayerDieOrDisconnectEvent ev)
         {
-            if (ev.Player == MyPlayer || ev.Player == jailed) 
-                RpcJail.Invoke((MyPlayer, null));
+            if (ev.Player == MyPlayer || ev.Player == jailed)
+                jailed = null;
         }
 
         void OnMeetingStart(MeetingStartEvent ev)
@@ -182,9 +190,10 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             Clear();
             if (jailed == null) return;
 
-            RpcInsulate.Invoke(jailed);
+            if (MyPlayer.AmOwner)
+                RpcInsulate.Invoke(jailed);
 
-            foreach (var voteArea in MeetingHud.Instance.playerStates)
+            foreach (var voteArea in MeetingHud.Instance.playerStates.GetFastEnumerator())
             {
                 if (jailed.PlayerId == voteArea.TargetPlayerId)
                 {
@@ -199,9 +208,10 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             if (jailed == null) return;
 
             if (!JailInARow)
-                RpcJail.Invoke((MyPlayer, null));
+                jailed = null;
             else
             {
+                if (!MyPlayer.AmOwner) return;
                 if (IsLimiltJailUses() && leftUses > 0)
                 {
                     --leftUses;
@@ -212,7 +222,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
         public void Clear()
         {
-            if (jailCell.AsBoolFast()) 
+            if (jailCell.AsBoolFast())
                 jailCell?.Destroy();
         }
 
@@ -228,10 +238,9 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
         {
             MeetingHudExtension.AddSealedMask(1 << player.PlayerId);
             if (player.AmOwner) MeetingHudExtension.CanUseAbility = false;
-            MeetingHud.Instance.ResetPlayerState();
         });
 
-        private static readonly RemoteProcess<(GamePlayer jailor, GamePlayer? jailed)> RpcJail = new("JailorJail", (message, _) =>
+        private static readonly RemoteProcess<(GamePlayer jailor, GamePlayer jailed)> RpcJail = new("JailorJail", (message, _) =>
         {
             if (!message.jailor.TryGetAbility<Jailor.Ability>(out var ability)) return;
             ability.jailed = message.jailed;

@@ -3,9 +3,18 @@
 [HarmonyPatch(typeof(NebulaAddon))]
 public static class AddonHandshakeHashPatch
 {
-    public static string text = string.Empty;
-
     public static int AddonHandshakeHash { get; internal set; }
+
+    static AddonHandshakeHashPatch()
+    {
+        int val = 0;
+        foreach (var addon in NebulaAddon.AllAddons)
+        {
+            if (addon.NeedHandshake) val ^= CalculateAddonHash(addon);
+        }
+
+        AddonHandshakeHash = val;
+    }
 
     [HarmonyPatch(nameof(NebulaAddon.AddonHandshakeHash), MethodType.Getter)]
     [HarmonyPrefix]
@@ -36,6 +45,9 @@ public static class AddonHandshakeHashPatch
 
             return BitConverter.ToString(md5.Hash).ComputeConstantHash();
         }
-        catch { return addon.HandshakeHash; }
+        catch
+        {
+            return addon.HandshakeHash;
+        }
     }
 }

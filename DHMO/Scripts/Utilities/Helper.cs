@@ -4,7 +4,23 @@ public static class AddonHelper
 {
     internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.ScriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
 
-    public static int GetAlivePlayers(Predicate<GamePlayer>? predicate = null) => GamePlayer.AllPlayers.Where(p => predicate == null || predicate(p)).Count(p => p.IsAlive);
+    extension (NebulaPreSpawnLocation)
+    {
+        public static NebulaPreSpawnLocation[] PreLocations
+        {
+            get
+            {
+                byte mapId = NebulaAPI.AmongUs.MapId;
+                var cand = NebulaPreSpawnLocation.Locations[mapId];
+
+                if (cand.Length == 0) cand = [.. NebulaPreSpawnLocation.Locations[mapId].Where(l => l.VanillaIndex.HasValue)];
+
+                return cand;
+            }
+        }
+    }
+
+    internal static Virial.Game.Player[] AlivePlayers => GamePlayer.AllPlayers.Where(p => p.IsAlive).ToArray();
 
     public static void RemoveAllListeners(this PassiveButton button)
     {
@@ -35,8 +51,7 @@ public static class AddonHelper
             bubbleObj.GetUnityTransform().SetParent(chatController.scroller.Inner);
             bubbleObj.LocalScale = VVector3.One;
 
-            bool isLocalPlayer = sourcePlayer.AmOwner;
-            if (isLocalPlayer)
+            if (sourcePlayer.AmOwner)
                 pooledBubble.SetRight();
             else
                 pooledBubble.SetLeft();
@@ -57,7 +72,7 @@ public static class AddonHelper
             if (!chatController.IsOpenOrOpening && chatController.notificationRoutine == null)
                 chatController.notificationRoutine = chatController.StartCoroutine(chatController.BounceDot());
 
-            if (!isLocalPlayer && !chatController.IsOpenOrOpening)
+            if (!sourcePlayer.AmOwner && !chatController.IsOpenOrOpening)
             {
                 var soundPlayer = AmongUsLLImpl.SoundManagerInstance.PlaySound(chatController.messageSound, false, 1f, null);
                 soundPlayer.pitch = 0.5f + sourcePlayer.PlayerId / 15f;

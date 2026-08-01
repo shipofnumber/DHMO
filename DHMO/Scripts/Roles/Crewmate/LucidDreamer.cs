@@ -1,6 +1,4 @@
-﻿using DHMO.Roles.Abilities;
-
-namespace DHMO.Roles.Crewmate;
+﻿namespace DHMO.Roles.Crewmate;
 
 public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Ability>, DefinedRole, HasCitation, IAssignableDocument
 {
@@ -31,7 +29,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
     }
 
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/LucidDreamerIcon.png")?.AsImage(80f);
-    private static Image? buttonImage = NebulaAPI.AddonAsset?.GetResource("Button/LucidDreamerMeetingButton.png")?.AsImage();
+    private static Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/LucidDreamerMeetingButton.png")?.AsImage();
     public Citation? Citation => DHMOCitations.GGD;
 
     [NebulaRPCHolder]

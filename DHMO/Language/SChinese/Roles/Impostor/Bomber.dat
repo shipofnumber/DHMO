@@ -6,8 +6,15 @@
 
 # Document
 
-"role.bomber.doc" : "炸弹王可以通过点燃炸弹传递给其他玩家，如果在规定时间内没有传递给其他玩家，持有炸弹的人会直接爆炸死亡。"
-"role.bomber.tips" : "・本职业由<b>DHMO</b>添加。"
+"role.bomber.doc" : "炸弹王可以通过炸弹淘汰其他玩家。"
+"role.bomber.ability.title" : "固有能力【炸弹】"
+"role.bomber.ability.main" : "点燃炸弹后可以传递给他人，当炸弹倒计时结束时，持有炸弹者会因爆炸而亡。<br>炸弹拥有<b>2</b>个阶段：激活（<var>%ACTIVE%秒</var>）与燃烧（<var>%EXPLODE%秒</var>），只有炸弹王本人才可在激活阶段察觉炸弹并传递给他人，除此之外只能在燃烧阶段传递。"
+"role.bomber.ability.ignite" : "<title>点燃</title>使用后点燃炸弹，%OF%"
+"role.bomber.ability.pass" : "<title>传递</title>使用后传递炸弹给他人，并继承自己的炸弹持续时间。<br>除炸弹王本身外其余人传递拥有<b>3秒</b>冷却时间。"
+"role.bomber.ability.evidence" : "炸弹爆炸后遗留在场景的痕迹。"
+"role.bomber.ability.self" : "并安装在<var>自身</var>。"
+"role.bomber.ability.other" : "并安装在<var>他人</var>。"
+"role.bomber.tips" : "・炸弹也可以击杀<b><color=red>伪装者</color></b>。<br>・爆炸不会触发诱饵报告。<br>・本职业由<b>DHMO</b>添加。"
 
 # Options
 
@@ -15,6 +22,7 @@
 "options.role.bomber.bombIgniteOf" : "炸弹点燃安装方式"
 "options.role.bomber.bombIgniteOf.self" : "自身"
 "options.role.bomber.bombIgniteOf.other" : "他人"
+"options.role.bomber.canVanillaKill" : "可以进行普通击杀"
 "options.role.bomber.igniteBombCooldown" : "点燃冷却时间"
 "options.role.bomber.activatebombTime" : "炸弹激活时间"
 "options.role.bomber.bombExplodeTime" : "炸弹爆炸时间"

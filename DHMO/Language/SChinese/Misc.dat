@@ -6,8 +6,12 @@
 "ui.lobbyRules.return" : "返回"
 "ui.lobbyRules.rule" : "请填写房规。"
 "ui.lobbyRules.fieldNoText" : "输入框不能为空。"
-"ui.lobbyRules.selectFileSuccessfully" : "已将%FILE%设为当前房规。"
+"ui.lobbyRules.selectFileSuccessfully" : "%FILE%被设为当前房规。"
 "ui.lobbyRules.noTextError" : "房规无内容。"
+
+# TimeMoment
+
+"role.timeMoment.meetingButtonText" : "危险悄然降临..."
 
 # Help
 
@@ -15,4 +19,4 @@
 
 # Action
 
-"input.passAction" : "传递行动"
+"input.pass" : "传递行动"

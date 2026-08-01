@@ -1,4 +1,6 @@
-﻿namespace DHMO.Roles.Crewmate;
+﻿using System.Numerics;
+
+namespace DHMO.Roles.Crewmate;
 
 public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedSingleAssignable, DefinedAssignable, DefinedRole, IAssignableDocument, HasCitation
 {
@@ -22,10 +24,10 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
     [NebulaRPCHolder]
     public class Ability : AbstractPlayerAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
     {
-        Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(120f);
+        Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(150f);
         int leftUniting = NumOfUnitingOption;
 
-        private HashSet<byte> selected = [];
+        public EditableBitMask<GamePlayer> selected = BitMasks.AsPlayer();
 
         public Ability(GamePlayer player, int leftUses) : base(player)
         {
@@ -50,34 +52,43 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
                 var p = state.MyPlayer;
                 if (!state.IsSelected)
                 {
-                    if (selected.Count < NumOfCanUnitOption)
+                    if (BitOperations.PopCount(selected.AsRawPattern) < NumOfCanUnitOption)
                     {
-                        selected.Add(p.PlayerId);
+                        selected.Add(p);
                         state.SetSelect(true);
                     }
                 }
                 else
                 {
-                    if (selected.Contains(p.PlayerId))
-                        selected.Remove(p.PlayerId);
+                    selected.Remove(p);
                     state.SetSelect(false);
                 }
             }, (p) => (!MeetingHud.Instance.GetPlayer(MyPlayer.PlayerId).DidVote || p.IsSelected) && MeetingHudExtension.VotingTimer > MaxLeftVotingTimeForUniting && leftUniting > 0 && p.MyPlayer.IsAlive && !p.MyPlayer.AmOwner && MyPlayer.IsAlive));
         }
 
         [OnlyMyPlayer]
-        void OnVote(PlayerVoteCastLocalEvent ev) { if (selected.Count > 0) --leftUniting; }
+        void OnVote(PlayerVoteCastLocalEvent ev)
+        {
+            if (selected.ForEach(GamePlayer.AllPlayers).Any()) --leftUniting;
+            RpcUpdateStatus.Invoke((MyPlayer, selected.AsRawPattern));
+        }
 
         void FixVote(PlayerFixVoteHostEvent ev)
         {
             if (MyPlayer.IsDead) return;
             var uniterArea = MeetingHud.Instance.GetPlayer(MyPlayer.PlayerId);
 
-            if (selected.Contains(ev.Player.PlayerId))
+            if (selected.Test(ev.Player))
             {
                 if (uniterArea?.DidVote ?? false && ev.DidVote)
                     ev.VoteTo = NebulaGameManager.Instance?.GetPlayer(uniterArea.VotedFor);
             }
         }
     }
+
+    static private readonly RemoteProcess<(GamePlayer uniter, uint mask)> RpcUpdateStatus = new("UpdateUniter", (message, _) => 
+    {
+        if (!message.uniter.TryGetAbility<Uniter.Ability>(out var uniter)) return;
+        uniter.selected = BitMasks.AsPlayer(message.mask);
+    });
 }

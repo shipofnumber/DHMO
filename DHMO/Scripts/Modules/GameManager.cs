@@ -1,5 +1,5 @@
-﻿using BepInEx;
-using DHMO.Roles.Abilities;
+﻿using DHMO.Roles.Abilities;
+using Virial.Runtime;
 
 namespace DHMO.Modules;
 
@@ -7,31 +7,20 @@ namespace DHMO.Modules;
 [NebulaRPCHolder]
 public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 {
+    public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
+    {
+        yield return preprocessor;
+        NebulaInput.modInput[(VirtualKeyInput)120] = new(GetModKeyCodeGetter("pass", KeyCode.Space));
+    }
+
     static DHMOGameManager() => DIManager.Instance.RegisterModule(() => new DHMOGameManager());
     public DHMOGameManager() => ModSingleton<DHMOGameManager>.Instance = this;
-    protected override void OnInjected(Game container)
+    protected override void OnInjected(Game container) => this.Register(container);
+
+    internal static Func<KeyCode> GetModKeyCodeGetter(string translationKey, KeyCode defaultKey)
     {
-        this.Register(container);
-        NebulaManager.commands.Add(new NebulaManager.MetaCommand("help.command.showRule",
-            () => container != null && !LobbyRules.IsShown,
-            () =>
-            {
-                if (AmongUsLLImpl.LocalPlayer.AmHost())
-                {
-                    var files = Directory.GetFiles(Path.Combine(Paths.GameRootPath, "LobbyRules"), "*.txt", SearchOption.AllDirectories);
-                    if (files.Length > 1)
-                        LobbyRules.CreateSelectFileScreen();
-                    else
-                    {
-                        LobbyRules.currentPath = files.FirstOrDefault();
-                        LobbyRules.selectedPath = files.FirstOrDefault();
-                        LobbyRules.OpenHostRuleScreen();
-                    }
-                }
-                else
-                    LobbyRules.RpcRequestRules.Invoke(AmongUsLLImpl.LocalPlayer.PlayerId);
-            })
-        { DefaultKeyInput = new(KeyCode.F7), });
+        KeyAssignment assignment = new(translationKey, defaultKey);
+        return () => assignment.KeyInput;
     }
 
     void OnGameStart(GameStartEvent ev)

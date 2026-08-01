@@ -18,6 +18,8 @@ public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
         MarkRoleDic = [];
         myPlayer = player;
 
+        foreach (var p in GamePlayer.AllPlayers) MarkRoleDic.Add(p.PlayerId, []);
+
         var assignables = Nebula.Roles.Roles.AllAssignables().Where(a => a is not DefinedGhostRole && a.ShowOnHelpScreen);
 
         var markButton = NebulaAPI.Modules.AbilityButton(this, isLeftSideButton: true, alwaysShow: true).SetImage(MarkImage!).SetLabel("mark");
