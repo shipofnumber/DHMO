@@ -1,4 +1,5 @@
-﻿using Image = Virial.Media.Image;
+﻿using static Sentry.Protocol.SampleProfile;
+using Image = Virial.Media.Image;
 
 namespace DHMO.Roles.Crewmate;
 
@@ -62,6 +63,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
         public GamePlayer? jailed { get; private set; } = null;
         private EditableBitMask<GamePlayer> hasJailed = BitMasks.AsPlayer();
 
+        PoolablePlayer? jailIcon = null;
         private GameObject? jailCell;
         private int leftUses = GetAbilityUses();
 
@@ -106,6 +108,11 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
                             hasJailed.Add(tracker.CurrentTarget);
                             RpcJail.Invoke((MyPlayer, tracker.CurrentTarget));
+
+                            var outfit = tracker.CurrentTarget.GetOutfit(OutfitPriority.TransformedThrethold);
+                            jailIcon?.Destroy();
+                            if (outfit == null) return;
+                            jailIcon = AmongUsUtil.GetPlayerIcon(outfit.outfit, (button as ModAbilityButtonImpl)?.VanillaButton.transform, new VVector3(-0.4f, 0.35f, -0.5f), new(0.3f, 0.3f)).SetAlpha(0.5f);
                         }
                     }
                     button.StartCoolDown();
@@ -190,7 +197,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             Clear();
             if (jailed == null) return;
 
-            if (MyPlayer.AmOwner)
+            if (AmOwner)
                 RpcInsulate.Invoke(jailed);
 
             foreach (var voteArea in MeetingHud.Instance.playerStates.GetFastEnumerator())
@@ -205,18 +212,20 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
         void OnMeetingEnd(MeetingEndEvent ev)
         {
-            if (jailed == null) return;
+            if (jailed is null) return;
 
             if (!JailInARow)
-                jailed = null;
-            else
             {
-                if (!MyPlayer.AmOwner) return;
-                if (IsLimiltJailUses() && leftUses > 0)
-                {
-                    --leftUses;
-                    jailButton?.UpdateUsesIcon(leftUses.ToString());
-                }
+                jailed = null;
+                if (AmOwner) jailIcon?.Destroy();
+                return;
+            }
+
+            if (!AmOwner) return;
+            if (IsLimiltJailUses() && leftUses > 0)
+            {
+                leftUses--;
+                jailButton?.UpdateUsesIcon(leftUses.ToString());
             }
         }
 

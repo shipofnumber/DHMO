@@ -1,0 +1,6 @@
+# Chat
+
+"options.chat" : "聊天设置"
+"options.chat.numOfchatHistory" : "聊天记录上限"
+"options.chat.numOfchatHistory.detail" : "数值过大可能会引起内存溢出。"
+"options.chat.numOffreeChatMaxChar" : "自由聊天最大字数"

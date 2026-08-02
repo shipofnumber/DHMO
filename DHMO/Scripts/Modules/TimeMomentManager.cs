@@ -95,7 +95,7 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
         var player = GamePlayer.LocalPlayer;
         var vanillaplayer = player?.VanillaPlayer;
 
-        if (player is null || vanillaplayer is null || player.IsDead || player.IsDisconnected) yield break;
+        if (player is null || vanillaplayer is null || player.IsDead) yield break;
 
         if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.ForceClose();
 
@@ -127,6 +127,8 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
     public static IEnumerator CoTimeMomentFlash()
     {
         var hud = AmongUsLLImpl.HudManagerInstance;
+        while (IntroCutscene.Instance.AsBoolFast() || ExileController.Instance.AsBoolFast()) yield return null;
+
         var wait = new WaitForSeconds(1f);
         var light = false;
         hud.FullScreen.color = (UColor)new VColor(1f, 0f, 0f, 0.37254903f);

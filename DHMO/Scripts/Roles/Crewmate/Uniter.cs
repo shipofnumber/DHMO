@@ -24,7 +24,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
     [NebulaRPCHolder]
     public class Ability : AbstractPlayerAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
     {
-        Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(150f);
+        Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(1200f);
         int leftUniting = NumOfUnitingOption;
 
         public EditableBitMask<GamePlayer> selected = BitMasks.AsPlayer();

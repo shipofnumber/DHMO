@@ -68,7 +68,7 @@ public class Overclocker : DefinedSingleAbilityRoleTemplate<Overclocker.Ability>
                 outTimeButton = new ModAbilityButtonImpl().SetLabel("overclocker.outtime").SetLabelType(ModAbilityButton.LabelType.Impostor).Register(this);
                 outTimeButton.SetSprite(Snatcher.clockButtonSprite.GetSprite());
                 outTimeButton.Visibility = button => MyPlayer.IsAlive;
-                outTimeButton.Availability = button => killTracker.CurrentTarget != null && MyPlayer.CanMove;
+                outTimeButton.Availability = button => outTimeTracker.CurrentTarget != null && MyPlayer.CanMove;
                 outTimeButton.RelatedAbility = this;
                 outTimeButton.CoolDownTimer = outTimer.SetAsAbilityCoolDown().Start();
                 outTimeButton.OnClick = button =>
@@ -224,7 +224,7 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
 
     public float CurrentTime { get => currentTime; }
     public virtual float Percentage { get => currentTime > 0f ? currentTime / max : 0f; }
-    public bool IsProgressing => currentTime >= 0f;
+    public bool IsProgressing => CurrentTime >= 0f;
 
     void Update(UpdateEvent ev)
     {
