@@ -9,7 +9,7 @@
 "role.overclocker.doc" : "焚频者可以储存多出的冷却时间，并加以辅助同伴。"
 "role.overclocker.ability.title" : "固有能力【超频】"
 "role.overclocker.ability.main" : "焚频者的技能冷却时间允许超出并被储存，且使用技能时会优先消耗储存时间。"
-"role.overclocker.ability.outtime" : "<title>超频</title>对同阵营使用时会按照此技能的储存时间的<var>%PERCENTAGE%%</var>缩减对方%RANDOM%，反之增加。<br>使用后此技能会增加"
+"role.overclocker.ability.outtime" : "<title>超频</title>对同阵营使用时会按照此技能的储存时间的<var>%PERCENTAGE%%</var>缩减对方%RANDOM%，反之增加。<br>使用后此技能会增加目标缩减的冷却时间+设置的冷却时间。"
 "role.overclocker.ability.random" : "<var>随机技能的冷却时间</var>"
 "role.overclocker.ability.all" : "<var>全部技能的冷却时间</var>"
 "role.overclocker.tips" : "・本职业由<b>DHMO</b>添加。"

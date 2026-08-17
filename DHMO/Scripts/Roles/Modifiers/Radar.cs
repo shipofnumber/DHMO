@@ -7,7 +7,7 @@ public class Radar : DefinedAllocatableModifierTemplate, DefinedAllocatableModif
         ConfigurationHolder?.AddTags(ConfigurationTags.TagBeginner);
     }
 
-    static internal FloatConfiguration DetectDistanceOption = NebulaAPI.Configurations.Configuration("options.role.rader.detectDistance", (5f, 20f, 1f), 10f, FloatConfigurationDecorator.Ratio);
+    static internal FloatConfiguration DetectDistanceOption = NebulaAPI.Configurations.Configuration("options.role.rader.detectDistance", (10f, 50f, 1f), 20f, FloatConfigurationDecorator.Ratio);
     static private FloatConfiguration UpdateIntervalOption = NebulaAPI.Configurations.Configuration("options.role.rader.updateInterval", (0f, 10f, 1f), 1f, FloatConfigurationDecorator.Second);
 
     Image? DefinedAssignable.IconImage => Nebula.Roles.Crewmate.NiceTracker.MyRole.GetRoleIcon();
@@ -59,7 +59,7 @@ public class RadarTrackingArrowAbility(GamePlayer? target, GamePlayer radar, flo
 
             if (timer < 0f)
             {
-                arrow ??= new Arrow(null, true, true) { IsAffectedByComms = true }.SetColor(color).Register(this);
+                arrow ??= new Arrow(null, true, false) { IsAffectedByComms = true }.SetColor(color).Register(this);
 
                 if (target != null)
                     arrow.TargetPos = target.Position;
@@ -71,6 +71,6 @@ public class RadarTrackingArrowAbility(GamePlayer? target, GamePlayer radar, flo
         var player = APICompat.GetClosestPlayer(radar, Radar.DetectDistanceOption);
         if (player != null) this.SetTarget(player);
 
-        arrow?.IsActive = target != null && radar.Position.Distance(target.Position) <= Radar.DetectDistanceOption && !target.IsDead && !AmongUsUtil.InMeeting;
+        arrow?.IsActive = target != null && radar.Position.Distance(target.Position) <= Radar.DetectDistanceOption && !target.IsDead && radar.IsAlive && !AmongUsUtil.InMeeting;
     }
 }

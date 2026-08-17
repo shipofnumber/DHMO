@@ -271,7 +271,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         void OnRavenTimeEnd(TimeMomentEndEvent ev)
         {
             if (ev.IsTimeOver && MyPlayer.IsAlive)
-                MyPlayer.Suicide(PlayerStates.Suicide, EventDetails.Kill, KillParameter.NormalKill | ~KillParameter.WithDeadBody);
+                MyPlayer.Suicide(PlayerStates.Suicide, EventDetails.Kill, KillParameter.MeetingKill);
         }
 
         [OnlyMyPlayer]

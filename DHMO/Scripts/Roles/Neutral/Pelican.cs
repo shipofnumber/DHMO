@@ -56,12 +56,6 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             if (MyPlayer.IsAlive) callback.MarkRemaining();
         }
 
-        [OnlyMyPlayer]
-        void OnCheckWin(PlayerCheckWinEvent ev)
-        {
-            ev.SetWinIf(ev.GameEnd == PelicanTeamWin && !MyPlayer.IsDead);
-        }
-
         [OnlyHost]
         void CheckWin(GameUpdateEvent ev)
         {
@@ -76,17 +70,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             if (NebulaAPI.RunEvent(new KillerTeamCallback(PelicanTeam)).RemainingOtherTeam || (totalAlive - totalDevoured) > 1) return;
 
             if (MyPlayer.IsAlive && PelicanTeamWin != null)
-                NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin, GameEndReason.Situation);
-        }
-
-        [OnlyHost]
-        void OnPelicanTimeEnd(TimeMomentEndEvent ev)
-        {
-            if (ev.IsTimeOver && ev.TimeMoment.Id is "pelican" && PelicanTeamWin != null && MyPlayer.IsAlive)
-            {
-                EditableBitMask<GamePlayer> playerMask = BitMasks.AsPlayer().AddAll(GamePlayer.AllPlayers.Where(p => p.IsAlive && p.Role is Pelican.Instance));
-                NebulaAPI.CurrentGame?.RequestGameEnd(PelicanTeamWin, playerMask);
-            }
+                NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin, GameEndReason.Situation, BitMasks.AsPlayer(MyPlayer));
         }
 
         public override void OnActivated() 
@@ -138,7 +122,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
         public readonly static RemoteProcess<(GamePlayer player, GamePlayer pelican)> RpcDevoured = new("PelicanDevour", (message, _) =>
         {
-            if (!message.player.AmOwner || message.pelican.Role is not Pelican.Instance pelican) return;
+            if (!message.player.AmOwner || message.player.IsDead || message.pelican.Role is not Pelican.Instance pelican) return;
             DevouredAbility devoured = new(message.player, pelican);
             devoured.Register(pelican);
         });
@@ -161,6 +145,13 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
             RpcUpdateStatus.Invoke((player, pelican.MyPlayer, true));
             player.GainAttribute(PlayerAttributes.Invisible, 100000f, false, 0, tag);
+
+            if (pelican.MyPlayer.IsDead || MeetingHud.Instance.AsBoolFast())
+            {
+                this.Release();
+                return;
+            }
+
             AmongUsUtil.SetCamTarget(pelican.MyPlayer.VanillaPlayer);
             player.VanillaPlayer.NetTransform.RpcSnapTo(new VVector2(-100f, 10f));
 
@@ -192,7 +183,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         {
             RpcUpdateStatus.Invoke((myPlayer, Pelican, false));
             myPlayer.RemoveAttributeByTag(tag);
-            myPlayer.VanillaPlayer.NetTransform.RpcSnapTo(Pelican.TruePosition);
+            myPlayer.VanillaPlayer.NetTransform.RpcSnapTo(Pelican.Position);
             AmongUsUtil.SetCamTarget(null);
         }
 
@@ -208,6 +199,23 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
         {
             this.Pelican = pelican;
             this.Devoured = devour;
+        }
+    }
+}
+
+[NebulaPreprocess(PreprocessPhase.PostBuildNoS)]
+internal class PelicanCriteria : AbstractModule<IGameModeStandard>, IGameOperator
+{
+    static PelicanCriteria() => DIManager.Instance.RegisterModule(() => new PelicanCriteria().RegisterPermanently());
+
+    [OnlyHost]
+    void OnPelicanTimeEnd(TimeMomentEndEvent ev)
+    {
+        var pelicanWin = Pelican.Instance.PelicanTeamWin;
+        if (ev.IsTimeOver && ev.TimeMoment.Id is "pelican" && pelicanWin != null)
+        {
+            EditableBitMask<GamePlayer> playerMask = BitMasks.AsPlayer().AddAll(GamePlayer.AllPlayers.Where(p => p.IsAlive && p.Role is Pelican.Instance));
+            NebulaAPI.CurrentGame?.RequestGameEnd(pelicanWin, playerMask);
         }
     }
 }

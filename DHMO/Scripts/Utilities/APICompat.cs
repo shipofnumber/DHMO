@@ -96,7 +96,7 @@ public static class APICompat
         if (closest.Count == 1)
             return closest[0].Player;
 
-        return closest.Where(x => !(NebulaAPI.CurrentGame?.CurrentMap?.AnyShadowsBetween(myPos, x.Position) ?? true)).Select(x => x.Player).FirstOrDefault();
+        return closest.Where(x => !(NebulaAPI.CurrentGame?.CurrentMap?.AnyShadowsBetween(myPos, x.Position) ?? true)).Select(x => x.Player).FirstOrDefault() ?? closest[0].Player;
     }
 
     public static bool AlmostEqual(this double a, double b, double absoluteTolerance = 1e-9, double relativeTolerance = 1e-9)
