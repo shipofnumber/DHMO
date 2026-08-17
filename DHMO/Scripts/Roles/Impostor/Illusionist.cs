@@ -72,7 +72,6 @@ public class Degenerate : FlexibleLifespan, IGameOperator, IBindPlayer, IPlayerA
     private GamePlayer myPlayer;
     private GamePlayer illusionist;
 
-    private ModAbilityButton? killButton;
     private List<IFakePlayer> dummys = [];
     GamePlayer IBindPlayer.MyPlayer => myPlayer;
 
@@ -82,7 +81,6 @@ public class Degenerate : FlexibleLifespan, IGameOperator, IBindPlayer, IPlayerA
     public static readonly TranslatableTag madness = new("state.madness");
 
     bool IPlayerAbility.CanReport => false;
-    bool IPlayerAbility.HasReportButton => false;
 
     public Degenerate(GamePlayer illusionist, GamePlayer player)
     {
@@ -93,20 +91,6 @@ public class Degenerate : FlexibleLifespan, IGameOperator, IBindPlayer, IPlayerA
         {
             string prefix = Language.Translate("roles.illusionist.leftTime");
             Helpers.TextHudContent("DegenerateText", this, (tmPro) => tmPro.text = $"{prefix}: {timer}s");
-
-            var myKillTracker = ObjectTrackers.ForPlayerlike(this, null, myPlayer, (p) => ObjectTrackers.PlayerlikeStandardPredicate(p) && p is IFakePlayer fake && dummys.Contains(fake), null);
-
-            killButton = NebulaAPI.Modules.KillButton(this, myPlayer, true, Virial.Compat.VirtualKeyInput.Kill,
-                5f, "kill", ModAbilityButton.LabelType.Impostor, null,
-                (target, button) =>
-                {
-                    myPlayer.MurderPlayer(target, PlayerState.Dead, EventDetail.Kill, Virial.Game.KillParameter.NormalKill);
-                    killButton?.StartCoolDown();
-                },
-                null,
-                _ => myKillTracker.CurrentTarget != null && myPlayer.CanMove,
-                _ => myPlayer.IsAlive);
-            killButton.ShowUsesIcon(0, Illusionist.NumOfNeedKillDummyOption.GetValue().ToString());
         }
     }
 
@@ -133,21 +117,19 @@ public class Degenerate : FlexibleLifespan, IGameOperator, IBindPlayer, IPlayerA
         fakePlayer.Release();
     }
 
-    [OnlyMyPlayer]
-    void OnTryMurder(PlayerKillFakePlayerEvent ev)
-    {
-        if (dummys.Contains(ev.Target))
-        {
-            killCount++;
-            killButton?.UpdateUsesIcon((Illusionist.NumOfNeedKillDummyOption - killCount).ToString());
-            ManagedEffects.CoDisappearEffect(LayerExpansion.GetPlayersLayer(), null, ev.Target.Position.ToUnityVector().AsVector3(-1f), 1f).StartOnScene();
-        }
-    }
-
     void OnUpdate(GameHudUpdateEvent ev)
     {
         if (AmongUsUtil.InMeeting) return;
         timer -= ev.DeltaTime;
+
+        foreach (var fp in dummys)
+        {
+            if (fp.IsDead) continue;
+            float distance = myPlayer.Position.Distance(fp.Position);
+            if (NebulaAPI.CurrentGame?.CurrentMap?.AnyShadowsBetween(myPlayer.Position, fp.Position) ?? false) continue;
+
+            if (distance < 0.8f) DespawnDummy(fp);
+        }
 
         if (killCount >= Illusionist.NumOfNeedKillDummyOption) this.Release();
         else if (timer <= 0f)

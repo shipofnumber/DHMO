@@ -3,14 +3,14 @@
 public class Overclocker : DefinedSingleAbilityRoleTemplate<Overclocker.Ability>, HasCitation, DefinedRole, IAssignableDocument
 {
     private Overclocker() : base("overclocker", VColor.ImpostorColor, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam,
-    [KillCooldown, MinKillCooldown, OutTimeCooldown, MinOutTimeCooldown, ChangeTimePercentage, RandomChangeCD])
+    [KillCooldown, MaxStorageKillCooldown, OverTimeCooldown, MaxStorageOverTimeCooldown, ChangeTimePercentage, RandomChangeCD])
     {
     }
 
     public static readonly IRelativeCooldownConfiguration KillCooldown = NebulaAPI.Configurations.KillConfiguration("options.role.overclocker.killCooldown", CoolDownType.Immediate, (0f, 60f, 2.5f), 25f, (-40f, 40f, 2.5f), 0f, (0.125f, 2f, 0.125f), 1f);
-    public static readonly FloatConfiguration MinKillCooldown = NebulaAPI.Configurations.Configuration("options.role.overclocker.minKillCooldown", (0f, 60f, 2.5f), 30f, FloatConfigurationDecorator.Second);
-    public static readonly FloatConfiguration OutTimeCooldown = NebulaAPI.Configurations.Configuration("options.role.overclocker.outTimeCooldown", (0f, 60f, 2.5f), 30f, FloatConfigurationDecorator.Second);
-    public static readonly FloatConfiguration MinOutTimeCooldown = NebulaAPI.Configurations.Configuration("options.role.overclocker.minOutTimeCooldown", (0f, 30f, 2.5f), 20f, FloatConfigurationDecorator.Second);
+    public static readonly FloatConfiguration MaxStorageKillCooldown = NebulaAPI.Configurations.Configuration("options.role.overclocker.maxStorageKillCooldown", (0f, 60f, 2.5f), 30f, FloatConfigurationDecorator.Second);
+    public static readonly FloatConfiguration OverTimeCooldown = NebulaAPI.Configurations.Configuration("options.role.overclocker.overTimeCooldown", (0f, 60f, 2.5f), 30f, FloatConfigurationDecorator.Second);
+    public static readonly FloatConfiguration MaxStorageOverTimeCooldown = NebulaAPI.Configurations.Configuration("options.role.overclocker.maxStorageOverTimeCooldown", (0f, 30f, 2.5f), 20f, FloatConfigurationDecorator.Second);
     public static readonly FloatConfiguration ChangeTimePercentage = NebulaAPI.Configurations.Configuration("options.role.overclocker.changeTimePercentage", (0f, 100f, 10f), 30f, FloatConfigurationDecorator.Percentage);
     public static readonly BoolConfiguration RandomChangeCD = NebulaAPI.Configurations.Configuration("options.role.overclocker.randomChangeCooldown", true);
 
@@ -24,14 +24,19 @@ public class Overclocker : DefinedSingleAbilityRoleTemplate<Overclocker.Ability>
         yield return new(Snatcher.clockButtonSprite, "role.overclocker.ability.outtime");
     }
 
-    static public Overclocker MyRole = new();
+    IEnumerable<AssignableDocumentReplacement> IAssignableDocument.GetDocumentReplacements()
+    {
+        yield return new("%RANDOM%", Language.Translate(RandomChangeCD ? "role.overclocker.ability.random" : "role.overclocker.ability.all"));
+        yield return new("%PERCENTAGE%", ChangeTimePercentage.GetValue().ToString());
+    }
 
+    static public Overclocker MyRole = new();
     public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.GetAsBool(0));
 
     [NebulaRPCHolder]
     public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility
     {
-        public ModAbilityButtonImpl? killButton, outTimeButton;
+        public ModAbilityButtonImpl? killButton, overTimeButton;
         bool IPlayerAbility.HideKillButton => true;
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
 
@@ -41,9 +46,9 @@ public class Overclocker : DefinedSingleAbilityRoleTemplate<Overclocker.Ability>
             {
                 var killTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, (p) => ObjectTrackers.PlayerlikeLocalKillablePredicate(p), VColor.ImpostorColor.ToUnityColor(), Nebula.Roles.Impostor.Impostor.CanKillHidingPlayerOption);
 
-                OutTimer killTimer = new OutTimer(-MinKillCooldown, KillCooldown.Cooldown).Register(this);
+                OverTimer killTimer = new OverTimer(-MaxStorageKillCooldown, KillCooldown.Cooldown).Register(this);
 
-                killButton = new ModAbilityButtonImpl(isArrangedAsKillButton: true).SetLabel("kill").SetLabelType(ModAbilityButton.LabelType.Impostor).Register(this);
+                killButton = new ModAbilityButtonImpl(isArrangedAsKillButton: true).KeyBind(VirtualKeyInput.Kill).SetLabel("kill").SetLabelType(ModAbilityButton.LabelType.Impostor).Register(this);
                 killButton.Visibility = button => MyPlayer.IsAlive;
                 killButton.Availability = button => killTracker.CurrentTarget != null && MyPlayer.CanMove && !MyPlayer.WillDie;
                 killButton.CoolDownTimer = killTimer.SetAsKillCoolDown().Start();
@@ -62,26 +67,26 @@ public class Overclocker : DefinedSingleAbilityRoleTemplate<Overclocker.Ability>
                 var killButtoncooldownText = killButton.VanillaButton.cooldownTimerText;
                 killButton.cooldownTextColorObserver = new(false, inEffect => killButtoncooldownText.color = new VColor(255, 106, 106).ToUnityColor(), true);
 
-                OutTimer outTimer = new OutTimer(-MinOutTimeCooldown, OutTimeCooldown).Register(this);
+                OverTimer overTimer = new OverTimer(-MaxStorageKillCooldown, OverTimeCooldown).Register(this);
 
                 var outTimeTracker = ObjectTrackers.ForPlayerlike(this, null, MyPlayer, (p) => ObjectTrackers.PlayerlikeStandardPredicate(p));
-                outTimeButton = new ModAbilityButtonImpl().SetLabel("overclocker.outtime").SetLabelType(ModAbilityButton.LabelType.Impostor).Register(this);
-                outTimeButton.SetSprite(Snatcher.clockButtonSprite.GetSprite());
-                outTimeButton.Visibility = button => MyPlayer.IsAlive;
-                outTimeButton.Availability = button => outTimeTracker.CurrentTarget != null && MyPlayer.CanMove;
-                outTimeButton.RelatedAbility = this;
-                outTimeButton.CoolDownTimer = outTimer.SetAsAbilityCoolDown().Start();
-                outTimeButton.OnClick = button =>
+                overTimeButton = new ModAbilityButtonImpl().SetLabel("overclocker.overTime").KeyBind(VirtualKeyInput.Ability).SetLabelType(ModAbilityButton.LabelType.Impostor).Register(this);
+                overTimeButton.SetSprite(Snatcher.clockButtonSprite.GetSprite());
+                overTimeButton.Visibility = button => MyPlayer.IsAlive;
+                overTimeButton.Availability = button => outTimeTracker.CurrentTarget != null && MyPlayer.CanMove;
+                overTimeButton.RelatedAbility = this;
+                overTimeButton.CoolDownTimer = overTimer.SetAsAbilityCoolDown().Start();
+                overTimeButton.OnClick = button =>
                 {
                     if (outTimeTracker.CurrentTarget == null || outTimeTracker.CurrentTarget is not GamePlayer player) return;
-                    var time = Mathn.Abs(outTimer.CurrentTime * (ChangeTimePercentage / 100f));
+                    var time = Mathn.Abs(overTimer.CurrentTime * (ChangeTimePercentage / 100f));
                     RpcReduceCooldown.Invoke((MyPlayer, player, time));
 
-                    outTimer.Increase(OutTimeCooldown + time);
+                    overTimer.Increase(OverTimeCooldown + time);
                 };
 
-                var outTimeButtoncooldownText = outTimeButton.VanillaButton.cooldownTimerText;
-                outTimeButton.cooldownTextColorObserver = new(false, inEffect => outTimeButtoncooldownText.color = new VColor(255, 106, 106).ToUnityColor(), true);
+                var outTimeButtoncooldownText = overTimeButton.VanillaButton.cooldownTimerText;
+                overTimeButton.cooldownTextColorObserver = new(false, inEffect => outTimeButtoncooldownText.color = new VColor(255, 106, 106).ToUnityColor(), true);
             }
         }
 
@@ -95,37 +100,29 @@ public class Overclocker : DefinedSingleAbilityRoleTemplate<Overclocker.Ability>
                 if (Overclocker.RandomChangeCD)
                 {
                     var randomButton = buttons[System.Random.Shared.Next(buttons.Length)];
-                    var timer = randomButton.CoolDownTimer as GameTimer;
-
-                    if (message.overclocker.IsSameSideOf(message.player))
-                        OutTimer.CoChangeTime(timer, message.changeTime, true).StartOnScene();
-                    else
-                    {
-                        float changeTime = timer?.CurrentTime - message.changeTime ?? 0f;
-                        OutTimer.CoChangeTime(timer, changeTime).StartOnScene();
-                    }
+                    ChangeTime(randomButton);
                 }
                 else
-                {
-                    buttons.Do(b =>
-                    {
-                        var timer = b.CoolDownTimer as GameTimer;
+                    buttons.Do(b => ChangeTime(b));
+            }
 
-                        if (message.overclocker.IsSameSideOf(message.player))
-                            OutTimer.CoChangeTime(timer, message.changeTime, true).StartOnScene();
-                        else
-                        {
-                            float changeTime = timer?.CurrentTime - message.changeTime ?? 0f;
-                            OutTimer.CoChangeTime(timer, changeTime).StartOnScene();
-                        }
-                    });
+            void ChangeTime(ModAbilityButtonImpl button)
+            {
+                var timer = button.CoolDownTimer as GameTimer;
+
+                if (message.overclocker.IsSameSideOf(message.player))
+                    OverTimer.CoChangeTime(timer, message.changeTime, true).StartOnScene();
+                else
+                {
+                    float changeTime = timer?.CurrentTime - message.changeTime ?? 0f;
+                    OverTimer.CoChangeTime(timer, changeTime).StartOnScene();
                 }
             }
         });
     }
 }
 
-public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
+public class OverTimer : FlexibleLifespan, GameTimer, IGameOperator
 {
     private Func<bool>? predicate = null;
     private bool isActive;
@@ -139,35 +136,35 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
     /// IsProgressingはfalseを返します。
     /// </summary>
     /// <returns></returns>
-    public OutTimer StopForcely() => SetTime(0f);
+    public OverTimer StopForcely() => SetTime(0f);
 
-    public OutTimer Pause()
+    public OverTimer Pause()
     {
         isActive = false;
         return this;
     }
-    public virtual OutTimer Start(float? time = null)
+    public virtual OverTimer Start(float? time = null)
     {
         isActive = true;
         currentTime = time ?? max;
         return this;
     }
-    public OutTimer Resume()
+    public OverTimer Resume()
     {
         isActive = true;
         return this;
     }
-    public OutTimer Reset()
+    public OverTimer Reset()
     {
         currentTime = max;
         return this;
     }
-    public OutTimer SetTime(float time)
+    public OverTimer SetTime(float time)
     {
         currentTime = time;
         return this;
     }
-    public OutTimer SetRange(float min, float max)
+    public OverTimer SetRange(float min, float max)
     {
         if (min > max)
         {
@@ -181,27 +178,27 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
         }
         return this;
     }
-    public OutTimer Expand(float time)
+    public OverTimer Expand(float time)
     {
         this.max += time;
         return this;
     }
 
-    public OutTimer Increase(float time)
+    public OverTimer Increase(float time)
     {
         CoIncreaseTime(this, time).StartOnScene();
         return this;
     }
 
-    public static IEnumerator CoIncreaseTime(OutTimer outTimer, float time)
+    public static IEnumerator CoIncreaseTime(OverTimer overTimer, float time)
     {
-        outTimer.Pause();
+        overTimer.Pause();
         for (int i = 0; i < (int)time; i++)
         {
-            outTimer.currentTime += 1f;
-            yield return new WaitForSeconds(0.05f);
+            overTimer.currentTime += 1f;
+            yield return ManagedEffects.Wait(0.05f);
         }
-        outTimer.Resume();
+        overTimer.Resume();
     }
 
     public static IEnumerator CoChangeTime(GameTimer? timer, float time, bool reduce = false)
@@ -209,7 +206,7 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
         if (!reduce) yield return ManagedEffects.Wait(5f);
         timer?.Pause();
 
-        for (int i = 0; i < (int)time + 5; i++)
+        for (int i = 0; i < (int)time; i++)
         {
             if (reduce)
                 timer?.SetTime(timer.CurrentTime - 1f);
@@ -241,9 +238,9 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
         }
     }
 
-    public OutTimer(float max) : this(float.MinValue, max) { }
+    public OverTimer(float max) : this(float.MinValue, max) { }
 
-    public OutTimer(float min, float max)
+    public OverTimer(float min, float max)
     {
         SetRange(min, max);
         Reset();
@@ -251,7 +248,7 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
     }
 
     GameTimer GameTimer.SetCondition(System.Func<bool> progressWhile) => SetPredicate(progressWhile);
-    public OutTimer SetPredicate(Func<bool>? predicate)
+    public OverTimer SetPredicate(Func<bool>? predicate)
     {
         this.predicate = predicate;
         return this;
@@ -260,13 +257,13 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
     public Func<bool>? Predicate => this.predicate;
     public bool AffectedByCooldownEffect = false;
 
-    public OutTimer SetAsKillCoolDown()
+    public OverTimer SetAsKillCoolDown()
     {
         AffectedByCooldownEffect = true;
         return SetPredicate(() => AmongUsLLImpl.LocalPlayer.IsKillTimerEnabled || AmongUsLLImpl.LocalPlayer.ForceKillTimerContinue);
     }
 
-    public OutTimer SetAsAbilityCoolDown()
+    public OverTimer SetAsAbilityCoolDown()
     {
         AffectedByCooldownEffect = true;
         return SetPredicate(() =>
@@ -277,8 +274,8 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
 
             var minigame = Minigame.Instance;
 
-            if (minigame &&
-            ((bool)minigame.MyNormTask
+            if (minigame.AsBoolFast() &&
+            (minigame.MyNormTask.AsBoolFast()
             || minigame.IsFast<SwitchMinigame>()
             || minigame.IsFast<IDoorMinigame>()
             || minigame.IsFast<VitalsMinigame>()
@@ -305,13 +302,9 @@ public class OutTimer : FlexibleLifespan, GameTimer, IGameOperator
 
     GameTimer GameTimer.Expand(float time) => Expand(time);
     string IVisualTimer.TimerText => Mathn.CeilToInt(currentTime).ToString();
-    internal class TimerCoolDownHelper : IGameOperator
+    internal class TimerCoolDownHelper(OverTimer timer) : IGameOperator
     {
-        private OutTimer myTimer;
-        public TimerCoolDownHelper(OutTimer timer)
-        {
-            this.myTimer = timer;
-        }
+        private OverTimer myTimer = timer;
 
         void ResetVentCoolDownOnTaskPhaseRestart(TaskPhaseRestartEvent ev) => myTimer?.Start();
         void ResetVentCoolDownOnGameStart(GameStartEvent ev) => myTimer?.Start();

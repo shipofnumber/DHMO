@@ -1,27 +1,11 @@
 ﻿namespace DHMO.Patches;
 
-[HarmonyPatch(typeof(NebulaAddon))]
 public static class AddonHandshakeHashPatch
 {
-    public static int AddonHandshakeHash { get; internal set; }
-
     static AddonHandshakeHashPatch()
     {
-        int val = 0;
         foreach (var addon in NebulaAddon.AllAddons)
-        {
-            if (addon.NeedHandshake) val ^= CalculateAddonHash(addon);
-        }
-
-        AddonHandshakeHash = val;
-    }
-
-    [HarmonyPatch(nameof(NebulaAddon.AddonHandshakeHash), MethodType.Getter)]
-    [HarmonyPrefix]
-    public static bool Prefix(ref int __result)
-    {
-        __result = AddonHandshakeHashPatch.AddonHandshakeHash;
-        return false;
+            addon.HandshakeHash = CalculateAddonHash(addon);
     }
 
     internal static int CalculateAddonHash(NebulaAddon addon)

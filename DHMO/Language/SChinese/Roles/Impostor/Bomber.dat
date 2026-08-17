@@ -23,6 +23,7 @@
 "options.role.bomber.bombIgniteOf.self" : "自身"
 "options.role.bomber.bombIgniteOf.other" : "他人"
 "options.role.bomber.canVanillaKill" : "可以进行普通击杀"
+"options.role.bomber.shareCooldownOfkillAndignite" : "普通击杀与点燃共用冷却时间"
 "options.role.bomber.igniteBombCooldown" : "点燃冷却时间"
 "options.role.bomber.activatebombTime" : "炸弹激活时间"
 "options.role.bomber.bombExplodeTime" : "炸弹爆炸时间"

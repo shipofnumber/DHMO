@@ -51,12 +51,12 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             {
                 GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
                 {
-                    if (ev.Player == MyPlayer && AddonHelper.IsOutMeeting())
+                    if (ev.Player == MyPlayer && APICompat.IsOutMeeting())
                         LeaveOrJoinMeeting(false);
                 }, this);
 
                 var modUseButton = new ModAbilityButtonImpl(alwaysShow: true).KeyBind(VirtualKeyInput.Use).Register(this);
-                modUseButton.Visibility = _ => MyPlayer.IsAlive && AddonHelper.IsOutMeeting() && coroutine == null;
+                modUseButton.Visibility = _ => MyPlayer.IsAlive && APICompat.IsOutMeeting() && coroutine == null;
                 modUseButton.Availability = _ => MyPlayer.CanMove && MyPlayer.VanillaPlayer.closest != null && canCompleteTasks > 0;
                 modUseButton.OnClick = _ => MyPlayer.VanillaPlayer.UseClosest();
                 modUseButton.RelatedAbility = this;
@@ -91,25 +91,25 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
                     .SetAsUsurpableButton(this);
 
                 meetingButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting && leftLeave > 0;
-                meetingButton.Availability = _ => AddonHelper.ModAbilityMeetingButton() && coroutine == null && (CanLeaveMultiple || canLeave) && MeetingHudExtension.VotingTimer > MaxLeftVotingTimeForLeaving;
+                meetingButton.Availability = _ => APICompat.ModAbilityMeetingButton() && coroutine == null && (CanLeaveMultiple || canLeave) && MeetingHudExtension.VotingTimer > MaxLeftVotingTimeForLeaving;
                 meetingButton.ShowUsesIcon(3, leftLeave.ToString());
 
-                meetingButton.OnClick = button => LeaveOrJoinMeeting(!AddonHelper.IsOutMeeting());
+                meetingButton.OnClick = button => LeaveOrJoinMeeting(!APICompat.IsOutMeeting());
                 meetingButton.OnUpdate = button =>
                 {
-                    if (AddonHelper.IsOutMeeting())
+                    if (APICompat.IsOutMeeting())
                     {
                         if ((MeetingHudExtension.VotingTimer <= MaxLeftVotingTimeForLeaving || canCompleteTasks <= 0) && coroutine == null)
                             LeaveOrJoinMeeting(false);
                     }
-                    button.SetLabel(AddonHelper.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
+                    button.SetLabel(APICompat.IsOutMeeting() ? "lucidDreamer.returnmeeting" : "lucidDreamer.leavemeeting");
                 };
             }
         }
 
         void IGameOperator.OnReleased()
         {
-            if (AddonHelper.IsOutMeeting())
+            if (APICompat.IsOutMeeting())
                 LeaveOrJoinMeeting(false);
         }
 
@@ -148,7 +148,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         }
 
         [OnlyMyPlayer]
-        void OnPlayerStepSound(PlayerCheckPlayFootSoundEvent ev) => ev.PlayFootSound &= !AddonHelper.IsOutMeeting();
+        void OnPlayerStepSound(PlayerCheckPlayFootSoundEvent ev) => ev.PlayFootSound &= !APICompat.IsOutMeeting();
 
         [Local]
         void OnMeetingPreStart(MeetingPreStartEvent ev)
@@ -162,14 +162,14 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         [OnlyMyPlayer]
         void OnTaskComplete(PlayerTaskCompleteLocalEvent ev)
         {
-            if (AddonHelper.IsOutMeeting() && MyPlayer.IsAlive) --canCompleteTasks;
+            if (APICompat.IsOutMeeting() && MyPlayer.IsAlive) --canCompleteTasks;
         }
 
         void OnCameraUpdate(CameraUpdateEvent ev)
         {
-            if (MyPlayer.AmOwner && AddonHelper.IsOutMeeting() && MyPlayer.IsAlive) ev.UpdateSaturation(0f, true);
+            if (MyPlayer.AmOwner && APICompat.IsOutMeeting() && MyPlayer.IsAlive) ev.UpdateSaturation(0f, true);
         }
 
-        bool IPlayerAbility.EyesightIgnoreWalls => AddonHelper.IsOutMeeting() && MyPlayer.IsAlive;
+        bool IPlayerAbility.EyesightIgnoreWalls => APICompat.IsOutMeeting() && MyPlayer.IsAlive;
     }
 }

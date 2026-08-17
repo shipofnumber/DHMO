@@ -5,14 +5,14 @@ namespace DHMO.Modules;
 [NebulaPreprocess(PreprocessPhase.PostFixStructure)]
 public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
 {
-    static TimeMomentManager() => DIManager.Instance.RegisterModule(() => new TimeMomentManager());
-
     static public void Preprocess(NebulaPreprocessor preprocessor)
     {
+        preprocessor.DIManager.RegisterModule(() => new TimeMomentManager());
+
         TimeMoment.Register("raven", Raven.RavenTimeDuration, () =>
         {
             if (!Raven.InvokeRavenTime) return false;
-            int aliveCount = AddonHelper.AlivePlayers.Length;
+            int aliveCount = APICompat.AlivePlayers.Length;
 
             return aliveCount <= Raven.RavenTimeAliveNum && GamePlayer.AllPlayers.Any(p => p.Role is Raven.Instance && p.IsAlive) && !AmongUsUtil.InMeeting;
         }, Raven.MyRole.Color, Raven.TaskPhaseRestartRavenTimeDisperse);
@@ -20,7 +20,7 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
         TimeMoment.Register("pelican", Pelican.PelicanTimeDuration, () =>
         {
             if (!Pelican.InvokePelicanTime) return false;
-            var alivePlayers = AddonHelper.AlivePlayers;
+            var alivePlayers = APICompat.AlivePlayers;
             int totalAlive = alivePlayers.Length;
 
             var pelicans = alivePlayers.Select(p =>
@@ -48,9 +48,14 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
         {
             TimeMoment time = TimeMoment.AllTimes[i];
 
-            if (!time.CanRunning)
-                time.Stop();
-            else if (!time.IsRunning && time.CanRunning)
+            if (time.IsRunning)
+            {
+                if (!time.CanRunning)
+                    time.Stop(false);
+                else if (time.Time <= 0f)
+                    time.Stop(true);
+            }
+            else if (time.CanRunning)
                 time.Start();
 
             if (time.IsRunning)
@@ -72,6 +77,8 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
         if (!IsAnyTimeRun && hasFlashCoroutine)
             StopTimeMomentFlash();
     }
+
+    void OnUpdateVentState(PlayerUpdateVentStateLocalEvent ev) => ev.CannotUseVentTemporary |= IsAnyTimeRun;
 
     [OnlyHost]
     void OnTaskPhaseRestart(TaskPhaseRestartEvent ev)
@@ -97,7 +104,17 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
 
         if (player is null || vanillaplayer is null || player.IsDead) yield break;
 
-        if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.ForceClose();
+        if (Minigame.Instance.AsBoolFast(out var minigame))
+        {
+            try
+            {
+                minigame.Close();
+                minigame.Close();
+            }
+            catch (Exception)
+            {
+            }
+        }
 
         if (vanillaplayer.inVent)
         {
@@ -105,7 +122,8 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
             vanillaplayer.MyPhysics.ExitAllVents();
         }
 
-        vanillaplayer.NetTransform.RpcSnapTo(NebulaPreSpawnLocation.PreLocations.Select(p => p.Position!.Value).ToArray()[System.Random.Shared.Next(NebulaPreSpawnLocation.PreLocations.Length)]);
+        var preLocations = APICompat.AllPreLocations;
+        vanillaplayer.NetTransform.RpcSnapTo(preLocations.Select(p => p.Position!.Value).ToArray()[System.Random.Shared.Next(preLocations.Length)]);
 
         if (vanillaplayer.walkingToVent)
         {
@@ -187,16 +205,14 @@ public class TimeMomentImpl : TimeMoment
     {
         time = maxTime;
         isRun = true;
-        NebulaAPI.RunEvent(new TimeMomentStartEvent(this));
+        NebulaAPI.RunEvent(new TimeMomentStartEvent(ModSingleton<TimeMomentManager>.Instance.MyContainer, this));
         return this;
     }
 
-    bool isTimeOver;
-
-    public TimeMomentImpl Stop()
+    public TimeMomentImpl Stop(bool isTimeOver)
     {
         isRun = false;
-        NebulaAPI.RunEvent(new TimeMomentEndEvent(this, isTimeOver));
+        NebulaAPI.RunEvent(new TimeMomentEndEvent(ModSingleton<TimeMomentManager>.Instance.MyContainer, this, isTimeOver));
         return this;
     }
 
@@ -209,31 +225,12 @@ public class TimeMomentImpl : TimeMoment
 
     VColor TimeMoment.Color => this.color;
     bool TimeMoment.ShouldBeDisperse => shouldBeDisperse;
-    bool TimeMoment.CanRunning
-    {
-        get
-        {
-            if (!canRunning.Invoke())
-            {
-                this.isTimeOver = false;
-                return false;
-            }
-
-            if (time <= 0f)
-            {
-                time = maxTime;
-                this.isTimeOver = true;
-                return false;
-            }
-
-            return true;
-        }
-    }
+    bool TimeMoment.CanRunning => canRunning.Invoke();
 
     bool TimeMoment.IsRunning => isRun;
 
     TimeMoment TimeMoment.Start() => this.Start();
-    TimeMoment TimeMoment.Stop() => this.Stop();
+    TimeMoment TimeMoment.Stop(bool isTimeOver) => this.Stop(isTimeOver);
 }
 
 public interface TimeMoment
@@ -255,15 +252,15 @@ public interface TimeMoment
     }
 
     internal TimeMoment Start();
-    internal TimeMoment Stop();
+    internal TimeMoment Stop(bool isTimeOver);
 }
 
-public class TimeMomentStartEvent(TimeMoment timeMoment) : Virial.Events.Event
+public class TimeMomentStartEvent(Virial.Game.Game game, TimeMoment timeMoment) : Virial.Events.Game.AbstractGameEvent(game)
 {
     public TimeMoment TimeMoment { get; init; } = timeMoment;
 }
 
-public class TimeMomentEndEvent(TimeMoment timeMoment, bool isTimeOver) : Virial.Events.Event
+public class TimeMomentEndEvent(Virial.Game.Game game, TimeMoment timeMoment, bool isTimeOver) : Virial.Events.Game.AbstractGameEvent(game)
 {
     public TimeMoment TimeMoment { get; init; } = timeMoment;
     public bool IsTimeOver { get; init; } = isTimeOver;

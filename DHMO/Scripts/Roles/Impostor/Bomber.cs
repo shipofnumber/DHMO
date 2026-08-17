@@ -82,7 +82,6 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
             Timer?.Resume();
     }
 
-
     public readonly static RemoteProcess<(GamePlayer player, GamePlayer bomber, float duration)> RPCSetBomb = new("BomberSetBomb", (message, _) =>
     {
         if (!message.player.AmOwner) return;
@@ -110,14 +109,14 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitation, DefinedRole, IAssignableDocument
 {
     private Bomber() : base("bomber", VColor.ImpostorColor, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, 
-        [IgniteBombCooldown, BombIgniteOfOption, CanVanillaKill, ActivateBombTime, BombExplodeTime, AfterMeetingResetBombTime, BombKillLeftDeadBody])
+        [IgniteBombCooldown, BombIgniteOfOption, CanVanillaKill, ShareCooldownOfKillAndIgnite, ActivateBombTime, BombExplodeTime, AfterMeetingResetBombTime, BombKillLeftDeadBody])
     {
     }
 
     public static readonly IRelativeCooldownConfiguration IgniteBombCooldown = NebulaAPI.Configurations.KillConfiguration("options.role.bomber.igniteBombCooldown", CoolDownType.Relative, (0f, 60f, 2.5f), 25f, (-40f, 40f, 2.5f), 5f, (0.125f, 2f, 0.125f), 1.125f);
     private static readonly ValueConfiguration<int> BombIgniteOfOption = NebulaAPI.Configurations.Configuration("options.role.bomber.bombIgniteOf", ["options.role.bomber.bombIgniteOf.self", "options.role.bomber.bombIgniteOf.other"], 0);
     public static readonly BoolConfiguration CanVanillaKill = NebulaAPI.Configurations.Configuration("options.role.bomber.canVanillaKill", false);
-    public static readonly BoolConfiguration ShareCooldownOfKillAndIgnite = NebulaAPI.Configurations.Configuration("options.role.bomber.shareCooldownOfkillAndignite", false, () => CanVanillaKill);
+    public static readonly BoolConfiguration ShareCooldownOfKillAndIgnite = NebulaAPI.Configurations.Configuration("options.role.bomber.shareCooldownOfkillAndignite", true, () => CanVanillaKill);
     public static readonly FloatConfiguration ActivateBombTime = NebulaAPI.Configurations.Configuration("options.role.bomber.activatebombTime", (0f, 60f, 1f), 5f, FloatConfigurationDecorator.Second);
     public static readonly FloatConfiguration BombExplodeTime = NebulaAPI.Configurations.Configuration("options.role.bomber.bombExplodeTime", (0f, 60f, 2.5f), 15f, FloatConfigurationDecorator.Second);
     public static readonly BoolConfiguration AfterMeetingResetBombTime = NebulaAPI.Configurations.Configuration("options.role.bomber.afterMeetingResetBomb", true);

@@ -32,7 +32,7 @@ public static class MeetingStartPatch
         {
             try
             {
-                if (player.VanillaPlayer.AsBoolFast()) player.VanillaPlayer.ModResetForMeeting(false);
+                if (player.VanillaPlayer.AsBoolFast(out var pc)) pc.ModResetForMeeting(false);
             }
             catch (Exception e)
             {
@@ -99,7 +99,7 @@ public static class MeetingStartPatch
                         new VVector2(9.8f, 14.3f),
                         new VVector2(13f, 14.3f)
                     ];
-                    vector = list[Random.Range(0, list.Count)];
+                    vector = list[System.Random.Shared.Next(list.Count)];
                 }
                 pet.SetGettingPet(false, vector);
                 return;

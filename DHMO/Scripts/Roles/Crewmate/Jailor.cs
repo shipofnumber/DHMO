@@ -1,12 +1,11 @@
-﻿using static Sentry.Protocol.SampleProfile;
-using Image = Virial.Media.Image;
+﻿using Image = Virial.Media.Image;
 
 namespace DHMO.Roles.Crewmate;
 
 public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedRole, HasCitation, IAssignableDocument
 {
     private Jailor() : base("jailor", new(166, 166, 166), RoleCategory.CrewmateRole, NebulaTeams.CrewmateTeam,
-        [JailCooldownOption, JailDurationOption, JailInARow, LimitAbilityUsesOption, NumOfJailOption, NumOfExecuteOption, MaxLeftVotingTimeForExecuting, CanExecuteLoversOption, CannotJailAfterCrewmate, HasPrivateChat])
+        [JailCooldownOption, JailDurationOption, JailInARow, LimitAbilityUsesOption, NumOfJailOption, NumOfExecuteOption, MaxLeftVotingTimeForExecuting, CanExecuteLoversOption, HasPrivateChat])
     { }
 
     static private readonly FloatConfiguration JailCooldownOption = NebulaAPI.Configurations.Configuration("options.role.jailor.jailCooldown", (5f, 30f, 2.5f), 25f, FloatConfigurationDecorator.Second);
@@ -17,10 +16,9 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
     static private readonly IntegerConfiguration NumOfExecuteOption = NebulaAPI.Configurations.Configuration("options.role.jailor.numOfexecute", (1, 5), 3, () => LimitAbilityUsesOption.GetValue() == 1);
     static internal readonly FloatConfiguration MaxLeftVotingTimeForExecuting = NebulaAPI.Configurations.Configuration("options.role.jailor.maxLeftVotingTimeForExecuting", (5f, 60f, 5f), 20f, FloatConfigurationDecorator.Second);
     static private readonly BoolConfiguration CanExecuteLoversOption = NebulaAPI.Configurations.Configuration("options.role.jailor.canExecuteLovers", false);
-    static private readonly BoolConfiguration CannotJailAfterCrewmate = NebulaAPI.Configurations.Configuration("options.role.jailor.cannotJailAfterExecuteCrew", true);
     static public readonly BoolConfiguration HasPrivateChat = NebulaAPI.Configurations.Configuration("options.role.jailor.hasJailorchat", true, () => NebulaAPI.GetAddon("Plan17ResourcesPlana") != null);
 
-    public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.Get(0, GetAbilityUses()));
+    public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.Get(0, GetAbilityUses()), arguments.GetAsBool(1));
 
     private static readonly Image? jailImage = NebulaAPI.AddonAsset?.GetResource("Button/JailButton.png")?.AsImage(80f);
     private static readonly Image? executeImage = NebulaAPI.AddonAsset?.GetResource("Button/ExecuteButton.png")?.AsImage(170f);
@@ -42,39 +40,34 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
     {
         yield return new("%JAILINAROW%", Language.Translate(JailInARow ? "role.jailor.ability.jailinArow" : "role.jailor.ability.clearJailed"));
         yield return new("%CANEXECUTELOVER%", CanExecuteLoversOption ? Language.Translate("role.jailor.ability.canExecuteLover") : "");
-        yield return new("%CANNOTJAIL%", CannotJailAfterCrewmate ? Language.Translate("role.jailor.ability.cannotJailAfterExecuteCrew") : "");
     }
 
     public Citation? Citation => DHMOCitations.TownOfUsMira;
 
-    private static bool IsLimiltJailUses()
-    {
-        if (LimitAbilityUsesOption.GetValue() == 0) return true;
-        else
-            return false;
-    }
-
+    private static bool IsLimiltJailUses() => LimitAbilityUsesOption.GetValue() == 0;
     private static int GetAbilityUses() => IsLimiltJailUses() ? NumOfJailOption : NumOfExecuteOption;
 
     [NebulaRPCHolder]
-    public class Ability : AbstractPlayerAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
+    public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
     {
         ModAbilityButton? jailButton, executeButton;
-        public GamePlayer? jailed { get; private set; } = null;
-        private EditableBitMask<GamePlayer> hasJailed = BitMasks.AsPlayer();
+        public GamePlayer? Jailed { get; private set; } = null;
+        EditableBitMask<GamePlayer> hasJailed = BitMasks.AsPlayer();
 
+        bool isMissed;
         PoolablePlayer? jailIcon = null;
         private GameObject? jailCell;
         private int leftUses = GetAbilityUses();
+        int[] IPlayerAbility.AbilityArguments => [leftUses, IsUsurped.AsInt()];
 
-        public Ability(GamePlayer player, int uses) : base(player)
+        public Ability(GamePlayer player, int uses, bool isUsurped) : base(player, isUsurped)
         {
             this.leftUses = uses;
 
             if (HasPrivateChat)
             {
                 PrivateChat.RegisterPublicChannel(MyRole.Color, MyRole.Color, $"Jailor{MyPlayer.PlayerId}", Language.Translate("chat.jailortext"), this,
-                    () => AmongUsUtil.InMeeting && jailed != null && jailed.IsAlive && (MyPlayer.AmOwner || jailed.AmOwner), true,
+                    () => AmongUsUtil.InMeeting && Jailed != null && Jailed.IsAlive && (MyPlayer.AmOwner || Jailed.AmOwner), true,
                     text => RpcSendChat.Invoke((MyPlayer, GamePlayer.LocalPlayer ?? MyPlayer, text)));
             }
 
@@ -84,11 +77,8 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
                 jailButton = NebulaAPI.Modules.EffectButton(this, MyPlayer, VirtualKeyInput.Ability, JailCooldownOption, JailDurationOption, "jailor.jail", jailImage)
                     .SetLabelType(ModAbilityButton.LabelType.Impostor).SetColorLabel(MyRole.UnityColor);
-                jailButton.Availability = _ => MyPlayer.CanMove && tracker.CurrentTarget != null;
-                jailButton.Visibility = _ => MyPlayer.IsAlive && leftUses > 0;
-
-                if (IsLimiltJailUses())
-                    jailButton.ShowUsesIcon(3, leftUses.ToString());
+                jailButton.Availability = button => MyPlayer.CanMove && tracker.CurrentTarget != null;
+                jailButton.Visibility = button => MyPlayer.IsAlive && leftUses > 0;
 
                 jailButton.OnEffectStart = _ => tracker.KeepAsLongAsPossible = true;
                 jailButton.OnEffectEnd = button =>
@@ -112,7 +102,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                             var outfit = tracker.CurrentTarget.GetOutfit(OutfitPriority.TransformedThrethold);
                             jailIcon?.Destroy();
                             if (outfit == null) return;
-                            jailIcon = AmongUsUtil.GetPlayerIcon(outfit.outfit, (button as ModAbilityButtonImpl)?.VanillaButton.transform, new VVector3(-0.4f, 0.35f, -0.5f), new(0.3f, 0.3f)).SetAlpha(0.5f);
+                            jailIcon = AmongUsUtil.GetPlayerIcon(outfit.outfit, ((ModAbilityButtonImpl)button).VanillaButton.transform, new VVector3(0.4f, -0.35f, -0.5f), new(0.3f, 0.3f)).SetAlpha(0.5f);
                         }
                     }
                     button.StartCoolDown();
@@ -127,18 +117,20 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 executeButton = NebulaAPI.Modules.AbilityButton(this, false, false, 0, true)
                     .BindKey(VirtualKeyInput.SidekickAction).SetLabel("jailor.execute")
                     .SetLabelType(ModAbilityButton.LabelType.Impostor).SetColorLabel(MyRole.UnityColor);
-                executeButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting && leftUses > 0 && jailed != null;
-                executeButton.Availability = _ => jailed != null && jailed.IsAlive && AddonHelper.ModAbilityMeetingButton() && MeetingHudExtension.VotingTimer >= MaxLeftVotingTimeForExecuting && MyPlayer.CanKill(jailed);
+                executeButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting && leftUses > 0 && Jailed != null;
+                executeButton.Availability = _ => Jailed != null && Jailed.IsAlive && APICompat.ModAbilityMeetingButton() && MeetingHudExtension.VotingTimer >= MaxLeftVotingTimeForExecuting && MyPlayer.CanKill(Jailed);
                 executeButton.SetImage(executeImage!);
-
-                if (!IsLimiltJailUses())
-                    executeButton.ShowUsesIcon(3, leftUses.ToString());
 
                 executeButton.OnClick = button =>
                 {
-                    if (jailed == null) return;
-                    MyPlayer.MurderPlayer(jailed, execution, execution, KillParameter.MeetingKill, KillCondition.TargetAlive);
+                    if (Jailed == null) return;
+                    MyPlayer.MurderPlayer(Jailed, execution, execution, KillParameter.MeetingKill, KillCondition.TargetAlive);
                 };
+
+                if (IsLimiltJailUses())
+                    jailButton.ShowUsesIcon(3, leftUses.ToString());
+                else
+                    executeButton.ShowUsesIcon(3, leftUses.ToString());
             }
         }
 
@@ -163,7 +155,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
         [Local]
         void CheckPlayerMurdered(PlayerMurderedEvent ev)
         {
-            if (ev.Dead.PlayerId != jailed?.PlayerId || !AmongUsUtil.InMeeting) return;
+            if (ev.Dead.PlayerId != Jailed?.PlayerId || !AmongUsUtil.InMeeting) return;
             if (ev.Murderer == MyPlayer && ev.Dead.PlayerState == execution)
             {
                 var canExecute = this.CanExecute(ev.Dead);
@@ -171,7 +163,9 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 if (!canExecute && MyPlayer.IsTrueCrewmate)
                 {
                     leftUses = 0;
+                    isMissed = true;
                     AmongUsUtil.PlayFlash(VColor.Red);
+                    RpcInsulate.Invoke(MyPlayer);
                 }
                 else
                 {
@@ -188,21 +182,22 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
         void OnPlayerDieOrDisconnect(PlayerDieOrDisconnectEvent ev)
         {
-            if (ev.Player == MyPlayer || ev.Player == jailed)
-                jailed = null;
+            if (ev.Player == MyPlayer || ev.Player == Jailed)
+                Jailed = null;
         }
 
         void OnMeetingStart(MeetingStartEvent ev)
         {
             Clear();
-            if (jailed == null) return;
+            if (Jailed == null) return;
 
-            if (AmOwner)
-                RpcInsulate.Invoke(jailed);
+            if (AmOwner && isMissed) RpcInsulate.Invoke(MyPlayer);
+            MeetingHudExtension.AddSealedMask(1 << Jailed.PlayerId);
+            if (Jailed.AmOwner) MeetingHudExtension.CanUseAbility = false;
 
             foreach (var voteArea in MeetingHud.Instance.playerStates.GetFastEnumerator())
             {
-                if (jailed.PlayerId == voteArea.TargetPlayerId)
+                if (Jailed.PlayerId == voteArea.TargetPlayerId)
                 {
                     var voteAreaTransform = voteArea.ModGameObject().GetUnityTransform();
                     GenCell(voteAreaTransform);
@@ -212,11 +207,11 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
         void OnMeetingEnd(MeetingEndEvent ev)
         {
-            if (jailed is null) return;
+            if (Jailed == null) return;
 
             if (!JailInARow)
             {
-                jailed = null;
+                Jailed = null;
                 if (AmOwner) jailIcon?.Destroy();
                 return;
             }
@@ -231,8 +226,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
         public void Clear()
         {
-            if (jailCell.AsBoolFast())
-                jailCell?.Destroy();
+            if (jailCell.AsBoolFast(out var cell)) cell.Destroy();
         }
 
         internal void GenCell(Transform voteArea)
@@ -243,32 +237,27 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             jailCell = cellRenderer.gameObject;
         }
 
-        private static readonly RemoteProcess<GamePlayer> RpcInsulate = new("InsulateJailor", (player, _) =>
-        {
-            MeetingHudExtension.AddSealedMask(1 << player.PlayerId);
-            if (player.AmOwner) MeetingHudExtension.CanUseAbility = false;
-        });
+        private static readonly RemoteProcess<GamePlayer> RpcInsulate = new("InsulateJailor", (msg, _) => MeetingHudExtension.RemoveCanVoteMask(1 << msg.PlayerId));
 
         private static readonly RemoteProcess<(GamePlayer jailor, GamePlayer jailed)> RpcJail = new("JailorJail", (message, _) =>
         {
             if (!message.jailor.TryGetAbility<Jailor.Ability>(out var ability)) return;
-            ability.jailed = message.jailed;
+            ability.Jailed = message.jailed;
         });
 
         private static readonly RemoteProcess<(GamePlayer jailor, GamePlayer sender, string text)> RpcSendChat = new("JailorSendChat", (message, _) =>
         {
-            if (string.IsNullOrEmpty(message.text) || NebulaGameManager.Instance == null || !message.jailor.TryGetAbility<Jailor.Ability>(out var ability) || ability.jailed == null) return;
-            if (!message.jailor.AmOwner && !ability.jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo) return;
+            if (string.IsNullOrEmpty(message.text) || NebulaGameManager.Instance == null || !message.jailor.TryGetAbility<Jailor.Ability>(out var ability) || ability.Jailed == null) return;
+            if (!message.jailor.AmOwner && !ability.Jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo) return;
 
             var chat = AmongUsLLImpl.HudManagerBridge.Chat;
-            VColor color = Jailor.MyRole.Color;
-            string tag = Language.Translate("chat.jailortext");
+            string tag = Language.Translate("chat.jailor").Color(Jailor.MyRole.Color);
             GamePlayer sender = message.sender;
 
-            if (sender == message.jailor && ability.jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo)
-                chat.AddCustomChat(sender.VanillaPlayer, ability.jailed.VanillaPlayer, $"{(Jailor.MyRole as DefinedAssignable).DisplayName}({tag})".Color(color), message.text);
+            if (sender == message.jailor && ability.Jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo)
+                chat.AddCustomChat(sender.VanillaPlayer, ability.Jailed.VanillaPlayer, $"{(Jailor.MyRole as DefinedAssignable).DisplayColoredName}{tag}", message.text);
             else
-                chat.AddCustomChat(sender.VanillaPlayer, sender.VanillaPlayer, $"{sender.Name}{$"({tag})".Color(color)}", message.text);
+                chat.AddCustomChat(sender.VanillaPlayer, sender.VanillaPlayer, $"{sender.Name}{tag}", message.text);
 
             if (message.text.IndexOf("who", StringComparison.OrdinalIgnoreCase) >= 0)
                 Assets.CoreScripts.UnityTelemetry.Instance.SendWho();

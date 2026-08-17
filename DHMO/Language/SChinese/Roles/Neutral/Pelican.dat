@@ -25,6 +25,7 @@
 "options.role.pelican.detail" : "鹈鹕可以吞噬玩家。"
 "options.role.pelican.devourCooldown" : "吞噬冷却时间"
 "options.role.pelican.increaseTime" : "吞噬增加冷却时间"
+"options.role.pelican.canCallEmergencyMeeting" : "可以召开紧急会议"
 "options.role.pelican.group.pelicanTime" : "鹈鹕时刻设置"
 "options.role.pelican.pelicanTime" : "鹈鹕时刻"
 "options.role.pelican.pelicanTimeAlived" : "鹈鹕时刻所需存活玩家数"

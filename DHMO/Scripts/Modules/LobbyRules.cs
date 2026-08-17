@@ -8,7 +8,7 @@ public class LobbyRules
 {
     public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
     {
-        yield return preprocessor.SetLoadingText("Building Lobby Rules Module");
+        yield return preprocessor.SetLoadingText("Building LobbyRules Module");
 
         NebulaManager.commands.Add(new NebulaManager.MetaCommand("help.command.showRule",
                      () => NebulaAPI.CurrentGame != null && !LobbyRules.IsShown,
@@ -53,6 +53,7 @@ public class LobbyRules
 
             var stream = NebulaAPI.AddonAsset.GetResource("LobbyRule.txt")?.AsStream()!;
             using var reader = new StreamReader(stream, Encoding.GetEncoding("utf-8"));
+
             string text = reader.ReadToEnd();
 
             string ruleFile = Path.Combine(directory, "LobbyRule.txt");
@@ -90,26 +91,6 @@ public class LobbyRules
         LobbyRules.OpenClientRuleScreen(message.rulesText, message.title);
     });
 
-    static RemoteProcess<(string key, string name)> RpcSetLobbyRulesMessage = new("SetLobbyRulesMessage", (message, _) =>
-    {
-        var notifier = AmongUsLLImpl.HudManagerInstance.Notifier;
-        var key = message.key.Sum(c => c);
-        var text = $"<font=\"Barlow-Black SDF\" material=\"Barlow-Black Outline\">{Language.Translate("ui.lobbyRules.selectFileSuccessfully").Replace("%FILE%", message.name.Color(VColor.CrewmateColor))}</font>";
-
-        if (notifier.lastMessageKey == key && notifier.activeMessages.Count > 0)
-            notifier.activeMessages[^1].UpdateMessage(text);
-        else
-        {
-            notifier.lastMessageKey = key;
-            LobbyNotificationMessage newMessage = UnityEngine.Object.Instantiate(notifier.notificationMessageOrigin, VVector3.Zero, Quaternion.identity, notifier.transform);
-            newMessage.transform.localPosition = new VVector3(0f, 0f, -2f);
-            var action = () => notifier.OnMessageDestroy(newMessage);
-            newMessage.SetUp(text, notifier.settingsChangeSprite, notifier.settingsChangeColor, action);
-            notifier.ShiftMessages();
-            notifier.AddMessageToQueue(newMessage);
-        }
-        AmongUsLLImpl.SoundManagerInstance.PlaySoundImmediate(notifier.settingsChangeSound, false, 1f, 1f);
-    });
 
     private static (MetaScreen window, GUIWidget titleWidget) CreateRuleWindow(string? title)
     {
@@ -190,10 +171,10 @@ public class LobbyRules
 
         foreach (var path in txtPath)
         {
-            var name = Path.GetFileNameWithoutExtension(path);
+            var file = Path.GetFileNameWithoutExtension(path);
 
             widgets.Add(NebulaAPI.GUI.HorizontalHolder(Virial.Media.GUIAlignment.Center,
-        new NoSGUIFramed(GUIAlignment.Left,NebulaAPI.GUI.VerticalHolder(GUIAlignment.Left, NebulaAPI.GUI.HorizontalMargin(5.75f), NebulaAPI.GUI.RawText(GUIAlignment.Left, AttributeAsset.DocumentBold, name)),
+        new NoSGUIFramed(GUIAlignment.Left,NebulaAPI.GUI.VerticalHolder(GUIAlignment.Left, NebulaAPI.GUI.HorizontalMargin(5.75f), NebulaAPI.GUI.RawText(GUIAlignment.Left, AttributeAsset.DocumentBold, file)),
         new(0.1f, 0.1f), new(0.3f, 0.3f, 0.3f, 0.2f))
         {
             OnClicked = () =>
@@ -210,7 +191,7 @@ public class LobbyRules
                 selectedPath = path;
                 WriteLobbyRulesText(setting, path);
                 window.CloseScreen();
-                RpcSetLobbyRulesMessage.Invoke(("SendLobbyRulesMessage", name));
+                APICompat.RpcAddLobbyNotification.Invoke(("SendLobbyRulesMessage", Language.Translate("ui.lobbyRules.selectFileSuccessfully").Replace("%FILE%", file), VColor.Clear, 0, true));
             },
         }));
         }

@@ -24,7 +24,7 @@ public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
 
         var markButton = NebulaAPI.Modules.AbilityButton(this, isLeftSideButton: true, alwaysShow: true).SetImage(MarkImage!).SetLabel("mark");
         markButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting;
-        markButton.Availability = _ => !Minigame.Instance.AsBoolFast() && AmongUsUtil.InMeeting && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !AddonHelper.IsOutMeeting();
+        markButton.Availability = _ => !Minigame.Instance.AsBoolFast() && AmongUsUtil.InMeeting && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !APICompat.IsOutMeeting();
         markButton.OnClick = _ =>
         {
             RoleMarkMenu.Open((p) =>

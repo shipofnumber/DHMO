@@ -6,23 +6,25 @@
 
 # Document
 
-"role.overclocker.doc" : "焚频者可以储存多余冷却时间。"
+"role.overclocker.doc" : "焚频者可以储存多出的冷却时间，并加以辅助同伴。"
 "role.overclocker.ability.title" : "固有能力【超频】"
-"role.overclocker.ability.main" : "焚频者的技能冷却时间会被储存，以负数字体显示，且重置冷却时间时会优先消耗储存冷却时间（只在行动阶段生效）。"
-"role.overclocker.ability.outtime" : "<title>超频</title>对同阵营使用时会缩减对方一定比例的冷却时间，反之增加。"
+"role.overclocker.ability.main" : "焚频者的技能冷却时间允许超出并被储存，且使用技能时会优先消耗储存时间。"
+"role.overclocker.ability.outtime" : "<title>超频</title>对同阵营使用时会按照此技能的储存时间的<var>%PERCENTAGE%%</var>缩减对方%RANDOM%，反之增加。<br>使用后此技能会增加"
+"role.overclocker.ability.random" : "<var>随机技能的冷却时间</var>"
+"role.overclocker.ability.all" : "<var>全部技能的冷却时间</var>"
 "role.overclocker.tips" : "・本职业由<b>DHMO</b>添加。"
 
 # Options
 
-"options.role.overclocker.detail" : "焚频者可以使自身的技能所多出的冷却时间储存，并借此辅助队友。"
+"options.role.overclocker.detail" : "焚频者可以使自身的冷却时间超出，并借此辅助队友。"
 "options.role.overclocker.killCooldown" : "击杀冷却时间"
-"options.role.overclocker.minKillCooldown" : "击杀可储存冷却时间"
-"options.role.overclocker.outTimeCooldown" : "超频冷却时间"
-"options.role.overclocker.minOutTimeCooldown" : "超频可储存冷却时间"
+"options.role.overclocker.maxStorageKillCooldown" : "最大可储存击杀冷却时间"
+"options.role.overclocker.overTimeCooldown" : "超频冷却时间"
+"options.role.overclocker.maxStorageOverTimeCooldown" : "最大可储存超频冷却时间"
 "options.role.overclocker.changeTimePercentage" : "冷却时间变更百分比"
 "options.role.overclocker.changeTimePercentage.detail" : "冷却时间变更数值 = 当前超频技能的<b>储存冷却时间</b> * 设置的百分比。" 
 "options.role.overclocker.randomChangeCooldown" : "随机变更冷却时间"
 
 # Button
 
-"button.label.overclocker.outtime" : "超频"
+"button.label.overclocker.overTime" : "超频"

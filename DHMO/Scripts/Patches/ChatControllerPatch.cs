@@ -1,118 +1,141 @@
 ﻿using AmongUs.Data;
-using Virial.Events.Configurations;
+using System.Reflection.Emit;
 
 namespace DHMO.Patches;
 
 [HarmonyPatch]
 public static class ChatControllerPatch
 {
-/*    [HarmonyPatch(typeof(ChatController), nameof(ChatController.Awake))]
+    [HarmonyPatch(typeof(HudManager), nameof(HudManager.Start))]
     [HarmonyPostfix]
-    public static void ChatControllerAwakePostfix(ChatController __instance)
+    public static void HudManagerStartPostfix(HudManager __instance)
     {
-        var quickChatButton = __instance.quickChatButton;
+        APICompat.WarningImage = new CacheSpriteLoader(() => __instance.LobbyTimerExtensionUI.gameObject.transform.TryDig("WarningContainer", "Icon")?.GetComponent<SpriteRenderer>().sprite!);
 
-        var searchHistoryButton = UnityEngine.Object.Instantiate(quickChatButton, quickChatButton.transform.parent);
-        searchHistoryButton.name = "SearchHistoryButton";
+        __instance.Chat.chatBubblePool.poolSize = ChatSystem.NumOfChatHistory;
+        NebulaManager.Instance.StartCoroutine(CoLoadHistory(__instance).WrapToIl2Cpp());
+    }
+
+    static IEnumerator CoLoadHistory(HudManager __instance)
+    {
+        ChatController chatController = __instance.Chat;
+        var quickChatButton = chatController.quickChatButton;
+        var freeChatField = chatController.freeChatField;
+
+        while (!chatController.AsBoolFast() || !quickChatButton.AsBoolFast() || !freeChatField.AsBoolFast()) yield return null;
+
+        var searchButton = UnityEngine.Object.Instantiate(quickChatButton, quickChatButton.transform.parent);
+        var buttonObj = searchButton.ModGameObject();
+
+        var searchField = UnityEngine.Object.Instantiate(freeChatField, freeChatField.transform.parent);
+        searchField.name = "SearchField";
+
+        TextMeshPro textPro = searchField.submitButton.text;
+        var translator = textPro.GetComponent<TextTranslatorTMP>();
+        translator?.Destroy();
+        textPro.text = Language.Translate("ui.chat.history.search");
+
+        searchField.gameObject.SetActive(false);
+
+        searchButton.name = "SearchButton";
         VVector3 postion = quickChatButton.transform.localPosition;
         postion.x = -3.94f;
 
-        searchHistoryButton.transform.localPosition = postion;
-        searchHistoryButton.OnClick = new UnityEngine.UI.Button.ButtonClickedEvent();
-        searchHistoryButton.OnClick.AddListener(() =>
+        buttonObj.LocalPosition = postion;
+
+        bool lastShowState = buttonObj.ActiveSelf;
+        buttonObj.AddComponent<ScriptBehaviour>().UpdateHandler += () =>
+        {
+            bool shouldShow = !chatController.quickChatMenu.AsBoolFast() || !chatController.quickChatMenu.gameObject.activeSelf;
+
+            if (shouldShow != lastShowState)
+            {
+                bool isSearch = ChatSystem.Instance.IsSearch;
+                if (!shouldShow && isSearch) ChatSystem.Instance.IsSearch = false;
+                buttonObj.SetActive(shouldShow);
+                lastShowState = shouldShow;
+            }
+        };
+
+        searchButton.OnClick = new UnityEngine.UI.Button.ButtonClickedEvent();
+        searchButton.OnClick.AddListener(() =>
         {
             ChatSystem.Instance.IsSearch = !ChatSystem.Instance.IsSearch;
-            quickChatButton.gameObject.SetActive(!ChatSystem.Instance.IsSearch);
+            var isSerach = ChatSystem.Instance.IsSearch;
+
+            searchField.SetVisible(isSerach);
+            freeChatField.SetVisible(!isSerach);
+            quickChatButton.gameObject.SetActive(!isSerach);
         });
 
-        ChatSystem.Instance.SearchButton = searchHistoryButton.ModGameObject();
-        searchHistoryButton.gameObject.SetActive(false);
+        ChatSystem.Instance.SearchField = searchField;
+        ChatSystem.Instance.SearchButton = buttonObj;
+        buttonObj.SetActive(false);
+    }
+
+    static bool ShouldSkipNotification()
+    {
+        var bridge = AmongUsLLImpl.HudManagerBridge;
+        var chat = bridge.Chat;
+        if (!chat.AsBoolFast()) return false;
+
+        var chatButton = chat.chatButton;
+        if (!chatButton.AsBoolFast()) return false;
+
+        return !chatButton.isActiveAndEnabled;
+    }
+
+    [HarmonyPatch(typeof(ChatNotification), nameof(ChatNotification.SetUp))]
+    [HarmonyTranspiler]
+    public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        var codes = instructions.ToList();
+
+        var shipStatusInstanceGetter = AccessTools.PropertyGetter(typeof(ShipStatus), "Instance");
+        var skipCheckMethod = AccessTools.Method(typeof(ChatControllerPatch), nameof(ShouldSkipNotification));
+
+        for (int i = 0; i < codes.Count - 1; i++)
+        {
+            if (codes[i].opcode == OpCodes.Call && codes[i].operand is System.Reflection.MethodInfo method && method == shipStatusInstanceGetter &&
+                (codes[i + 1].opcode == OpCodes.Brtrue_S || codes[i + 1].opcode == OpCodes.Brtrue))
+            {
+                var newCall = new CodeInstruction(OpCodes.Call, skipCheckMethod);
+
+                if (codes[i].labels != null && codes[i].labels.Count > 0)
+                {
+                    newCall.labels.AddRange(codes[i].labels);
+                }
+
+                codes[i] = newCall;
+                break;
+            }
+        }
+
+        return codes.AsEnumerable();
     }
 
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.CoOpen))]
-    [HarmonyPrefix]
-    public static void CoOpenPrefix()
+    [HarmonyPostfix]
+    public static void CoOpenPostfix()
     {
+        ChatSystem system = ChatSystem.Instance;
+        system.IsSearch = false;
+
+        system.SearchField?.SetVisible(false);
         if (DataManager.Settings.Multiplayer.ChatMode == InnerNet.QuickChatModes.QuickChatOnly) return;
-        ChatSystem.Instance.SearchButton?.SetActive(true);
+        system.SearchButton?.SetActive(true);
     }
 
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.CoClose))]
-    [HarmonyPrefix]
-    public static void CoClosePrefix()
+    [HarmonyPostfix]
+    public static void CoClosePostfix()
     {
-        if (DataManager.Settings.Multiplayer.ChatMode == InnerNet.QuickChatModes.QuickChatOnly) return;
-        ChatSystem.Instance.SearchButton?.SetActive(false);
-    }*/
+        ChatSystem system = ChatSystem.Instance;
+        FreeChatInputField? searchField = system.SearchField;
 
-    [HarmonyPatch(typeof(ObjectPoolBehavior), nameof(ObjectPoolBehavior.Awake))]
-    [HarmonyPrefix]
-    public static void ChatPoolAwakePrefix(ObjectPoolBehavior __instance)
-    {
-        if (__instance.GetInstanceIdFast() != AmongUsLLImpl.HudManagerBridge.Chat.chatBubblePool.GetInstanceIdFast()) return;
-        
-        __instance.poolSize = ChatSystem.NumOfChatHistory;
-        ILifespan objLifespan = new GameObjectLifespan(__instance.gameObject);
-        GameOperatorManager.Instance?.Subscribe<UpdateEvent>(ev =>
-        {
-            if (__instance.poolSize == ChatSystem.NumOfChatHistory) return;
-            __instance.StartCoroutine(CoChangeSize().WrapToIl2Cpp());
-        }, objLifespan);
-
-        IEnumerator CoChangeSize()
-        {
-            var size = ChatSystem.NumOfChatHistory;
-            __instance.poolSize = size;
-
-            DLog.Log($"ObjectPool: PoolSize changed to {size}");
-            var count = size - __instance.activeChildren.Count;
-            var list = __instance.inactiveChildren;
-            if (count < 0)
-            {
-                PoolableBehavior[] poolables = [.. __instance.activeChildren.GetFastEnumerator().Skip(Math.Abs(count))];
-                foreach (var poolable in poolables)
-                {
-                    try
-                    {
-                        __instance.Reclaim(poolable);
-                    }
-                    catch (Exception ex)
-                    {
-                        DLog.Log($"Error reclaiming poolable: {ex.Message}");
-                    }
-                }
-            }
-
-            if (count > 0)
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    try
-                    {
-                        __instance.CreateOneInactive(__instance.Prefab);
-                    }
-                    catch (Exception ex)
-                    {
-                        DLog.Log($"Error creating inactive poolable: {ex.Message}");
-                    }
-                }
-            }
-
-            yield return null;
-        }
-    }
-    
-
-    [HarmonyPatch(typeof(ChatController), nameof(ChatController.GetPooledBubble))]
-    [HarmonyPrefix]
-    public static bool OnFreeChatSubmitPrefix()
-    {
-        if (ChatSystem.Instance.IsSearch)
-        {
-            return false;
-        }
-
-        return true;
+        system.SearchButton?.SetActive(false);
+        searchField?.Unfocus();
+        searchField?.ForceKeyboardClose();
     }
 
     [HarmonyPostfix]
@@ -152,6 +175,8 @@ public static class ChatControllerPatch
     {
         var textArea = __instance.textArea;
         var back = __instance.Background;
+        ModGameObject backObj = back.ModGameObject(false);
+        ModGameObject fieldObj = __instance.ModGameObject(false);
 
         float height = Math.Max(0.62f, textArea.TextHeight + 0.2f);
         VVector2 size = back.size;
@@ -159,13 +184,13 @@ public static class ChatControllerPatch
         back.size = size;
 
         float delta = 0.62f - height;
-        VVector3 pos = back.transform.localPosition;
+        VVector3 pos = backObj.LocalPosition;
         pos.y = delta / 2f;
-        back.transform.localPosition = pos;
+        backObj.LocalPosition = pos;
 
-        VVector3 selfPos = __instance.transform.localPosition;
+        VVector3 selfPos = fieldObj.LocalPosition;
         selfPos.y = -2.08f - delta;
-        __instance.transform.localPosition = selfPos;
+        fieldObj.LocalPosition = selfPos;
 
         int length = textArea.text.Length;
         __instance.charCountText.text = string.Format("{0}/{1}", length, textArea.characterLimit);

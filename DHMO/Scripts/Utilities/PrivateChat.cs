@@ -4,7 +4,7 @@ public class PrivateChat
 {
     public static void RegisterPublicChannel(VColor color, VColor textfieldColor, string chatid, string localizedname, ILifespan lifespan, Func<bool> useChannelPredicate, bool donotSendMessage = false, Action<string>? onSendMessage = null)
     {
-        var managerType = AddonHelper.GetAddonAssembly("Plan17ResourcesPlana")?.GetType("Plana.Core.API.PrivateChatManager");
+        var managerType = PrivateChat.GetAddonAssembly("Plan17ResourcesPlana")?.GetType("Plana.Core.API.PrivateChatManager");
         var instance = managerType?.GetProperty("Instance", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)?.GetValue(null);
         var methods = managerType?.GetMethods();
 
@@ -22,12 +22,8 @@ public class PrivateChat
         catch (Exception e)
         {
             DLog.Log(e);
-
         }
     }
 
-    public static void SetPredicate()
-    {
-
-    }
+    internal static Assembly? GetAddonAssembly(string addonId) => Nebula.Scripts.AddonScriptManager.ScriptAssemblies.FirstOrDefault(a => a.Addon.Id == addonId)?.Assembly;
 }

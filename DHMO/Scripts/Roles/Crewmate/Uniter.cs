@@ -46,8 +46,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
             if (leftUniting <= 0) return;
             selected.Clear();
 
-            var buttonManager = NebulaAPI.CurrentGame?.GetModule<MeetingPlayerButtonManager>();
-            buttonManager?.RegisterMeetingAction(new(buttonImage!, state =>
+            NebulaAPI.CurrentGame?.GetModule<MeetingPlayerButtonManager>()?.RegisterMeetingAction(new(buttonImage!, state =>
             {
                 var p = state.MyPlayer;
                 if (!state.IsSelected)

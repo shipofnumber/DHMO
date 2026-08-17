@@ -25,7 +25,9 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
 
     void OnGameStart(GameStartEvent ev)
     {
-        if (GamePlayer.LocalPlayer != null && RoleMarkAbility.CanUseMark)
+        if (GamePlayer.LocalPlayer == null) return;
+
+        if (RoleMarkAbility.CanUseMark)
         {
             var markAbility = new RoleMarkAbility(this.MyContainer, GamePlayer.LocalPlayer);
             markAbility.RegisterSelf();
@@ -38,7 +40,7 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         {
             try
             {
-                if (player.VanillaPlayer.AsBoolFast()) player.VanillaPlayer.ModResetForMeeting();
+                if (player.VanillaPlayer.AsBoolFast(out var pc)) pc.ModResetForMeeting(!player.TryGetModifier<Communicator.Instance>(out var _));
             }
             catch (Exception e)
             {

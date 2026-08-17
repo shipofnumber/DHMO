@@ -11,7 +11,7 @@ public abstract class PlayerMenuMinigame : Minigame
 
     protected UiElement? backButton;
     protected UiElement? defaultButtonSelected;
-    internal ShapeshifterPanel? panelPrefab;
+    internal ShapeshifterPanel panelPrefab = null!;
     protected int currentPage;
     protected float xOffset = 1.95f, xStart = -0.8f, yOffset = -0.65f, yStart = 2.15f;
     protected List<ShapeshifterPanel> AllPanels { get; set; } = [];

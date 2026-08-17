@@ -6,6 +6,7 @@ global using DHMO.Modules;
 global using DHMO.Patches;
 global using DHMO.Roles.Crewmate;
 global using DHMO.Roles.Impostor;
+global using DHMO.Roles.Modifiers;
 global using DHMO.Roles.Neutral;
 global using DHMO.Utilities;
 global using HarmonyLib;

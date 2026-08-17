@@ -1,3 +1,10 @@
+# Certification
+
+"certification.notification" : "%PLAYER%%REASON%！"
+"certification.unmatchedAddon.extra" : "冗余插件"
+"certification.unmatchedAddon.missing" : "丢失插件"
+"certification.unmatchedAddon.hashMismatched" : "哈希不匹配插件"
+
 # LobbyRule
 
 "ui.lobbyRules.noTitle" : "房间规则"

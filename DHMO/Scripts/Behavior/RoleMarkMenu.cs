@@ -46,14 +46,14 @@ static public class RoleMarkWindow
 
                     renderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
                     renderer.color = dic != null && dic[player.PlayerId].Contains(a) ? VColor.White.ToUnityColor() : new(0.14f, 0.14f, 0.14f);
-                    button.ModGameObject().LocalPosition += new VVector3(0.05f, 0f, 0f);
-                    text.ModGameObject().LocalPosition += new VVector3(0.072f, 0f, 0f);
+                    button.ModGameObject(false).LocalPosition += new VVector3(0.05f, 0f, 0f);
+                    text.ModGameObject(false).LocalPosition += new VVector3(0.072f, 0f, 0f);
 
                     var icon = UnityHelper.CreateObject<SpriteRenderer>("Icon", button.transform, new(-0.65f, 0f, -0.1f));
                     icon.sprite = a.GetRoleIcon()?.GetSprite();
                     icon.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
                     icon.material = RoleIcon.GetRoleIconMaterial(a, 0.8f);
-                    icon.ModGameObject().LocalScale = new(0.253f, 0.253f, 1f);
+                    icon.ModGameObject(false).LocalScale = new(0.253f, 0.253f, 1f);
                     icon.SetBothOrder(15);
 
                     button.OnMouseOut.RemoveAllListeners();
@@ -101,38 +101,37 @@ public class RoleMarkMenu : PlayerMenuMinigame
             if (player.AmOwner) continue;
 
             var panel = GameObject.Instantiate(panelPrefab, transform);
-            var panelObj = panel?.ModGameObject(false);
+            var panelObj = panel.ModGameObject(false);
 
-            panelObj?.LocalPosition = new VVector3(0f, 0f, -1f);
-            panel?.SetPlayer(i, player.VanillaPlayer.Data, (Action)(() => onClick?.Invoke(player)));
-            panel?.NameText.color = VColor.White.ToUnityColor();
-            panel?.ColorBlindName.ModGameObject(false).SetActive(false);
+            panelObj.LocalPosition = new VVector3(0f, 0f, -1f);
+            panel.SetPlayer(i, player.VanillaPlayer.Data, (Action)(() => onClick?.Invoke(player)));
+            panel.NameText.color = VColor.White.ToUnityColor();
+            panel.ColorBlindName.ModGameObject(false).SetActive(false);
 
-            TextMeshPro? nameText = panel?.NameText;
-            TextMeshPro? roleText = GameObject.Instantiate(nameText, nameText?.transform);
-            var textObj = roleText?.ModGameObject(false);
+            TextMeshPro nameText = panel.NameText;
+            TextMeshPro roleText = GameObject.Instantiate(nameText, nameText.transform);
+            var textObj = roleText.ModGameObject(false);
 
-            roleText?.name = "RoleMarkText";
-            roleText?.text = "";
+            roleText.name = "RoleMarkText";
+            roleText.text = "";
 
-            textObj?.LocalPosition = new VVector3(0f, -0.1611f, 0f);
-            textObj?.LocalScale = new VVector3(0.6333f, 0.6333f);
+            textObj.LocalPosition = new VVector3(0f, -0.1611f, 0f);
+            textObj.LocalScale = new VVector3(0.6333f, 0.6333f);
 
-            roleText?.rectTransform.sizeDelta += new UVector2(0.35f, 0f);
-            roleText?.UseRoleIcon();
+            roleText.rectTransform.sizeDelta += new UVector2(0.35f, 0f);
+            roleText.UseRoleIcon();
 
-            ScriptBehaviour? script = panelObj?.AddComponent<ScriptBehaviour>();
+            ScriptBehaviour script = panelObj.AddComponent<ScriptBehaviour>();
+            script.UpdateHandler += () => textUpdate.Invoke(roleText, player);
 
-            if (roleText != null) script?.UpdateHandler += () => textUpdate.Invoke(roleText, player);
+            var namePlate = panelObj.GetUnityTransform().FindChild("Nameplate");
+            var button = namePlate.GetComponent<PassiveButton>();
 
-            var namePlate = panelObj?.GetUnityTransform().FindChild("Nameplate");
-            var button = namePlate?.GetComponent<PassiveButton>();
+            button.OnMouseOver.AddListener(() => NebulaManager.Instance.SetHelpWidget(button, RoleMarkAbility.GetModifierString(player.PlayerId)));
+            button.OnMouseOut.AddListener(() => NebulaManager.Instance.HideHelpWidgetIf(button));
+            namePlate.FindChild("Highlight")?.Find("ShapeshifterIcon").gameObject.SetActive(false);
 
-            button?.OnMouseOver.AddListener(() => NebulaManager.Instance.SetHelpWidget(button, RoleMarkAbility.GetModifierString(player.PlayerId)));
-            button?.OnMouseOut.AddListener(() => NebulaManager.Instance.HideHelpWidgetIf(button));
-            namePlate?.FindChild("Highlight")?.Find("ShapeshifterIcon").gameObject.SetActive(false);
-
-            if (panel != null) AllPanels.Add(panel);
+            AllPanels.Add(panel);
         }
         base.ShowPageButtons();
 

@@ -5,7 +5,7 @@ public static class ModAbilityButtonUpdatePatch
 {
     public static bool Prefix(ModAbilityButtonImpl __instance)
     {
-        if (GamePlayer.LocalPlayer != null && GamePlayer.LocalPlayer.TryGetAbility<Overclocker.Ability>(out var ability) && (ability.killButton == __instance || ability.outTimeButton == __instance))
+        if (GamePlayer.LocalPlayer != null && GamePlayer.LocalPlayer.TryGetAbility<Overclocker.Ability>(out var ability) && __instance != null && (ability.killButton == __instance || ability.overTimeButton == __instance))
         {
             __instance.UpdateVisibility();
 
