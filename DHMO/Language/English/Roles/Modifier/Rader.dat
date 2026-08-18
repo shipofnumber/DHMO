@@ -1,0 +1,19 @@
+# Assignable
+
+"role.radar.name" : "Radar"
+"role.radar.generalBlurb" : "Detect Potential Dangers!"
+
+# Document
+
+"role.radar.doc" : "The Radar will track the player closest to himself within its detection range."
+
+# Options
+
+"options.role.radar.detail" : "The Radar will track the player closest to himself."
+"options.role.rader.detectDistance" : "Detect DiStance"
+"options.role.rader.updateInterval" : "Update Arrow Interval"
+
+# Game
+
+
+# UI

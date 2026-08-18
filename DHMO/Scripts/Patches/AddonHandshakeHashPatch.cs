@@ -5,7 +5,10 @@ public static class AddonHandshakeHashPatch
     static AddonHandshakeHashPatch()
     {
         foreach (var addon in NebulaAddon.AllAddons)
+        {
+            if (!addon.NeedHandshake) continue;
             addon.HandshakeHash = CalculateAddonHash(addon);
+        }
     }
 
     internal static int CalculateAddonHash(NebulaAddon addon)

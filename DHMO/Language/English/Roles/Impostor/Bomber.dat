@@ -1,0 +1,44 @@
+# Assignable
+
+"role.bomber.name" : "Bomber"
+"role.bomber.short" : "Bo"
+"role.bomber.blurb" : "Blow You All Up!"
+
+# Document
+
+"role.bomber.doc" : "An impostor who can pass the bomb to other to kill he."
+"role.bomber.ability.title" : "Inherent Ability [Bomb]"
+"role.bomber.ability.main" : "After igniting the bomb, it can be passed to others. When the bomb's countdown ends, the player holding the bomb will be killed by the explosion.<br>The bomb has <b>2</b> phases: Activation (<var>%ACTIVE%s</var>) and Explosion (<var>%EXPLODE%s</var>). <br>Only the Bomber can detect the bomb and pass it to others during the Activation phase. Otherwise, the bomb can only be passed during the Explosion phase."
+"role.bomber.ability.ignite" : "<title>Ignite</title>Ignite a bomb, %OF%"
+"role.bomber.ability.pass" : "<title>Pass</title>Pass own bomb to other else, the bomb will inherit the original explosion timer. <br>Except the Bomber, the Pass Ability has <b>3s</b> cooldown on everyone."
+"role.bomber.ability.evidence" : "The evidence after explosion in the scence."
+"role.bomber.ability.self" : "and on <var>own self</var>."
+"role.bomber.ability.other" : "and on <var>other</var>."
+"role.bomber.tips" : "・The bomb can also kill the <b><color=red>impostor</color></b>.<br>・Explosion cannot invoke the Bait Report.<br>・The role is created by <b>DHMO</b>."
+
+# Options
+
+"options.role.bomber.detail" : "The Bomber kills others by his bomb."
+"options.role.bomber.igniteBombOn" : "Ignite Bomb On"
+"options.role.bomber.igniteBombOn.self" : "Own Self"
+"options.role.bomber.igniteBombOn.other" : "Other"
+"options.role.bomber.canVanillaKill" : "Can Vanilla Kill"
+"options.role.bomber.syncKillAndIgniteCooldown" : "Sync Kill And Ignite Cooldown"
+"options.role.bomber.igniteBombCooldown" : "Ignite Cooldown"
+"options.role.bomber.activateBombDuration" : "Bomb Activate Duration"
+"options.role.bomber.bombExplosionDuration" : "Bomb Explosion Duration"
+"options.role.bomber.afterMeetingResetBomb" : "Reset Bomb Time After Meeting"
+"options.role.bomber.bombKillLeftDeadbody" : "Leave Dead Body"
+
+# GameAction
+
+"gameAction.bomber.passbomb" : "Pass Bomb"
+
+# Button
+
+"button.label.bomber.ignitebomb" : "Ignite"
+"button.label.game.passBomb" : "Pass"
+
+# State
+
+"state.bomb.explosion" : "Explosion"

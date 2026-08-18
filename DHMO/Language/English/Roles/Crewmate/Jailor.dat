@@ -1,0 +1,47 @@
+# Assignable
+
+"role.jailor.name" : "Jailor"
+"role.jailor.short" : "Ja"
+"role.jailor.blurb" : "Arrest A Criminal"
+
+# Document
+
+"role.jailor.doc" : "A crewmate who can jail other and force him to give information or execute him."
+"role.jailor.ability.title" : "Inherent Ability [Interrogation]"
+"role.jailor.ability.main" : "Jail suspects, restrict their movements, and execute those you deem impostors."
+"role.jailor.ability.jail" : "<title>Jail</title>Try to jail the target. In the meeting, the jailed may be in jail.<br>%JAILINAROW%"
+"role.jailor.ability.execute" : "<title>Execute</title>Kill the jailed.%CANEXECUTELOVER%<br>If the jailed is a crewmate, you will not be able to jail other again. Meanwhile, you can't vote because you've lost credibility."
+"role.jailor.ability.inJail" : "The In Jail Image will appear on the icon of the jailed player.<br>To remind everyone."
+"role.jailor.ability.jailinArow" : "<var>After the meeting end, the jailed may keep, until you change the target.</var>"
+"role.jailor.ability.clearJailed" : "<var>After the meeting end, the jailed will be able to regain freedom.</var>"
+"role.jailor.ability.canExecuteLover" : "<br><b>You can execute the jailed who is the Lover, whatever he is a crewmate or not.</b>"
+"role.jailor.tips" : "・The role is carried over from Among Us Mod - <b>Town of Us Mira</b>, added by <b>DHMO</b>."
+
+# Options
+
+"options.role.jailor.detail" : "The Jailor can jail suspects and execute them."
+"options.role.jailor.jailCooldown" : "Jail Cooldown"
+"options.role.jailor.jailDuration" : "Jail Duration"
+"options.role.jailor.jailinArow" : "Jail In A Row"
+"options.role.jailor.limitAbilityUsesOf" : "Limit Ability Uses Of"
+"options.role.jailor.limitAbilityUsesOf.jail" : "Jail"
+"options.role.jailor.limitAbilityUsesOf.execute" : "Execute"
+"options.role.jailor.numOfjail" : "# Of Jail"
+"options.role.jailor.numOfexecute" : "# Of Execute"
+"options.role.jailor.maxLeftVotingTimeForExecuting" : "Max Left Voting Time For Executing"
+"options.role.jailor.canExecuteLovers" : "Can Execute Lover"
+"options.role.jailor.hasJailorchat" : "Jailor Meeting Chat"
+
+# Button
+
+"button.label.jailor.jail" : "Jail"
+"button.label.jailor.execute" : "Execute"
+
+# Chat
+
+"chat.jailor" : "[Interrogation Room]"
+"chat.jailortext" : "Interrogation Room"
+
+# State
+
+"state.execution" : "Execution"

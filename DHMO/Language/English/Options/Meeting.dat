@@ -1,2 +1,2 @@
-"options.meeting.canUseMark" : "Can Mark Role"
-"options.meeting.canUseMark.detail" : "When turned on, you can mark other players' roles during the meeting, which is only visible to yourself."
+"options.meeting.canUseMark" : "Can Use Mark"
+"options.meeting.canUseMark.detail" : "When turned on, you may mark others' roles or modifiers, visible only to yourself."

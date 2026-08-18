@@ -5,11 +5,11 @@
 
 # Document
 
-"role.communicator.doc" : "通讯兵在紧急会议后会回到原位。"
+"role.communicator.doc" : "通讯兵随身携带通讯工具，因此在紧急会议后不会返回会议桌附近。"
 
 # Options
 
-"options.role.communicator.detail" : "通讯兵在紧急会议后会回到原位。"
+"options.role.communicator.detail" : "通讯兵在紧急会议后不会回到会议桌附近。"
 
 # Game
 

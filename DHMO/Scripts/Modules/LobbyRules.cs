@@ -122,7 +122,7 @@ public class LobbyRules
     {
         var (window, titleWidget) = CreateRuleWindow(Path.GetFileNameWithoutExtension(currentPath));
 
-        var button = new GUIModernButton(Virial.Media.GUIAlignment.TopLeft, AttributeAsset.OptionsButtonMedium, new TranslateTextComponent("ui.lobbyRules.return"))
+        var button = new GUIModernButton(Virial.Media.GUIAlignment.TopLeft, AttributeAsset.OptionsButtonMedium, new TranslateTextComponent("ui.lobbyRules.back"))
         {
             OnClick = _ =>
             {

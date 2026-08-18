@@ -147,9 +147,6 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
             coroutine = null;
         }
 
-        [OnlyMyPlayer]
-        void OnPlayerStepSound(PlayerCheckPlayFootSoundEvent ev) => ev.PlayFootSound &= !APICompat.IsOutMeeting();
-
         [Local]
         void OnMeetingPreStart(MeetingPreStartEvent ev)
         {

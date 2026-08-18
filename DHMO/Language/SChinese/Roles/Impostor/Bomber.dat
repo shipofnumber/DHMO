@@ -19,16 +19,16 @@
 # Options
 
 "options.role.bomber.detail" : "炸弹王可以通过炸弹炸死其他玩家。"
-"options.role.bomber.bombIgniteOf" : "炸弹点燃安装方式"
-"options.role.bomber.bombIgniteOf.self" : "自身"
-"options.role.bomber.bombIgniteOf.other" : "他人"
+"options.role.bomber.igniteBombOn" : "炸弹点燃安装方式"
+"options.role.bomber.igniteBombOn.self" : "自身"
+"options.role.bomber.igniteBombOn.other" : "他人"
 "options.role.bomber.canVanillaKill" : "可以进行普通击杀"
-"options.role.bomber.shareCooldownOfkillAndignite" : "普通击杀与点燃共用冷却时间"
+"options.role.bomber.syncKillAndIgniteCooldown" : "普通击杀与点燃共用冷却时间"
 "options.role.bomber.igniteBombCooldown" : "点燃冷却时间"
-"options.role.bomber.activatebombTime" : "炸弹激活时间"
-"options.role.bomber.bombExplodeTime" : "炸弹爆炸时间"
+"options.role.bomber.activateBombDuration" : "炸弹激活时间"
+"options.role.bomber.bombExplosionDuration" : "炸弹爆炸时间"
 "options.role.bomber.afterMeetingResetBomb" : "会议结束后重置炸弹爆炸时间"
-"options.role.bomber.bombkillleftDeadbody" : "炸弹击杀留下尸体"
+"options.role.bomber.bombKillLeftDeadbody" : "炸弹击杀留下尸体"
 
 # GameAction
 

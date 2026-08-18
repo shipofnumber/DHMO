@@ -49,10 +49,15 @@ public class DHMOGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         }
     }
 
+    void CheckPlayerStepSound(PlayerCheckPlayFootSoundEvent ev)
+    {
+        ev.PlayFootSound &= !APICompat.IsOutMeeting();
+    }
+
     void OnRoleChanged(PlayerTryToChangeRoleEvent ev)
     {
         var local = GamePlayer.LocalPlayer;
-        if (local is null || (local != ev.Player && (!NebulaGameManager.Instance?.CanSeeAllInfo ?? false))) return;
+        if (local is null || (local != ev.Player && !(NebulaGameManager.Instance?.CanSeeAllInfo ?? false))) return;
 
         NebulaManager.Instance.ScheduleDelayAction(() => AnimationEffects.CoPlayRoleNameEffect(ev.Player.RoleText.transform, new VVector3(0f, 0f, -0.1f), ev.NextRole.Color.ToUnityColor(), ev.Player.RoleText.gameObject.layer, 1.42857146f).StartOnScene());
     }

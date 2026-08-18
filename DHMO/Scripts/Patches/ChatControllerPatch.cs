@@ -1,5 +1,7 @@
 ﻿using AmongUs.Data;
 using System.Reflection.Emit;
+using Virial.Events.Configurations;
+using static Rewired.Glyphs.UnityUI.UnityUITextMeshProGlyphHelper.Tag;
 
 namespace DHMO.Patches;
 
@@ -13,9 +15,10 @@ public static class ChatControllerPatch
         APICompat.WarningImage = new CacheSpriteLoader(() => __instance.LobbyTimerExtensionUI.gameObject.transform.TryDig("WarningContainer", "Icon")?.GetComponent<SpriteRenderer>().sprite!);
 
         __instance.Chat.chatBubblePool.poolSize = ChatSystem.NumOfChatHistory;
-        NebulaManager.Instance.StartCoroutine(CoLoadHistory(__instance).WrapToIl2Cpp());
+        //NebulaManager.Instance.StartCoroutine(CoLoadHistory(__instance).WrapToIl2Cpp());
     }
 
+    /*
     static IEnumerator CoLoadHistory(HudManager __instance)
     {
         ChatController chatController = __instance.Chat;
@@ -72,6 +75,7 @@ public static class ChatControllerPatch
         ChatSystem.Instance.SearchButton = buttonObj;
         buttonObj.SetActive(false);
     }
+    */
 
     static bool ShouldSkipNotification()
     {
@@ -114,6 +118,7 @@ public static class ChatControllerPatch
         return codes.AsEnumerable();
     }
 
+    /*
     [HarmonyPatch(typeof(ChatController), nameof(ChatController.CoOpen))]
     [HarmonyPostfix]
     public static void CoOpenPostfix()
@@ -137,6 +142,7 @@ public static class ChatControllerPatch
         searchField?.Unfocus();
         searchField?.ForceKeyboardClose();
     }
+    */
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TextBoxTMP), nameof(TextBoxTMP.Start))]
@@ -155,9 +161,10 @@ public static class ChatControllerPatch
         field.characterLimit = ChatSystem.NumOfFreeChatMaxChar;
 
         __instance.UpdateCharCount();
-        GameOperatorManager.Instance?.Subscribe<UpdateEvent>(ev =>
+        GameOperatorManager.Instance?.Subscribe<SharableEntryUpdateEvent>(ev =>
         {
-            if (field.characterLimit == ChatSystem.NumOfFreeChatMaxChar) return;
+            if (ChatSystem.NumOfFreeChatMaxChar is not IntegerConfigurationImpl integerConfigurationImpl) return;
+            if (!__instance.AsBoolFast() || field.characterLimit == ChatSystem.NumOfFreeChatMaxChar || ev.SharableEntry.Id != integerConfigurationImpl.val.Id) return;
 
             field.characterLimit = ChatSystem.NumOfFreeChatMaxChar;
             if (field.characterLimit < __instance.textArea.text.Length)

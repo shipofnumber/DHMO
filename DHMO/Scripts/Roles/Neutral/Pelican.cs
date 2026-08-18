@@ -11,7 +11,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(Player player, int[] arguments) => new Instance(player);
 
     public static readonly IRelativeCooldownConfiguration DevourCooldown = NebulaAPI.Configurations.KillConfiguration("options.role.pelican.devourCooldown", CoolDownType.Immediate, (0f, 60f, 2.5f), 25f, (-40f, 40f, 2.5f), 0f, (0.125f, 2f, 0.125f), 1f);
-    public static readonly FloatConfiguration IncreaseTime = NebulaAPI.Configurations.Configuration("options.role.pelican.increaseTime", (0f, 20f, 1f), 5f, FloatConfigurationDecorator.Second);
+    public static readonly FloatConfiguration IncreaseTime = NebulaAPI.Configurations.Configuration("options.role.pelican.additionalCooldown", (0f, 20f, 1f), 5f, FloatConfigurationDecorator.Second);
     public static readonly BoolConfiguration InvokePelicanTime = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanTime", true);
     internal static readonly BoolConfiguration CanCallEmergencyMeeting = NebulaAPI.Configurations.Configuration("options.role.pelican.canCallEmergencyMeeting", true);
     internal static readonly IntegerConfiguration PelicanTimeAliveNum = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanTimeAlived", (2, 23), 4, () => InvokePelicanTime);

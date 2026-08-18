@@ -1,0 +1,50 @@
+# Assignable
+
+"role.pelican.name" : "Pelican"
+"role.pelican.short" : "Pe"
+"role.pelican.blurb" : "A Cheat Meal!"
+
+# Document
+
+"document.tip.winCond.pelican.devour.title" : "Devour Trigger"
+"document.tip.winCond.pelican.devour" : "The Pelican wins when all players except the Pelican are be devoured or only the Pelican is alive."
+"document.tip.winCond.pelican.timeOver.title" : "Time Over"
+"document.tip.winCond.pelican.timeOver" : "When Pelican Time is over, the alive Pelicans will win."
+
+"role.pelican.doc" : "A neutral who wins by devouring enemies."
+"role.pelican.winCond" : "Win when all players except the Pelican are be devoured or only the Pelican is alive.%WIN%"
+"role.pelican.winCond.pelicanTimeOver" : "<br>Moreover, <var>when Pelican Time is over, the alive Pelicans will win too.</var>。"
+"role.pelican.ability.title" : "Inherent Ability [Bottomless Appetite]"
+"role.pelican.ability.main" : "Can devour a player whole. Devoured players do not die and will be digested when the meeting starts without dead bodies. %PELICANTIME%"
+"role.pelican.ability.devour" : "<title>Devour</title>Devour the player. The devoured players' cam target will be locked at the Pelican."
+"role.pelican.ability.pelicanTime" : "<br>When only <var>%NUM%</var> players alive, It is going to start <b>"Pelican Time"</b>. During the Time, anyone cannot report, use the vent or sabotage. <br>It lasts <var>%DURATION%</var>s."
+"role.pelican.tips" : "・The devour distance is <b>1.25x</b> that the vanilla kill distance.<br>・The role is created by <b>DHMO</b>."
+
+# Options
+
+"options.role.pelican.detail" : "The Pelican can devour players and solve them in the stomach lol."
+"options.role.pelican.devourCooldown" : "Devour Cooldown"
+"options.role.pelican.additionalCooldown" : "Devour Additional Cooldown"
+"options.role.pelican.canCallEmergencyMeeting" : "Can Call Emergency Meeting"
+"options.role.pelican.group.pelicanTime" : "Pelican Time"
+"options.role.pelican.pelicanTime" : "Can Starting Pelican Time"
+"options.role.pelican.pelicanTimeAlived" : "Max Alive Players For Starting"
+"options.role.pelican.pelicanTimeDuration" : "Time Duration"
+"options.role.pelican.taskPhaseRestartEnterPelicanTimeDisperse" : "Disperse When Task Phase Restart"
+
+# Button
+
+"button.label.pelican.devour" : "Devour"
+
+# UI
+
+"timeMoment.pelican" : "The NEVER-ENDING FEAST... (%TIME%s)"
+
+# Team
+
+"teams.pelican" : "Pelican"
+"end.pelican" : "Pelican Wins%EXTRA%"
+
+# State
+
+"state.digestion" : "Digestion"

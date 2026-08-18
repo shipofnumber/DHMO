@@ -1,0 +1,21 @@
+# Assignable
+
+"role.uniter.name" : "Uniter"
+"role.uniter.short" : "Un"
+"role.uniter.blurb" : "Unite everyone's power"
+
+# Document
+
+"role.uniter.doc" : "A crewmate who can unite others' votes to your own vote."
+"role.uniter.tips" : "・The role is created by <b>DHMO</b>."
+
+# Options
+
+"options.role.uniter.detail" : "The Uniter can unite votes to correct choices."
+"options.role.uniter.numOfuniting" : "Num Of Uniting"
+"options.role.uniter.numOfcanUnit" : "# Able to Unite"
+"options.role.uniter.maxLeftVotingTimeForUniting" : "Max Left Voting Time For Uniting"
+
+# Game
+
+"roles.uniter.leftUniting" : "Left Uniting"

@@ -36,7 +36,7 @@ public class ChatSystem : AbstractModule<Virial.Game.Game>, IGameOperator
     {
         var pool = ChatController.chatBubblePool;
 
-        IntegerConfigurationImpl integerConfigurationImpl = (IntegerConfigurationImpl)ChatSystem.NumOfChatHistory;
+        if (ChatSystem.NumOfChatHistory is not IntegerConfigurationImpl integerConfigurationImpl) return;
         if (!pool.AsBoolFast() || ev.SharableEntry.Id != integerConfigurationImpl.val.Id) return;
 
         int count = ChatSystem.NumOfChatHistory - pool.poolSize;

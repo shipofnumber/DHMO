@@ -1,13 +1,29 @@
 # Certification
 
-"certification.unmatchedAddon.redundant" : "Redundant Addons"
+"certification.notification" : "%PLAYER%%REASON%！"
+"certification.unmatchedAddon.extra" : "Extra Addons"
 "certification.unmatchedAddon.missing" : "Missing Addons"
-"certification.unmatchedAddon.unmatched" : "Hash Unmatched"
+"certification.unmatchedAddon.hashMismatched" : "Hash Unmatched Addons"
 
 # LobbyRule
 
-"lobby.host.rule" : "Lobby Rule"
-"lobby.host" : "Host"
-"ui.lobby.rule" : "Rule"
-"ui.lobby.error" : "The input box cannot be empty."
-"lobby.rule.error" : "Rule has no content."
+"ui.lobbyRules.noTitle" : "Lobby Rules"
+"ui.lobbyRules.host" : "Host"
+"ui.lobbyRules.confirmation" : "Confirm"
+"ui.lobbyRules.back" : "Back"
+"ui.lobbyRules.rule" : "Please fill in the rules."
+"ui.lobbyRules.fieldNoText" : "The input box cannot be empty."
+"ui.lobbyRules.selectFileSuccessfully" : "%FILE% is set as the current rule."
+"ui.lobbyRules.noTextError" : "The rule text is empty."
+
+# TimeMoment
+
+"role.timeMoment.meetingButtonText" : "Danger creeps in..."
+
+# Help
+
+"help.command.showRule" : "Show Lobby Rules"
+
+# Action
+
+"input.pass" : "Pass Action"

@@ -274,9 +274,6 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                 MyPlayer.Suicide(PlayerStates.Suicide, EventDetails.Kill, KillParameter.MeetingKill);
         }
 
-        [OnlyMyPlayer]
-        void CheckPlayerStepSound(PlayerCheckPlayFootSoundEvent ev) => ev.PlayFootSound &= !APICompat.IsOutMeeting();
-
         void OnCameraUpdate(CameraUpdateEvent ev)
         {
             if ((IsInRavenTime || APICompat.IsOutMeeting()) && MyPlayer.IsAlive)

@@ -36,7 +36,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
             var passButton = NebulaAPI.Modules.AbilityButton(this, true, false)
                 .BindKey((VirtualKeyInput)120).SetLabel("game.passBomb").SetImage(passBombImage);
 
-            passButton.Visibility = _ => MyPlayer.IsAlive && (MyPlayer.PlayerId == Bomber.PlayerId || Timer.CurrentTime <= global::DHMO.Roles.Impostor.Bomber.BombExplodeTime);
+            passButton.Visibility = _ => MyPlayer.IsAlive && (MyPlayer.PlayerId == Bomber.PlayerId || Timer.CurrentTime <= global::DHMO.Roles.Impostor.Bomber.BombExplosionDuration);
             passButton.Availability = _ => MyPlayer.CanMove && passTracker.CurrentTarget != null;
             passButton.PlayFlashWhile = _ => true;
             passButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, MyPlayer.PlayerId == Bomber.PlayerId ? 0f : 3f).SetAsAbilityTimer().Start(null);
@@ -109,18 +109,18 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitation, DefinedRole, IAssignableDocument
 {
     private Bomber() : base("bomber", VColor.ImpostorColor, RoleCategory.ImpostorRole, NebulaTeams.ImpostorTeam, 
-        [IgniteBombCooldown, BombIgniteOfOption, CanVanillaKill, ShareCooldownOfKillAndIgnite, ActivateBombTime, BombExplodeTime, AfterMeetingResetBombTime, BombKillLeftDeadBody])
+        [IgniteBombCooldown, IgniteBombOn, CanVanillaKill, SyncKillAndIgniteCooldown, ActivateBombDuration, BombExplosionDuration, AfterMeetingResetBombTime, BombKillLeftDeadBody])
     {
     }
 
     public static readonly IRelativeCooldownConfiguration IgniteBombCooldown = NebulaAPI.Configurations.KillConfiguration("options.role.bomber.igniteBombCooldown", CoolDownType.Relative, (0f, 60f, 2.5f), 25f, (-40f, 40f, 2.5f), 5f, (0.125f, 2f, 0.125f), 1.125f);
-    private static readonly ValueConfiguration<int> BombIgniteOfOption = NebulaAPI.Configurations.Configuration("options.role.bomber.bombIgniteOf", ["options.role.bomber.bombIgniteOf.self", "options.role.bomber.bombIgniteOf.other"], 0);
+    private static readonly ValueConfiguration<int> IgniteBombOn = NebulaAPI.Configurations.Configuration("options.role.bomber.igniteBombOn", ["options.role.bomber.igniteBombOn.self", "options.role.bomber.igniteBombOn.other"], 0);
     public static readonly BoolConfiguration CanVanillaKill = NebulaAPI.Configurations.Configuration("options.role.bomber.canVanillaKill", false);
-    public static readonly BoolConfiguration ShareCooldownOfKillAndIgnite = NebulaAPI.Configurations.Configuration("options.role.bomber.shareCooldownOfkillAndignite", true, () => CanVanillaKill);
-    public static readonly FloatConfiguration ActivateBombTime = NebulaAPI.Configurations.Configuration("options.role.bomber.activatebombTime", (0f, 60f, 1f), 5f, FloatConfigurationDecorator.Second);
-    public static readonly FloatConfiguration BombExplodeTime = NebulaAPI.Configurations.Configuration("options.role.bomber.bombExplodeTime", (0f, 60f, 2.5f), 15f, FloatConfigurationDecorator.Second);
+    public static readonly BoolConfiguration SyncKillAndIgniteCooldown = NebulaAPI.Configurations.Configuration("options.role.bomber.syncKillAndIgniteCooldown", true, () => CanVanillaKill);
+    public static readonly FloatConfiguration ActivateBombDuration = NebulaAPI.Configurations.Configuration("options.role.bomber.activateBombDuration", (0f, 60f, 1f), 5f, FloatConfigurationDecorator.Second);
+    public static readonly FloatConfiguration BombExplosionDuration = NebulaAPI.Configurations.Configuration("options.role.bomber.bombExplosionDuration", (0f, 60f, 2.5f), 15f, FloatConfigurationDecorator.Second);
     public static readonly BoolConfiguration AfterMeetingResetBombTime = NebulaAPI.Configurations.Configuration("options.role.bomber.afterMeetingResetBomb", true);
-    public static readonly BoolConfiguration BombKillLeftDeadBody = NebulaAPI.Configurations.Configuration("options.role.bomber.bombkillleftDeadbody", false);
+    public static readonly BoolConfiguration BombKillLeftDeadBody = NebulaAPI.Configurations.Configuration("options.role.bomber.bombKillLeftDeadbody", false);
 
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/BomberIcon.png")?.AsImage();
     Citation? HasCitation.Citation => DHMOCitations.GGD;
@@ -139,9 +139,9 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
 
     IEnumerable<AssignableDocumentReplacement> IAssignableDocument.GetDocumentReplacements()
     {
-        yield return new("%ACTIVE%", ActivateBombTime.GetValue().ToString());
-        yield return new("%EXPLODE%", BombExplodeTime.GetValue().ToString());
-        yield return new("%OF%", BombIgniteOfOption.GetValue() == 0 ? Language.Translate("role.bomber.ability.self") : Language.Translate("role.bomber.ability.other"));
+        yield return new("%ACTIVE%", ActivateBombDuration.GetValue().ToString());
+        yield return new("%EXPLODE%", BombExplosionDuration.GetValue().ToString());
+        yield return new("%OF%", IgniteBombOn.GetValue() == 0 ? Language.Translate("role.bomber.ability.self") : Language.Translate("role.bomber.ability.other"));
     }
 
     public static Image? igniteBombImage = NebulaAPI.AddonAsset.GetResource("Button/IgniteBombButton.png")?.AsImage(115f)!;
@@ -153,13 +153,14 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
         bool IPlayerAbility.HideKillButton => (!igniteBomb?.IsBroken ?? false) || !CanVanillaKill;
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
 
+        float time = ActivateBombDuration + BombExplosionDuration;
         private ObjectTracker<GamePlayer>? igniteTracker = null;
 
         public Ability(GamePlayer player, bool isUsurped) : base(player, isUsurped)
         {
             if (AmOwner)
             {
-                if (BombIgniteOfOption.GetValue() == 1)
+                if (IgniteBombOn.GetValue() == 1)
                     igniteTracker = ObjectTrackers.ForPlayer(this, null, MyPlayer, p => ObjectTrackers.StandardPredicate(p), VColor.ImpostorColor.ToUnityColor(), false, false);
 
                 igniteBomb = NebulaAPI.Modules.AbilityButton(this, isArrangedAsKillButton: !CanVanillaKill).BindKey(CanVanillaKill ? VirtualKeyInput.Ability : VirtualKeyInput.Kill)
@@ -184,14 +185,14 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
                     if (igniteTracker != null)
                     {
                         var target = igniteTracker.CurrentTarget;
-                        if (target != null) Bomb.RPCSetBomb.Invoke((target, MyPlayer, ActivateBombTime + BombExplodeTime));
+                        if (target != null) Bomb.RPCSetBomb.Invoke((target, MyPlayer, time));
                     }
                     else
-                        Bomb.RPCSetBomb.Invoke((MyPlayer, MyPlayer, ActivateBombTime + BombExplodeTime));
+                        Bomb.RPCSetBomb.Invoke((MyPlayer, MyPlayer, time));
 
                     NebulaGameManager.Instance?.RpcDoGameAction(MyPlayer, MyPlayer.Position, Bomb.PassBombAction);
 
-                    if (ShareCooldownOfKillAndIgnite && CanVanillaKill)
+                    if (SyncKillAndIgniteCooldown && CanVanillaKill)
                         NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
                     else
                         button.StartCoolDown();

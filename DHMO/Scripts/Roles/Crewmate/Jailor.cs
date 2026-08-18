@@ -18,7 +18,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
     static private readonly BoolConfiguration CanExecuteLoversOption = NebulaAPI.Configurations.Configuration("options.role.jailor.canExecuteLovers", false);
     static public readonly BoolConfiguration HasPrivateChat = NebulaAPI.Configurations.Configuration("options.role.jailor.hasJailorchat", true, () => NebulaAPI.GetAddon("Plan17ResourcesPlana") != null);
 
-    public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.Get(0, GetAbilityUses()), arguments.GetAsBool(1));
+    public override Ability CreateAbility(GamePlayer player, int[] arguments) => new(player, arguments.GetAsBool(0), arguments.Get(1, GetAbilityUses()));
 
     private static readonly Image? jailImage = NebulaAPI.AddonAsset?.GetResource("Button/JailButton.png")?.AsImage(80f);
     private static readonly Image? executeImage = NebulaAPI.AddonAsset?.GetResource("Button/ExecuteButton.png")?.AsImage(170f);
@@ -60,7 +60,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
         private int leftUses = GetAbilityUses();
         int[] IPlayerAbility.AbilityArguments => [leftUses, IsUsurped.AsInt()];
 
-        public Ability(GamePlayer player, int uses, bool isUsurped) : base(player, isUsurped)
+        public Ability(GamePlayer player, bool isUsurped, int uses) : base(player, isUsurped)
         {
             this.leftUses = uses;
 
