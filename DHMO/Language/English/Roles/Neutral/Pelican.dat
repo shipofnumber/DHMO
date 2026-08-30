@@ -17,7 +17,7 @@
 "role.pelican.ability.title" : "Inherent Ability [Bottomless Appetite]"
 "role.pelican.ability.main" : "Can devour a player whole. Devoured players do not die and will be digested when the meeting starts without dead bodies. %PELICANTIME%"
 "role.pelican.ability.devour" : "<title>Devour</title>Devour the player. The devoured players' cam target will be locked at the Pelican."
-"role.pelican.ability.pelicanTime" : "<br>When only <var>%NUM%</var> players alive, It is going to start <b>"Pelican Time"</b>. During the Time, anyone cannot report, use the vent or sabotage. <br>It lasts <var>%DURATION%</var>s."
+"role.pelican.ability.pelicanTime" : "<br>When only <var>%NUM%</var> players alive, It is going to start <b>"Pelican Time"</b>.<br>During the Time, anyone cannot report, use the vent or sabotage. <br>It lasts <var>%DURATION%</var>s."
 "role.pelican.tips" : "・The devour distance is <b>1.25x</b> that the vanilla kill distance.<br>・The role is created by <b>DHMO</b>."
 
 # Options

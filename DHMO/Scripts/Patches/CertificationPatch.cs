@@ -41,26 +41,22 @@ public readonly record struct AddonInfo
 
     public static bool Compare(IEnumerable<AddonInfo> addonInfos, out IEnumerable<(IEnumerable<AddonInfo>, UnmatchedReason)> results)
     {
-        var localById = AllAddonInfos.ToDictionary(a => a.Id);
-        var remoteById = addonInfos.ToDictionary(a => a.Id);
+        var local = AllAddonInfos.ToDictionary(a => a.Id);
+        var client = addonInfos.ToDictionary(a => a.Id);
         var unmatches = new List<(IEnumerable<AddonInfo>, UnmatchedReason)>();
 
-        foreach (var remotePair in remoteById)
+        foreach (var remotePair in client)
         {
-            if (!localById.TryGetValue(remotePair.Key, out var localAddon))
+            if (!local.TryGetValue(remotePair.Key, out var localAddon))
                 unmatches.Add(([remotePair.Value], UnmatchedReason.Extra));
             else if (localAddon.Hash != remotePair.Value.Hash)
                 unmatches.Add(([localAddon, remotePair.Value], UnmatchedReason.HashMismatched));
         }
 
-        foreach (var localPair in localById)
-        {
-            if (!remoteById.ContainsKey(localPair.Key))
-                unmatches.Add(([localPair.Value], UnmatchedReason.Missing));
-        }
+        unmatches.AddRange(from localPair in local where !client.ContainsKey(localPair.Key) select ((IEnumerable<AddonInfo>, UnmatchedReason))([localPair.Value], UnmatchedReason.Missing));
 
         results = unmatches;
-        return unmatches.Count != 0;
+        return unmatches.Count > 0;
     }
 
     public static string ResultToString(IEnumerable<(IEnumerable<AddonInfo> addons, UnmatchedReason reason)> results)
@@ -126,12 +122,16 @@ public static class CertificationPatch
         {
             if (!message.player.AsBoolFast(out var player) || !message.host.AsBoolFast(out var host)) return;
 
+            UpdateButton(host, player);
+            UpdateButton(player, host);
+            return;
+
             void UpdateButton(PlayerControl owner, PlayerControl target)
             {
-                if (!(owner?.AmOwner ?? false))
+                if (!owner.AmOwner)
                     return;
 
-                if (!(target?.ModGameObject(false).TryGetComponent<UncertifiedPlayer>(out var certification) ?? false))
+                if (!target.ModGameObject(false).TryGetComponent<UncertifiedPlayer>(out var certification))
                     return;
 
                 var button = certification.myShower.GetComponent<PassiveButton>();
@@ -145,9 +145,6 @@ public static class CertificationPatch
                     });
                 });
             }
-
-            UpdateButton(host, player);
-            UpdateButton(player, host);
         }, false);
 
     public static void SendHandshake((byte playerId, int epoch, int build) tuple)

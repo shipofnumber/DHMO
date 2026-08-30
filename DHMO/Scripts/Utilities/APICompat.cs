@@ -20,6 +20,11 @@ public static class APICompat
         }
     }
 
+    extension(GamePlayer player)
+    {
+        public int? DeadRound => ModSingleton<DGameManager>.Instance.GetPlayerDeadRound(player);
+    }
+
     internal static Virial.Game.Player[] AlivePlayers => GamePlayer.AllPlayers.Where(p => p.IsAlive).ToArray();
 
     public static void AddLobbyNotification(string key, string message, UnityEngine.Color color, Image? image = null, bool playSound = true)
@@ -67,7 +72,7 @@ public static class APICompat
         var myPos = myPlayer.Position;
 
         var candidates = GamePlayer.AllPlayers
-            .Where(p => p != myPlayer && !p.IsDead && !p.IsInvisible)
+            .Where(p => p != myPlayer && p is { IsDead: false, IsInvisible: false })
             .Select(p => new
             { 
                 Player = p,
@@ -93,10 +98,7 @@ public static class APICompat
         var minDistance = candidates.Min(x => x.Distance);
         var closest = candidates.Where(x => x.Distance.AlmostEqual(minDistance)).ToList();
 
-        if (closest.Count == 1)
-            return closest[0].Player;
-
-        return closest.Where(x => !(NebulaAPI.CurrentGame?.CurrentMap?.AnyShadowsBetween(myPos, x.Position) ?? true)).Select(x => x.Player).FirstOrDefault() ?? closest[0].Player;
+        return closest[0].Player;
     }
 
     public static bool AlmostEqual(this double a, double b, double absoluteTolerance = 1e-9, double relativeTolerance = 1e-9)
@@ -119,7 +121,7 @@ public static class APICompat
         return diff <= Math.Max(Math.Abs(a), Math.Abs(b)) * relativeTolerance;
     }
 
-    public static bool ModAbilityMeetingButton() => AmongUsUtil.InMeeting && MeetingHud.Instance.state is not MeetingHud.VoteStates.Animating and not MeetingHud.VoteStates.Discussion and not MeetingHud.VoteStates.Results and not MeetingHud.VoteStates.Proceeding;
+    public static bool ModAbilityMeetingButton() => AmongUsUtil.InMeeting && MeetingHud.Instance.CurrentState is not MeetingHud.MeetingStates.Animating and not MeetingHud.MeetingStates.Discussion and not MeetingHud.MeetingStates.Results and not MeetingHud.MeetingStates.Proceeding;
 
     public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.ModGameObject(false).LocalPosition.x > 15;
 

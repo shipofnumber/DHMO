@@ -42,10 +42,10 @@ static public class RoleMarkWindow
                 TextHorizonotalExtraMargin = 0.15f,
                 PostBuilder = (button, renderer, text) =>
                 {
-                    var dic = RoleMarkAbility.MarkRoleDic;
+                    var dic = RoleMarkAbility.LocalMarkAbility.MarkRoleDic;
 
                     renderer.maskInteraction = SpriteMaskInteraction.VisibleInsideMask;
-                    renderer.color = dic != null && dic[player.PlayerId].Contains(a) ? VColor.White.ToUnityColor() : new(0.14f, 0.14f, 0.14f);
+                    renderer.color = dic[player.PlayerId].Contains(a) ? VColor.White.ToUnityColor() : new(0.14f, 0.14f, 0.14f);
                     button.ModGameObject(false).LocalPosition += new VVector3(0.05f, 0f, 0f);
                     text.ModGameObject(false).LocalPosition += new VVector3(0.072f, 0f, 0f);
 
@@ -57,7 +57,7 @@ static public class RoleMarkWindow
                     icon.SetBothOrder(15);
 
                     button.OnMouseOut.RemoveAllListeners();
-                    button.OnMouseOut.AddListener(() => renderer.color = dic != null && dic[player.PlayerId].Contains(a) ? VColor.White.ToUnityColor() : new(0.14f, 0.14f, 0.14f));
+                    button.OnMouseOut.AddListener(() => renderer.color = dic[player.PlayerId].Contains(a) ? VColor.White.ToUnityColor() : new(0.14f, 0.14f, 0.14f));
                     button.OnClick.AddListener(() => onSelected.Invoke(a, renderer));
                 }
             }), 4, -1, 0, 0.59f);
@@ -75,74 +75,69 @@ static public class RoleMarkWindow
     static IEnumerator CoCloseOnResult(MetaScreen window)
     {
         if (MeetingHud.Instance.AsBoolFast(out var hud))
-            while (hud.state != MeetingHud.VoteStates.Results) yield return null;
+            while (hud.CurrentState != MeetingHud.MeetingStates.Results) yield return null;
         else
             while (!hud.AsBoolFast()) yield return null;
         window.CloseScreen();
     }
 }
 
-public class RoleMarkMenu : PlayerMenuMinigame
+public class RoleMarkMenu : AbstractPlayerMenuMinigame
 {
     static RoleMarkMenu() => ClassInjector.RegisterTypeInIl2Cpp<RoleMarkMenu>();
     public RoleMarkMenu(nint ptr) : base(ptr) { }
     public RoleMarkMenu() : base(ClassInjector.DerivedConstructorPointer<RoleMarkMenu>()) => ClassInjector.DerivedConstructorBody(this);
 
-    public static void Open(Action<GamePlayer> onClick, Action<TextMeshPro, GamePlayer> textUpdate) => Create<RoleMarkMenu>().Begin(onClick, textUpdate);
+    public static void Open(Action<GamePlayer> onClick) => Create<RoleMarkMenu>().Begin(onClick);
 
-    [HideFromIl2Cpp]
-    public void Begin(Action<GamePlayer> onClick, Action<TextMeshPro, GamePlayer> textUpdate)
+    protected override void OnCreatePanel(GamePlayer player, ShapeshifterPanel panel, Action<GamePlayer>? onClick = null)
     {
-        base.Begin(out var players);
+        panel.ColorBlindName.ModGameObject(false).SetActive(false);
+        
+        TextMeshPro nameText = panel.NameText;
+        TextMeshPro roleText = GameObject.Instantiate(nameText, nameText.transform);
+        var textObj = roleText.ModGameObject(false);
+        
+        roleText.name = "RoleMarkText";
+        roleText.text = "";
 
-        for (int i = 0; i < players.Count; i++)
+        textObj.LocalPosition = new VVector3(0f, -0.1611f, 0f);
+        textObj.LocalScale = new VVector3(0.6333f, 0.6333f);
+
+        roleText.rectTransform.sizeDelta += new UVector2(0.35f, 0f);
+        roleText.UseRoleIcon();
+
+        ScriptBehaviour script = panel.gameObject.AddComponent<ScriptBehaviour>();
+        script.UpdateHandler += () =>
         {
-            var player = players[i];
-            if (player.AmOwner) continue;
+            if (!RoleMarkAbility.LocalMarkAbility.MarkRoleDic.TryGetValue(player.PlayerId, out var assignableSet)) return;
 
-            var panel = GameObject.Instantiate(panelPrefab, transform);
-            var panelObj = panel.ModGameObject(false);
+            HashSet<DefinedRole> roles = [];
+            foreach (var assignable in assignableSet)
+            {
+                if (assignable is DefinedRole role)
+                    roles.Add(role);
+            }
 
-            panelObj.LocalPosition = new VVector3(0f, 0f, -1f);
-            panel.SetPlayer(i, player.VanillaPlayer.Data, (Action)(() => onClick?.Invoke(player)));
-            panel.NameText.color = VColor.White.ToUnityColor();
-            panel.ColorBlindName.ModGameObject(false).SetActive(false);
+            roleText.text = string.Join(", ", roles.Select(r => r.GetRoleIconTag() + (roles.Count >= 2 ? " " + r.DisplayColoredShort : r.DisplayColoredName)));
+        };
+        
+        var namePlate = panel.gameObject.transform.FindChild("Nameplate");
+        var button = namePlate.GetComponent<PassiveButton>();
 
-            TextMeshPro nameText = panel.NameText;
-            TextMeshPro roleText = GameObject.Instantiate(nameText, nameText.transform);
-            var textObj = roleText.ModGameObject(false);
+        button.OnMouseOver.AddListener(() => NebulaManager.Instance.SetHelpWidget(button, RoleMarkAbility.LocalMarkAbility.GetModifierString(player.PlayerId)));
+        button.OnMouseOut.AddListener(() => NebulaManager.Instance.HideHelpWidgetIf(button));
+    }
 
-            roleText.name = "RoleMarkText";
-            roleText.text = "";
-
-            textObj.LocalPosition = new VVector3(0f, -0.1611f, 0f);
-            textObj.LocalScale = new VVector3(0.6333f, 0.6333f);
-
-            roleText.rectTransform.sizeDelta += new UVector2(0.35f, 0f);
-            roleText.UseRoleIcon();
-
-            ScriptBehaviour script = panelObj.AddComponent<ScriptBehaviour>();
-            script.UpdateHandler += () => textUpdate.Invoke(roleText, player);
-
-            var namePlate = panelObj.GetUnityTransform().FindChild("Nameplate");
-            var button = namePlate.GetComponent<PassiveButton>();
-
-            button.OnMouseOver.AddListener(() => NebulaManager.Instance.SetHelpWidget(button, RoleMarkAbility.GetModifierString(player.PlayerId)));
-            button.OnMouseOut.AddListener(() => NebulaManager.Instance.HideHelpWidgetIf(button));
-            namePlate.FindChild("Highlight")?.Find("ShapeshifterIcon").gameObject.SetActive(false);
-
-            AllPanels.Add(panel);
-        }
-        base.ShowPageButtons();
-
+    protected override void AfterCreated()
+    {
         this.StartCoroutine(CoCloseOnResult().WrapToIl2Cpp());
-        RefreshControllerOverlay(ShowPage());
     }
 
     private IEnumerator CoCloseOnResult()
     {
         if (MeetingHud.Instance.AsBoolFast(out var hud))
-            while (hud.state != MeetingHud.VoteStates.Results) yield return null;
+            while (hud.state != MeetingHud.MeetingStates.Results) yield return null;
         else
             while (!hud.AsBoolFast()) yield return null;
         this.Close();

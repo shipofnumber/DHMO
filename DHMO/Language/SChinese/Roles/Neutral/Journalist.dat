@@ -1,0 +1,44 @@
+# Assignable
+
+"role.journalist.name" : "记者"
+"role.journalist.short" : "记"
+"role.journalist.blurb" : "梦想是一步登天！"
+"role.journalist.taskText" : "成为王牌记者的目标<br>（%DETAIL%）"
+"role.journalist.taskTextBuzz" : "热度：%CB%/%GB%"
+"role.journalist.taskTextPhoto" : "拍摄照片数：%CP%/%GP%"
+
+# Document
+
+"document.tip.winCond.journalist.devour.title" : "舆论胜利"
+"document.tip.winCond.journalist.devour" : "达到足够新闻热度时会引导舆论为自己造势胜利。"
+
+"role.journalist.doc" : "记者可以在玩家身上安装微型摄像头以此来拍摄该玩家的照片，并发布在会议上让全体存活玩家猜测。"
+"role.journalist.winCond" : "达到足够的热度和照片数时胜利。"
+"role.journalist.ability.title" : "固有能力【热点新闻】"
+"role.journalist.ability.main" : "在选中的玩家的视角上拍摄照片在会议上展示，被选中玩家在照片里会被隐蔽。<br>全体除记者外可以点击照片猜测图中被隐蔽玩家是谁，猜测错误则为记者增加1点热度，不猜测会增加0.5点新闻热度。"
+"role.journalist.tips" : "・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.journalist.detail" : "记者可以拍摄指定玩家的照片，并在会议上展示它。"
+"options.role.journalist.miniCamCoolDown" : "微型摄像头冷却时间"
+"options.role.journalist.requiredBuzz" : "胜利所需热度"
+"options.role.journalist.requiredPhotos" : "胜利所需照片"
+"options.role.journalist.telephotoFinderSize" : "近距离镜头大小"
+"options.role.journalist.wideAngleFinderSize" : "远距离镜头大小"
+
+# Button
+
+"ui.action.journalist.camera" : "拍摄取景框的照片。"
+"ui.action.journalist.toggle" : "将镜头旋转90度。"
+"button.label.journalist.miniCam" : "微型摄像机"
+"button.label.journalist.shot" : "抓拍"
+
+# UI
+
+"ui.journalist.photoInfo" : "点击猜测图中隐蔽玩家。<br><b>猜测错误</b>或<b>不猜测</b>都会为记者积攒热度。"
+
+# Team
+
+"teams.journalist" : "记者"
+"end.journalist" : "记者%EXTRA%胜利"

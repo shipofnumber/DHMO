@@ -28,7 +28,7 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
                 p.TryGetRole<Pelican.Instance>(out var pelican);
                 return pelican;
             }).NotNull().ToArray();
-            int totalDevoured = pelicans.Sum(p => p.DevouringTotal);
+            int totalDevoured = pelicans.Sum(p => p.Count);
 
             return pelicans.Length > 0 && (totalAlive - totalDevoured) <= Pelican.PelicanTimeAliveNum && !AmongUsUtil.InMeeting;
         }, Pelican.MyRole.Color, Pelican.TaskPhaseRestartPelicanTimeDisperse);

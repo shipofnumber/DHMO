@@ -10,7 +10,7 @@
 "role.jailor.ability.title" : "Inherent Ability [Interrogation]"
 "role.jailor.ability.main" : "Jail suspects, restrict their movements, and execute those you deem impostors."
 "role.jailor.ability.jail" : "<title>Jail</title>Try to jail the target. In the meeting, the jailed may be in jail.<br>%JAILINAROW%"
-"role.jailor.ability.execute" : "<title>Execute</title>Kill the jailed.%CANEXECUTELOVER%<br>If the jailed is a crewmate, you will not be able to jail other again. Meanwhile, you can't vote because you've lost credibility."
+"role.jailor.ability.execute" : "<title>Execute</title>Kill the jailed.%CANEXECUTELOVER%<br>If the jailed is a crewmate, you will not be able to jail other again.<br>Meanwhile, you can't vote because you've lost credibility."
 "role.jailor.ability.inJail" : "The In Jail Image will appear on the icon of the jailed player.<br>To remind everyone."
 "role.jailor.ability.jailinArow" : "<var>After the meeting end, the jailed may keep, until you change the target.</var>"
 "role.jailor.ability.clearJailed" : "<var>After the meeting end, the jailed will be able to regain freedom.</var>"

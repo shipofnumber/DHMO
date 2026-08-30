@@ -4,12 +4,14 @@ namespace DHMO.Roles.Abilities;
 
 public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
 {
+    public static RoleMarkAbility LocalMarkAbility { get; private set; } = null!;
+    
     static readonly Image? MarkImage = NebulaAPI.AddonAsset?.GetResource("Button/MarkButton.png")?.AsImage();
     public static BoolConfiguration CanUseMark = NebulaAPI.Configurations.Configuration("options.meeting.canUseMark", true);
 
-    public static Dictionary<byte, HashSet<DefinedAssignable>>? MarkRoleDic { get; set; } = [];
-    public static MetaScreen? LastMarkWindow = null;
-    private GamePlayer myPlayer { get; set; }
+    public Dictionary<byte, HashSet<DefinedAssignable>> MarkRoleDic { get; private set; } = [];
+    public MetaScreen? LastMarkWindow = null;
+    private GamePlayer myPlayer;
 
     public GamePlayer MyPlayer => myPlayer;
 
@@ -24,7 +26,7 @@ public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
 
         var markButton = NebulaAPI.Modules.AbilityButton(this, isLeftSideButton: true, alwaysShow: true).SetImage(MarkImage!).SetLabel("mark");
         markButton.Visibility = _ => MyPlayer.IsAlive && AmongUsUtil.InMeeting;
-        markButton.Availability = _ => !Minigame.Instance.AsBoolFast() && AmongUsUtil.InMeeting && MeetingHud.Instance.state != MeetingHud.VoteStates.Animating && MeetingHud.Instance.state != MeetingHud.VoteStates.Results && MeetingHud.Instance.state != MeetingHud.VoteStates.Proceeding && !APICompat.IsOutMeeting();
+        markButton.Availability = _ => !Minigame.Instance.AsBoolFast() && AmongUsUtil.InMeeting && MeetingHud.Instance.CurrentState != MeetingHud.MeetingStates.Animating && MeetingHud.Instance.CurrentState != MeetingHud.MeetingStates.Results && MeetingHud.Instance.CurrentState != MeetingHud.MeetingStates.Proceeding && !APICompat.IsOutMeeting();
         markButton.OnClick = _ =>
         {
             RoleMarkMenu.Open((p) =>
@@ -41,24 +43,13 @@ public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
                         else
                             renderer.color = VColor.White.ToUnityColor();
                     });
-            },
-            (tmPro, p) =>
-            {
-                if (!MarkRoleDic.TryGetValue(p.PlayerId, out var assignablesSet)) return;
-
-                HashSet<DefinedRole> roles = [];
-                foreach (var assignable in assignablesSet)
-                {
-                    if (assignable is DefinedRole role)
-                        roles.Add(role);
-                }
-
-                tmPro.text = string.Join(", ", roles.Select(r => r.GetRoleIconTag() + (roles.Count >= 2 ? " " + r.DisplayColoredShort : r.DisplayColoredName)));
             });
         };
+
+        RoleMarkAbility.LocalMarkAbility = this;
     }
 
-    public static string GetModifierString(byte id)
+    public string GetModifierString(byte id)
     {
         if (MarkRoleDic == null) return string.Empty;
         var modifiers = MarkRoleDic[id].Where(a => a is DefinedModifier);

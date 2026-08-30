@@ -10,8 +10,8 @@
 # Options
 
 "options.role.radar.detail" : "雷达可以追踪距离最近的玩家。"
-"options.role.rader.detectDistance" : "探测距离"
-"options.role.rader.updateInterval" : "箭头更新间隔"
+"options.role.radar.detectDistance" : "探测距离"
+"options.role.radar.updateInterval" : "箭头更新间隔"
 
 # Game
 

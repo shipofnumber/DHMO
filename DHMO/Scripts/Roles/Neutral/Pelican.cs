@@ -1,4 +1,6 @@
-﻿namespace DHMO.Roles.Neutral;
+﻿using System.Numerics;
+
+namespace DHMO.Roles.Neutral;
 
 public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableDocument
 {
@@ -46,7 +48,9 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
     public class Instance(GamePlayer player) : RuntimeVentRoleTemplate(player, VentConfiguration), RuntimeRole
     {
         public static GameEnd? PelicanTeamWin = NebulaAPI.Preprocessor?.CreateEnd("pelican", MyRole.RoleColor);
-        public int DevouringTotal { get; private set; } = 0;
+        public EditableBitMask<GamePlayer> DevouredPlayerMask { get; private set; } = BitMasks.AsPlayer();
+        public int Count => BitOperations.PopCount(DevouredPlayerMask.AsRawPattern);
+        
         public override DefinedRole Role => MyRole;
         bool RuntimeAssignable.CanCallEmergencyMeeting => CanCallEmergencyMeeting;
 
@@ -65,7 +69,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             {
                 p.TryGetRole<Pelican.Instance>(out var pelican);
                 return pelican;
-            }).NotNull().Sum(p => p.DevouringTotal);
+            }).NotNull().Sum(p => Count);
 
             if (NebulaAPI.RunEvent(new KillerTeamCallback(PelicanTeam)).RemainingOtherTeam || (totalAlive - totalDevoured) > 1) return;
 
@@ -107,20 +111,20 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
                 NebulaAPI.CurrentGame?.KillButtonLikeHandler.Register(devourButton.GetKillButtonLike());
             }
-
-            GameOperatorManager.Instance?.Subscribe<DevouredStatusUpdate>(ev =>
-            {
-                if (ev.Pelican != myPlayer) return;
-                if (ev.Devoured)
-                    DevouringTotal++;
-                else
-                    DevouringTotal--;
-            }, this);
         }
 
-        float GetCurrentCooldown() => Mathn.Min(DevourCooldown.Cooldown + DevouringTotal * IncreaseTime, 60f);
+        void OnDevoured(DevouredStatusUpdate ev)
+        {
+            if (ev.Pelican.PlayerId != MyPlayer.PlayerId) return;
+            if (ev.Devoured)
+                DevouredPlayerMask.Add(ev.Player);
+            else
+                DevouredPlayerMask.Remove(ev.Player);
+        }
 
-        public readonly static RemoteProcess<(GamePlayer player, GamePlayer pelican)> RpcDevoured = new("PelicanDevour", (message, _) =>
+        private float GetCurrentCooldown() => Mathn.Min(DevourCooldown.Cooldown + Count * IncreaseTime, 60f);
+
+        private static readonly RemoteProcess<(GamePlayer player, GamePlayer pelican)> RpcDevoured = new("PelicanDevour", (message, _) =>
         {
             if (!message.player.AmOwner || message.player.IsDead || message.pelican.Role is not Pelican.Instance pelican) return;
             DevouredAbility devoured = new(message.player, pelican);
@@ -133,7 +137,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
     {
         private GamePlayer myPlayer;
         private Pelican.Instance pelican;
-        string tag = "PelicanDevouredInvisble";
+        string tag = "PelicanDevouredInvisible";
 
         public GamePlayer Pelican => pelican.MyPlayer;
         public GamePlayer MyPlayer => myPlayer;
@@ -146,7 +150,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             RpcUpdateStatus.Invoke((player, pelican.MyPlayer, true));
             player.GainAttribute(PlayerAttributes.Invisible, 100000f, false, 0, tag);
 
-            if (pelican.MyPlayer.IsDead || MeetingHud.Instance.AsBoolFast())
+            if (pelican.MyPlayer.IsDead || myPlayer.IsDead || MeetingHud.Instance.AsBoolFast())
             {
                 this.Release();
                 return;
@@ -169,7 +173,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
         void OnPlayerDieOrDisconnect(PlayerDieOrDisconnectEvent ev)
         {
-            if (ev.Player == myPlayer || ev.Player == pelican)
+            if (ev.Player == myPlayer || ev.Player == pelican.MyPlayer)
                 this.Release();
         }
 
@@ -187,7 +191,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             AmongUsUtil.SetCamTarget(null);
         }
 
-        public readonly static RemoteProcess<(GamePlayer player, GamePlayer pelican, bool devoured)> RpcUpdateStatus = new("PelicanUpdateStatus", (message, _) => GameOperatorManager.Instance?.Run(new DevouredStatusUpdate(message.player, message.pelican, message.devoured)));
+        private static readonly RemoteProcess<(GamePlayer player, GamePlayer pelican, bool devoured)> RpcUpdateStatus = new("PelicanUpdateStatus", (message, _) => GameOperatorManager.Instance?.Run(new DevouredStatusUpdate(message.player, message.pelican, message.devoured)));
     }
 
     public class DevouredStatusUpdate : Virial.Events.Player.AbstractPlayerEvent

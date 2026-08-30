@@ -80,7 +80,9 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
             if (selected.Test(ev.Player))
             {
                 if (uniterArea?.DidVote ?? false && ev.DidVote)
-                    ev.VoteTo = NebulaGameManager.Instance?.GetPlayer(uniterArea.VotedFor);
+                {
+                    ev.VoteTo = NebulaGameManager.Instance?.GetPlayer(uniterArea.VotedForId.Value);
+                }
             }
         }
     }

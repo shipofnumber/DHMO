@@ -7,8 +7,8 @@ public class Radar : DefinedAllocatableModifierTemplate, DefinedAllocatableModif
         ConfigurationHolder?.AddTags(ConfigurationTags.TagBeginner);
     }
 
-    static internal FloatConfiguration DetectDistanceOption = NebulaAPI.Configurations.Configuration("options.role.rader.detectDistance", (10f, 50f, 1f), 20f, FloatConfigurationDecorator.Ratio);
-    static private FloatConfiguration UpdateIntervalOption = NebulaAPI.Configurations.Configuration("options.role.rader.updateInterval", (0f, 10f, 1f), 1f, FloatConfigurationDecorator.Second);
+    static internal FloatConfiguration DetectDistanceOption = NebulaAPI.Configurations.Configuration("options.role.radar.detectDistance", (10f, 50f, 1f), 20f, FloatConfigurationDecorator.Ratio);
+    static private FloatConfiguration UpdateIntervalOption = NebulaAPI.Configurations.Configuration("options.role.radar.updateInterval", (0f, 10f, 1f), 1f, FloatConfigurationDecorator.Second);
 
     Image? DefinedAssignable.IconImage => Nebula.Roles.Crewmate.NiceTracker.MyRole.GetRoleIcon();
     static public Radar MyRole = new();

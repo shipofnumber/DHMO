@@ -10,8 +10,8 @@
 # Options
 
 "options.role.radar.detail" : "The Radar will track the player closest to himself."
-"options.role.rader.detectDistance" : "Detect DiStance"
-"options.role.rader.updateInterval" : "Update Arrow Interval"
+"options.role.radar.detectDistance" : "Detect DiStance"
+"options.role.radar.updateInterval" : "Update Arrow Interval"
 
 # Game
 

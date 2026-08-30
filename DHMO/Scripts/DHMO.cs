@@ -10,9 +10,10 @@ public class DHMO
 
     static void Preprocess(NebulaPreprocessor preprocessor)
     {
-        NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).CanSpawnInCurrentGame, "raven", null);
+        NebulaGameEnd.RegisterWinCondTip(Journalist.Instance.JournalistTeamWin!, () => ((ISpawnable)Journalist.MyRole).CanSpawnInCurrentGame, "journalist", null);
         NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame, "pelican.devour", null);
         NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame && Pelican.InvokePelicanTime, "pelican.timeOver", null);
+        NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).CanSpawnInCurrentGame, "raven", null);
     }
 
     static DHMO()

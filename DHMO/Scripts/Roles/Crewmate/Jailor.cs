@@ -197,7 +197,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
             foreach (var voteArea in MeetingHud.Instance.playerStates.GetFastEnumerator())
             {
-                if (Jailed.PlayerId == voteArea.TargetPlayerId)
+                if (Jailed.PlayerId == voteArea.PlayerId.Value)
                 {
                     var voteAreaTransform = voteArea.ModGameObject().GetUnityTransform();
                     GenCell(voteAreaTransform);
