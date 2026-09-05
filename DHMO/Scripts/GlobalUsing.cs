@@ -2,6 +2,8 @@
 global using BepInEx.Unity.IL2CPP.Utils.Collections;
 global using DHMO;
 global using DHMO.Behaviour;
+global using DHMO.Events.Game;
+global using DHMO.Events.Roles;
 global using DHMO.Modules;
 global using DHMO.Patches;
 global using DHMO.Roles.Crewmate;

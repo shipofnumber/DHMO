@@ -3,14 +3,14 @@
 "role.journalist.name" : "记者"
 "role.journalist.short" : "记"
 "role.journalist.blurb" : "梦想是一步登天！"
-"role.journalist.taskText" : "成为王牌记者的目标<br>（%DETAIL%）"
+"role.journalist.taskText" : "成为王牌记者的目标。<br>（%DETAIL%）"
 "role.journalist.taskTextBuzz" : "热度：%CB%/%GB%"
 "role.journalist.taskTextPhoto" : "拍摄照片数：%CP%/%GP%"
 
 # Document
 
-"document.tip.winCond.journalist.devour.title" : "舆论胜利"
-"document.tip.winCond.journalist.devour" : "达到足够新闻热度时会引导舆论为自己造势胜利。"
+"document.tip.winCond.journalist.title" : "舆论胜利"
+"document.tip.winCond.journalist" : "达到足够新闻热度时会引导舆论为自己造势胜利。"
 
 "role.journalist.doc" : "记者可以在玩家身上安装微型摄像头以此来拍摄该玩家的照片，并发布在会议上让全体存活玩家猜测。"
 "role.journalist.winCond" : "达到足够的热度和照片数时胜利。"
@@ -36,6 +36,7 @@
 
 # UI
 
+"role.journalist.disclosePicture" : "记者展示了新闻照片，快来猜猜他是谁！"
 "ui.journalist.photoInfo" : "点击猜测图中隐蔽玩家。<br><b>猜测错误</b>或<b>不猜测</b>都会为记者积攒热度。"
 
 # Team

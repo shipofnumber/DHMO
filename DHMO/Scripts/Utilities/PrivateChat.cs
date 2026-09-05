@@ -1,6 +1,6 @@
 ﻿namespace DHMO.Utilities;
 
-public class PrivateChat
+public static class PrivateChat
 {
     public static void RegisterPublicChannel(VColor color, VColor textfieldColor, string chatid, string localizedname, ILifespan lifespan, Func<bool> useChannelPredicate, bool donotSendMessage = false, Action<string>? onSendMessage = null)
     {
@@ -12,12 +12,12 @@ public class PrivateChat
         foreach (var method in methods ?? [])
         {
             if (method.Name != "RegisterPublicChannel" || method.GetParameters().Length != 8) continue;
-               registerMethod = method;
+            registerMethod = method;
         }
 
         try
         {
-             registerMethod?.Invoke(instance, [color, textfieldColor, chatid, localizedname, lifespan, useChannelPredicate, donotSendMessage, onSendMessage]);
+            registerMethod?.Invoke(instance, [color, textfieldColor, chatid, localizedname, lifespan, useChannelPredicate, donotSendMessage, onSendMessage]);
         }
         catch (Exception e)
         {

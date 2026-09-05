@@ -1,3 +1,7 @@
+# ClientOption
+
+"config.client.introRoleTextBold" : "开场界面职业文本粗体"
+
 # Certification
 
 "certification.notification" : "%PLAYER%%REASON%！"

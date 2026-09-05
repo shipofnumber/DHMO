@@ -90,6 +90,6 @@ public class ChatSystem : AbstractModule<Virial.Game.Game>, IGameOperator
             yield return null;
         }
 
-        DLog.Log($"ObjectPoolSize is changed to {pool.poolSize} now.(Acive: {pool.InUse}, Inactive: {pool.NotInUse})");
+        DLog.Log($"ObjectPoolSize is changed to {pool.poolSize} now.(Active: {pool.InUse}, Inactive: {pool.NotInUse})");
     }
 }

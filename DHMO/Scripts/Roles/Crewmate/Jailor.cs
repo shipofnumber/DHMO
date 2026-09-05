@@ -52,13 +52,12 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
     {
         ModAbilityButton? jailButton, executeButton;
         public GamePlayer? Jailed { get; private set; } = null;
-        EditableBitMask<GamePlayer> hasJailed = BitMasks.AsPlayer();
 
         bool isMissed;
         PoolablePlayer? jailIcon = null;
         private GameObject? jailCell;
         private int leftUses = GetAbilityUses();
-        int[] IPlayerAbility.AbilityArguments => [leftUses, IsUsurped.AsInt()];
+        int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt(), leftUses];
 
         public Ability(GamePlayer player, bool isUsurped, int uses) : base(player, isUsurped)
         {
@@ -67,7 +66,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             if (HasPrivateChat)
             {
                 PrivateChat.RegisterPublicChannel(MyRole.Color, MyRole.Color, $"Jailor{MyPlayer.PlayerId}", Language.Translate("chat.jailortext"), this,
-                    () => AmongUsUtil.InMeeting && Jailed != null && Jailed.IsAlive && (MyPlayer.AmOwner || Jailed.AmOwner), true,
+                    () => AmongUsUtil.InMeeting && Jailed is { IsAlive: true } && (MyPlayer.AmOwner || Jailed.AmOwner), true,
                     text => RpcSendChat.Invoke((MyPlayer, GamePlayer.LocalPlayer ?? MyPlayer, text)));
             }
 
@@ -96,12 +95,10 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                                 button.UpdateUsesIcon(leftUses.ToString());
                             }
 
-                            hasJailed.Add(tracker.CurrentTarget);
                             RpcJail.Invoke((MyPlayer, tracker.CurrentTarget));
 
                             var outfit = tracker.CurrentTarget.GetOutfit(OutfitPriority.TransformedThrethold);
                             jailIcon?.Destroy();
-                            if (outfit == null) return;
                             jailIcon = AmongUsUtil.GetPlayerIcon(outfit.outfit, ((ModAbilityButtonImpl)button).VanillaButton.transform, new VVector3(0.4f, -0.35f, -0.5f), new(0.3f, 0.3f)).SetAlpha(0.5f);
                         }
                     }
@@ -132,12 +129,6 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 else
                     executeButton.ShowUsesIcon(3, leftUses.ToString());
             }
-        }
-
-        void EditGuessable(PlayerCanGuessPlayerLocalEvent ev)
-        {
-            if (ev.Guesser == MyPlayer && hasJailed.Test(ev.Target) && ev.Target.IsAlive)
-                ev.CanGuess = false;
         }
 
         private bool CanExecute(GamePlayer target)
@@ -255,7 +246,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             GamePlayer sender = message.sender;
 
             if (sender == message.jailor && ability.Jailed.AmOwner && !NebulaGameManager.Instance.CanSeeAllInfo)
-                chat.AddCustomChat(sender.VanillaPlayer, ability.Jailed.VanillaPlayer, $"{(Jailor.MyRole as DefinedAssignable).DisplayColoredName}{tag}", message.text);
+                chat.AddCommChat(sender.VanillaPlayer, tag, message.text);
             else
                 chat.AddCustomChat(sender.VanillaPlayer, sender.VanillaPlayer, $"{sender.Name}{tag}", message.text);
 

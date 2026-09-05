@@ -10,6 +10,9 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
     public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
     {
         yield return preprocessor;
+        
+        string[] simpleSwitch = ["options.switch.off", "options.switch.on"];
+        new ClientOption((ClientOption.ClientOptionType)51, "introRoleTextBold", simpleSwitch, 0);
         NebulaInput.modInput[(VirtualKeyInput)120] = new(GetModKeyCodeGetter("pass", KeyCode.Space));
     }
 
@@ -32,14 +35,14 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         return null;
     }
 
-    public int? CurrentRound { get; private set; }
+    public int CurrentRound { get; private set; }
     private Dictionary<byte, int> deadPlayers = [];
     
     void OnGameStart(GameStartEvent ev)
     {
         if (GamePlayer.LocalPlayer == null) return;
-
-        deadPlayers = [];
+        
+        CurrentRound = 1;
         if (RoleMarkAbility.CanUseMark)
         {
             var markAbility = new RoleMarkAbility(this.MyContainer, GamePlayer.LocalPlayer);
@@ -47,21 +50,38 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         }
     }
 
-    void OnTaskPhaseStart(TaskPhaseStartEvent ev)
+    void OnLobbyDestroy(LobbyDestroyEvent ev)
     {
-        CurrentRound = 1;
+        CurrentRound = 0;
+        deadPlayers = [];
     }
 
     void OnTaskPhaseRestart(TaskPhaseRestartEvent ev)
     {
-        if (CurrentRound == null) return;
-        ++CurrentRound;
+        CurrentRound += 1;
+    }
+
+    [EventPriority(-1000000)]
+    void OnShowIntro(GameShowIntroLocalEvent ev)
+    {
+        if (ClientOption.GetValue((ClientOption.ClientOptionType)51) == 0) return;
+        
+        var roleText = IntroCutscene.Instance.RoleText;
+        
+        roleText.fontWeight = TMPro.FontWeight.Thin;
+        roleText.SetOutlineColor(ev.RoleColor.ShadeColor(0.1f).SetAlpha(0.38f));
+        roleText.SetOutlineThickness(0.17f);
     }
 
     void OnPlayerDieOrDisconnected(PlayerDieOrDisconnectEvent ev)
     {
-        if (CurrentRound == null) return;
-        deadPlayers.Add(ev.Player.PlayerId, CurrentRound.Value);
+        if (deadPlayers.TryGetValue(ev.Player.PlayerId, out var round))
+        {
+            deadPlayers[ev.Player.PlayerId] = CurrentRound;
+            return;
+        }
+        
+        deadPlayers.Add(ev.Player.PlayerId, CurrentRound);
     }
 
     void OnPlayerRevive(PlayerReviveEvent ev)

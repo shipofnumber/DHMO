@@ -1,5 +1,7 @@
 ﻿using Il2CppInterop.Runtime.Attributes;
 using Il2CppInterop.Runtime.Injection;
+using Nebula.Modules.Cosmetics;
+using Vector3 = System.Numerics.Vector3;
 
 namespace DHMO.Behaviour;
 
@@ -119,7 +121,14 @@ public abstract class AbstractPlayerMenuMinigame : Minigame
 
             panelObj.LocalPosition = new VVector3(0f, 0f, -1f);
             panel.SetPlayer(i, player.VanillaPlayer.Data, (Action)(() => onClick?.Invoke(player)));
-            panel.NameText.color = VColor.White.ToUnityColor();
+
+            var ev = NebulaAPI.RunEvent<PlayerDecorateNameEvent>(new PlayerDecorateNameEvent(player, "", false));
+            panel.NameText.color = ev.Color?.ToUnityColor() ?? VColor.White.ToUnityColor();
+            
+            var localPos = panel.ColorBlindName.transform.localPosition;
+            localPos.x = -0.947f;
+            localPos.z -= 0.15f;
+            panel.ColorBlindName.transform.localPosition = localPos;
             
             var namePlate = panelObj.GetUnityTransform().FindChild("Nameplate");
             namePlate.FindChild("Highlight")?.Find("ShapeshifterIcon").gameObject.SetActive(false);

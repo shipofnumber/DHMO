@@ -28,7 +28,7 @@ public class TimeMomentManager : AbstractModule<Virial.Game.Game>, IGameOperator
                 p.TryGetRole<Pelican.Instance>(out var pelican);
                 return pelican;
             }).NotNull().ToArray();
-            int totalDevoured = pelicans.Sum(p => p.Count);
+            int totalDevoured = pelicans.Sum(p => p.DevouredPlayerMask.Count);
 
             return pelicans.Length > 0 && (totalAlive - totalDevoured) <= Pelican.PelicanTimeAliveNum && !AmongUsUtil.InMeeting;
         }, Pelican.MyRole.Color, Pelican.TaskPhaseRestartPelicanTimeDisperse);
@@ -253,15 +253,4 @@ public interface TimeMoment
 
     internal TimeMoment Start();
     internal TimeMoment Stop(bool isTimeOver);
-}
-
-public class TimeMomentStartEvent(Virial.Game.Game game, TimeMoment timeMoment) : Virial.Events.Game.AbstractGameEvent(game)
-{
-    public TimeMoment TimeMoment { get; init; } = timeMoment;
-}
-
-public class TimeMomentEndEvent(Virial.Game.Game game, TimeMoment timeMoment, bool isTimeOver) : Virial.Events.Game.AbstractGameEvent(game)
-{
-    public TimeMoment TimeMoment { get; init; } = timeMoment;
-    public bool IsTimeOver { get; init; } = isTimeOver;
 }

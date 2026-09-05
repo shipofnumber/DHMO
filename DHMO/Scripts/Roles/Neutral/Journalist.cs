@@ -95,7 +95,7 @@ public class JournalistShot : MonoBehaviour
             transform.eulerAngles = new VVector3(0, 0, mouseInfo.angle * 180f / Mathn.PI + (isVert ? 90f : 0f));
     }
 
-    public void TakePicture(GamePlayer myPlayer, GamePlayer selectedPlayer, Action<bool>? callback = null)
+    public void TakePicture(GamePlayer myPlayer, Action<bool>? callback = null)
     {
         focus = false;
 
@@ -150,16 +150,16 @@ public class JournalistShot : MonoBehaviour
             renderer.transform.localEulerAngles = transform.localEulerAngles;
             var rotatedTexture = UnityHelper.TakeCustomPicture(null, new(0f,0f,-1f), rotatedWidth, rotatedHeight, rotatedHeight * 0.5f * 0.01f, 1 << 30, VColor.Clear.ToUnityColor(), false, false);
             File.WriteAllBytesAsync(NebulaManager.GetPicturePath("_Rotated", out _), rotatedTexture.EncodeToPNG());
-            GameObject.Destroy(renderer.gameObject);
-            GameObject.Destroy(rotatedTexture);
+            Object.Destroy(renderer.gameObject);
+            Object.Destroy(rotatedTexture);
         }
 
         var sprite = texture2D.ToSprite(100f);
 
         cam.targetTexture = null;
         RenderTexture.active = null;
-        GameObject.Destroy(rt);
-        GameObject.Destroy(camObj);
+        Object.Destroy(rt);
+        Object.Destroy(camObj);
 
         centerRenderer.gameObject.SetActive(true);
         centerRenderer.transform.localPosition = new(0f, 0f, 0.1f);
@@ -211,8 +211,10 @@ public class JournalistShot : MonoBehaviour
             callback?.Invoke(true);
 
             if (myPlayer.Role is Journalist.Instance journalist)
+            {
                 journalist.Shot = (pictureScalerObj.GetUnityTransform(), this);
-            
+            }
+
             NebulaManager.Instance.StartCoroutine(CoScale().WrapToIl2Cpp());
         }
 
@@ -251,7 +253,9 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
         public static GameEnd? JournalistTeamWin = NebulaAPI.Preprocessor?.CreateEnd("journalist", MyRole.RoleColor);
         
         public override DefinedRole Role => MyRole;
+        
         public (Transform holder, JournalistShot shot)? Shot { get; internal set; } = null;
+        
         private HudContent? shotsHolder = null;
         public GamePlayer? SelectedPlayer { get; private set; } = null;
 
@@ -299,6 +303,7 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                     else
                     {
                         AmongUsUtil.SetCamTarget(MyPlayer.VanillaPlayer);
+                        SelectedPlayer = null;
                     }
 
                     miniCamButton.StartCoolDown();
@@ -320,7 +325,9 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                         yield return new WaitForEndOfFrame();
 
                         if (SelectedPlayer == null) yield break;
-                        finder.TakePicture(MyPlayer, SelectedPlayer);
+                        
+                        finder.SetPlayer(SelectedPlayer);
+                        finder.TakePicture(MyPlayer);
                         RpcAddPhoto.Invoke(MyPlayer);
                     }
 
@@ -367,10 +374,10 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
         }
 
         [OnlyMyPlayer]
-        void OnStatusUpdate(JournalistStatusUpdate ev)
+        void OnSpeculated(PlayerSpeculateEvent ev)
         {
             if (ev.Correct) return;
-            if (ev.NoGuessed) buzz += 0.5f;
+            if (ev.NoSpeculated) buzz += 0.5f;
             else buzz++;
         }
 
@@ -446,10 +453,9 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
             {
                 if (MyPlayer.IsDead || SelectedPlayer == null) return;
 
-                RpcSharePicture.Invoke((shot.shot.centerRenderer.transform.localScale.x,
-                    shot.shot.transform.localEulerAngles.z,
-                    shot.shot.centerRenderer.sprite.texture.EncodeToJPG(60).ToArray(),
-                    [MyPlayer.PlayerId, SelectedPlayer.PlayerId]));
+                DisclosePicture(shot.shot);
+                
+                MeetingHudExtension.RequestEditDiscussionTime.Invoke(60);
                 shareFlag = true;
             });
         }
@@ -474,15 +480,24 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
         }
 
         [Local]
-        void OnMeetingEnd(MeetingEndEvent ev)
+        void OnMeetingEnd(MeetingPreEndEvent ev)
         {
             Shot?.shot.gameObject.Destroy();
             Shot = null;
         }
+        
+        void DisclosePicture(JournalistShot shot)
+        {
+            if (SelectedPlayer == null) return;
+
+            RpcSharePicture.Invoke((shot.centerRenderer.transform.localScale.x,
+                shot.transform.localEulerAngles.z,
+                [.. shot.centerRenderer.sprite.texture.EncodeToJPG(60)],
+                [MyPlayer.PlayerId, SelectedPlayer.PlayerId]));
+        }
 
         public static readonly Dictionary<int, (float scale, float angle, int length, byte[]?[] bytes)> storedTexture = [];
-
-        public static readonly DivisibleRemoteProcess<(float, float, byte[], byte[]), (int id, float scale, float angle, int length, int index, byte[] bytes, byte[] playerId)> RpcSharePicture = new("JournalistSharePicture",
+        public static readonly DivisibleRemoteProcess<(float, float, byte[], byte[]), (int id, float scale, float angle, int length, int index, byte[] bytes, byte journalistId, byte selectedPlayerId)> RpcSharePicture = new("JournalistSharePicture",
                 (message) =>
                 {
                     int id = System.Random.Shared.Next(100000);
@@ -500,7 +515,7 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                     }
 
                     return arrays
-                        .Select(array => (id, message.Item1, message.Item2, arrays.Count, array.Item2, array.Item1, message.Item4))
+                        .Select(array => (id, message.Item1, message.Item2, arrays.Count, array.Item2, array.Item1, message.Item4[0], message.Item4[1]))
                         .GetEnumerator();
                 },
                 (writer, divided) =>
@@ -511,10 +526,11 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                     writer.Write(divided.length);
                     writer.Write(divided.index);
                     writer.WriteBytesAndSize(divided.bytes);
-                    writer.WriteBytesAndSize(divided.playerId);
+                    writer.Write(divided.journalistId);
+                    writer.Write(divided.selectedPlayerId);
                 },
                 (reader) => (reader.ReadInt32(), reader.ReadSingle(), reader.ReadSingle(), reader.ReadInt32(),
-                    reader.ReadInt32(), reader.ReadBytesAndSize(), reader.ReadBytesAndSize()),
+                    reader.ReadInt32(), reader.ReadBytesAndSize(), reader.ReadByte(), reader.ReadByte()),
                 
                 (divided, _) =>
                 {
@@ -540,12 +556,10 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                         obj.transform.localEulerAngles = new(0, 0, stored.angle);
                         obj.ForEachChild((Il2CppSystem.Action<GameObject>)(o => o.layer = LayerExpansion.GetUILayer()));
 
-                        byte journalistByte = divided.playerId[0];
-                        byte selectedByte = divided.playerId[1];
-
-                        bool cannotClick = GamePlayer.LocalPlayer!.IsDead ||
-                                           GamePlayer.LocalPlayer.PlayerId == journalistByte;
-                        bool isGuessed = false;
+                        GamePlayer journalist = GamePlayer.GetPlayer(divided.journalistId)!;
+                        
+                        bool cannotClick = GamePlayer.LocalPlayer!.IsDead || journalist.AmOwner;
+                        bool isSpeculated = false;
 
                         var collider2D = obj.AddComponent<BoxCollider2D>();
                         collider2D.enabled = !cannotClick;
@@ -553,28 +567,30 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
 
                         obj.AddComponent<ScriptBehaviour>().DestroyHandler += () =>
                         {
-                             if (GamePlayer.LocalPlayer.IsDead || GamePlayer.LocalPlayer.PlayerId == journalistByte) return;
-                             if (!isGuessed) RpcGuessPlayer?.Invoke((journalistByte, false, true));
+                             if (GamePlayer.LocalPlayer.IsDead || journalist.AmOwner) return;
+                             if (!isSpeculated) RpcGuessPlayer?.Invoke((divided.journalistId, false, true));
                         };
                         
                         var button = obj.SetUpButton();
                         button.OnClick.AddListener(() =>
                         {
-                            if (isGuessed || GamePlayer.LocalPlayer.IsDead) return;
+                            if (isSpeculated || GamePlayer.LocalPlayer.IsDead) return;
                             if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.CloseInternal(); 
                             
                             var menu = AbstractPlayerMenuMinigame.Create<SelectPlayerMenu>();
                             
                             menu.Begin((p) =>
                             {
-                                bool correct = p.PlayerId == selectedByte;
-                                AmongUsUtil.PlayQuickFlash(correct ? VColor.Green : VColor.Red);
+                                bool correct = p.PlayerId == divided.selectedPlayerId;
 
-                                RpcGuessPlayer?.Invoke((journalistByte, correct, false));
-                                isGuessed = true;
+                                if (!correct)
+                                    AmongUsUtil.PlayQuickFlash(VColor.Red);
+                                
+                                RpcGuessPlayer?.Invoke((divided.journalistId, correct, false));
+                                isSpeculated = true;
                                 collider2D.enabled = false;
                                 menu.CloseInternal();
-                            }, (p) => p.DeadRound == null || (ModSingleton<DGameManager>.Instance.CurrentRound - p.DeadRound) == 1, true);
+                            }, (p) => p.DeadRound == null || (ModSingleton<DGameManager>.Instance.CurrentRound - p.DeadRound) <= 1, true);
                         });
                         button.SetLocalizedOverlay("ui.journalist.photoInfo");
                         
@@ -612,26 +628,12 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                 journalist.photos++;
         });
         
-        private static readonly RemoteProcess<(byte journalist, bool correct, bool noGuessed)> RpcGuessPlayer = new("JournalistGuessPlayer", (message, _) =>
+        private static readonly RemoteProcess<(byte journalist, bool correct, bool noSpeculated)> RpcGuessPlayer = new("JournalistGuessPlayer", (message, _) =>
         {
             var player = GamePlayer.GetPlayer(message.journalist);
             if (player == null) return;
             
-            GameOperatorManager.Instance?.Run(new JournalistStatusUpdate(player, message.correct, message.noGuessed));
+            GameOperatorManager.Instance?.Run(new PlayerSpeculateEvent(player, message.correct, message.noSpeculated));
         });
-        
-        public class JournalistStatusUpdate : Virial.Events.Player.AbstractPlayerEvent
-        {
-            public Virial.Game.Player Journalist { get; init; }
-            public bool Correct { get; init; }
-            public bool NoGuessed { get; init; }
-
-            public JournalistStatusUpdate(Virial.Game.Player journalist, bool correct, bool noGuessed) : base(journalist)
-            {
-                this.Journalist = journalist;
-                this.Correct = correct;
-                this.NoGuessed = noGuessed;
-            }
-        }
     }
 }

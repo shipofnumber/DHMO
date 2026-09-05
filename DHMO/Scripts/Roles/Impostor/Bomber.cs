@@ -13,7 +13,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 {
     private GamePlayer myPlayer { get; set; }
     public GamePlayer Bomber { get; private set; }
-    public GameTimer? Timer { get; private set; }
+    public GameTimer Timer { get; private set; }
 
     public GamePlayer MyPlayer => myPlayer;
 
@@ -27,11 +27,11 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
         this.myPlayer = player;
         Bomber = bomber;
 
+        Timer = NebulaAPI.Modules.Timer(this, duration);
+        Timer.Start();
+        
         if (player.AmOwner)
         {
-            Timer = NebulaAPI.Modules.Timer(this, duration);
-            Timer.Start();
-
             var passTracker = ObjectTrackers.ForPlayer(this, null, MyPlayer, p => ObjectTrackers.StandardPredicate(p), null);
             var passButton = NebulaAPI.Modules.AbilityButton(this, true, false)
                 .BindKey((VirtualKeyInput)120).SetLabel("game.passBomb").SetImage(passBombImage);
@@ -64,11 +64,35 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
         }
         explosion.gameObject.Destroy();
     }
-
-    void OnUpdate(GameUpdateEvent ev)
+    
+    void OnUpdate(GameUpdateEvent _)
     {
-        if (Timer == null || Timer.IsProgressing) return;
-        RpcExplode.Invoke((myPlayer, Bomber, myPlayer.TruePosition));
+        if (Timer.IsProgressing) return;
+
+        if (MyPlayer.AmOwner)
+        {
+            RpcExplode.Invoke(MyPlayer.TruePosition);
+
+            var killParam = KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE;
+            if (Impostor.Bomber.BombKillLeftDeadBody)
+                killParam |= KillParameter.WithDeadBody;
+
+            var ev = NebulaAPI.RunEvent(new BombExplodeEvent(MyPlayer));
+            Bomber.MurderPlayer(ev.Player, explosion, explosion, killParam,
+                KillCondition.TargetAlive | KillCondition.InTaskPhase);
+        }
+
+        Release();
+    }
+
+    [OnlyMyPlayer]
+    void OnPlayerDieOrDisconnected(PlayerDieOrDisconnectEvent ev)
+    {
+        if (AmongUsLLImpl.AmongUsClientInstance.AmHost)
+        {
+            NebulaSyncObject.RpcInstantiate(BombEvidence.MyTag, [ev.Player.Position.x, ev.Player.Position.y]);
+        }
+
         Release();
     }
     
@@ -84,25 +108,13 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 
     public readonly static RemoteProcess<(GamePlayer player, GamePlayer bomber, float duration)> RPCSetBomb = new("BomberSetBomb", (message, _) =>
     {
-        if (!message.player.AmOwner) return;
         var bomb = new Bomb(message.player, message.bomber, message.duration);
         bomb.RegisterPermanently();
     });
 
-    static private RemoteProcess<(GamePlayer, GamePlayer, VVector2)> RpcExplode = new("PlayBombExplode", (message, _) =>
+    static private RemoteProcess<VVector2> RpcExplode = new("PlayBombExplode", (message, _) =>
     {
-        var killParam = KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE;
-        if (Impostor.Bomber.BombKillLeftDeadBody)
-            killParam |= KillParameter.WithDeadBody;
-
-        var ev = NebulaAPI.RunEvent(new BombExplodeEvent(message.Item1));
-        NebulaManager.Instance.StartCoroutine(CoPlayExplosion(message.Item3).WrapToIl2Cpp());
-
-        if (AmongUsLLImpl.AmongUsClientInstance.AmHost)
-        {
-            message.Item2.MurderPlayer(ev.Player, explosion, explosion, killParam, KillCondition.TargetAlive | KillCondition.InTaskPhase);
-            NebulaSyncObject.RpcInstantiate(BombEvidence.MyTag, [ev.Player.Position.x, ev.Player.Position.y]);
-        }
+        NebulaManager.Instance.StartCoroutine(CoPlayExplosion(message).WrapToIl2Cpp());
     });
 }
 

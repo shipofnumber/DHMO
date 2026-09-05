@@ -20,6 +20,11 @@
 
 "role.timeMoment.meetingButtonText" : "Danger creeps in..."
 
+# Round
+
+"game.end.round" : "%ROUND% round(s) total"
+"game.player.deadRound" : "Round %ROUND%"
+
 # Help
 
 "help.command.showRule" : "Show Lobby Rules"

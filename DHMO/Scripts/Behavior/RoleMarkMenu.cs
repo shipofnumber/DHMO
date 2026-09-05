@@ -92,8 +92,6 @@ public class RoleMarkMenu : AbstractPlayerMenuMinigame
 
     protected override void OnCreatePanel(GamePlayer player, ShapeshifterPanel panel, Action<GamePlayer>? onClick = null)
     {
-        panel.ColorBlindName.ModGameObject(false).SetActive(false);
-        
         TextMeshPro nameText = panel.NameText;
         TextMeshPro roleText = GameObject.Instantiate(nameText, nameText.transform);
         var textObj = roleText.ModGameObject(false);

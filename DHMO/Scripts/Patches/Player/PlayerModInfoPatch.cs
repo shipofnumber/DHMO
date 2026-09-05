@@ -6,6 +6,7 @@ public static class PlayerModInfoPatch
     [HarmonyPatch(nameof(PlayerModInfo.GetStateText))]
     static void Postfix(PlayerModInfo __instance, ref string __result)
     {
+        if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard or IGameModeFreePlay) return;
         if (__instance.MyState == null || !__instance.IsDead) return;
 
         var round = ModSingleton<DGameManager>.Instance.GetPlayerDeadRound(__instance).ToString();

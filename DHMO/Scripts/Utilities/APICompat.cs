@@ -1,8 +1,14 @@
-﻿namespace DHMO.Utilities;
+﻿using System.Numerics;
+using Nebula.Modules.Cosmetics;
+using Object = UnityEngine.Object;
+
+namespace DHMO.Utilities;
 
 [NebulaRPCHolder]
 public static class APICompat
 {
+    private static OutfitDefinition UnknownOutfit = new(NebulaGameManager.UnknownOutfitId, new() { PlayerName = "", ColorId = NebulaPlayerTab.CamouflageColorId, HatId = "hat_NoHat", SkinId = "skin_None", VisorId = "visor_EmptyVisor", PetId = "pet_EmptyPet" }, []);
+    
     public static void Destroy(this UnityEngine.Object obj) => UnityEngine.Object.Destroy(obj);
 
     public static void DestroyImmediate(this UnityEngine.Object obj) => UnityEngine.Object.DestroyImmediate(obj);
@@ -25,8 +31,25 @@ public static class APICompat
         public int? DeadRound => ModSingleton<DGameManager>.Instance.GetPlayerDeadRound(player);
     }
 
+    extension<T>(EditableBitMask<T> mask)
+    {
+        public int Count => BitOperations.PopCount(mask.AsRawPattern);
+    }
+    
     internal static Virial.Game.Player[] AlivePlayers => GamePlayer.AllPlayers.Where(p => p.IsAlive).ToArray();
 
+    public static UColor ShadeColor(this VColor color, float darkness = 0)
+    {
+        bool isDarker = darkness >= 0;
+        if (!isDarker) darkness = -darkness;
+        float weight = isDarker ? 0 : darkness;
+        float r = (color.R + weight) / (darkness + 1);
+        float g = (color.G + weight) / (darkness + 1);
+        float b = (color.B + weight) / (darkness + 1);
+        
+        return new UColor(r, g, b, color.A);
+    }
+    
     public static void AddLobbyNotification(string key, string message, UnityEngine.Color color, Image? image = null, bool playSound = true)
     {
         var notifier = AmongUsLLImpl.HudManagerInstance.Notifier;
@@ -41,7 +64,7 @@ public static class APICompat
         else
         {
             notifier.lastMessageKey = messageKey;
-            LobbyNotificationMessage newMessage = GameObject.Instantiate<LobbyNotificationMessage>(notifier.notificationMessageOrigin, VVector3.Zero, Quaternion.identity, notifier.transform);
+            LobbyNotificationMessage newMessage = Object.Instantiate<LobbyNotificationMessage>(notifier.notificationMessageOrigin, VVector3.Zero, UnityEngine.Quaternion.identity, notifier.transform);
             newMessage.ModGameObject(false).LocalPosition = new VVector3(0f, 0f, -2f);
 
             if (image == WarningImage) newMessage.Icon.ModGameObject(false).LocalScale = new VVector3(1.009f, 1.009f, 1.009f);
@@ -125,15 +148,13 @@ public static class APICompat
 
     public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.ModGameObject(false).LocalPosition.x > 15;
 
-    public static void AddCustomChat(this ChatController chatController, PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
+    private static void AddChatBubble(ChatController chatController, PlayerControl sourcePlayer, string chatText, bool censor, Action<ChatBubble, bool> configureBubble)
     {
-        var sourcePlayerData = sourcePlayer.Data;
         ChatBubble pooledBubble = chatController.GetPooledBubble();
 
         try
         {
             var bubbleObj = pooledBubble.ModGameObject();
-
             bubbleObj.GetUnityTransform().SetParent(chatController.scroller.Inner);
             bubbleObj.LocalScale = VVector3.One;
 
@@ -142,17 +163,15 @@ public static class APICompat
             else
                 pooledBubble.SetLeft();
 
-            bool didVote = MeetingHud.Instance.AsBoolFast(out var meetingHud) && meetingHud.DidVote(sourcePlayer.PlayerId);
+            var didVote = MeetingHud.Instance.AsBoolFast(out var meetingHud) && meetingHud.DidVote(sourcePlayer.PlayerId);
 
-            pooledBubble.SetCosmetics(cosmetics.Data);
-            pooledBubble.SetName(title ?? sourcePlayerData.PlayerName, sourcePlayerData.IsDead, didVote, PlayerNameColor.Get(sourcePlayerData));
+            configureBubble(pooledBubble, didVote);
 
             if (censor && AmongUs.Data.DataManager.Settings.Multiplayer.CensorChat == true)
                 chatText = BlockedWords.CensorWords(chatText, false);
 
             pooledBubble.SetText(chatText);
             pooledBubble.AlignChildren();
-
             chatController.AlignAllBubbles();
 
             if (!chatController.IsOpenOrOpening && chatController.notificationRoutine == null)
@@ -162,7 +181,6 @@ public static class APICompat
             {
                 var soundPlayer = AmongUsLLImpl.SoundManagerInstance.PlaySound(chatController.messageSound, false, 1f, null);
                 soundPlayer.pitch = 0.5f + sourcePlayer.PlayerId / 15f;
-
                 chatController.chatNotification.SetUp(sourcePlayer, chatText);
             }
         }
@@ -170,6 +188,31 @@ public static class APICompat
         {
             DLog.Log(e);
             chatController.chatBubblePool.Reclaim(pooledBubble);
+        }
+    }
+    
+    extension(ChatController chatController)
+    {
+        public void AddCustomChat(PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
+        {
+            var sourcePlayerData = sourcePlayer.Data;
+            AddChatBubble(chatController, sourcePlayer, chatText, censor, (bubble, didVote) =>
+            {
+                bubble.SetCosmetics(cosmetics.Data);
+                bubble.SetName(title ?? sourcePlayerData.PlayerName, sourcePlayerData.IsDead, didVote, PlayerNameColor.Get(sourcePlayerData));
+            });
+        }
+
+        public void AddCommChat(PlayerControl sourcePlayer, string titleSuffix, string chatText, bool censor = true)
+        {
+            var sourcePlayerData = sourcePlayer.Data;
+            AddChatBubble(chatController, sourcePlayer, chatText, censor, (bubble, didVote) =>
+            {
+                bubble.playerInfo = sourcePlayerData;
+                bubble.Player.UpdateFromPlayerOutfit(UnknownOutfit.outfit, PlayerMaterial.MaskType.ScrollingUI, sourcePlayerData.IsDead, false, null);
+                bubble.ColorBlindName.text = "???";
+                bubble.SetName("???" + titleSuffix, sourcePlayerData.IsDead, didVote, VColor.White.ToUnityColor());
+            });
         }
     }
 }
