@@ -6,21 +6,21 @@
 
 # Document
 
-"role.lucidDreamer.doc" : "A crewmate who can leave the meeting to collec information and do tasks."
+"role.lucidDreamer.doc" : "A crewmate who can leave the meeting to collect information and do tasks."
 "role.lucidDreamer.ability.title" : "Inherent Ability [Inception]"
 "role.lucidDreamer.ability.main" : "Upon leaving the meeting, you will enter a special dream space where everything in reality is replicated.<br>Meanwhile, tasks completed within the dream will take effect in reality, and a max of <var>%NUM%</var> tasks can be completed in the dream."
-"role.lucidDreamer.ability.leave" : "<title>Leave/Return</title>Leave the meeting and enter the dream. You may leave the meeting only <var>%MAXLEAVINGTIME%</var> seconds before the voting ends.<br>If already in the dream, you will return to the meeting."
+"role.lucidDreamer.ability.leave" : "<title>Leave/Return</title>Leave the meeting and enter the dream. You may leave the meeting only within <var>%MAXLEAVINGTIME%</var> seconds before the voting ends.<br>If already in the dream, you will return to the meeting."
 "role.lucidDreamer.tips" : "・The role is created by <b>DHMO</b>."
 
 # Options
 
-"options.role.lucidDreamer.detail" : "The Lucid Dreamer can leave the meeting to make some amazing discoveries."
+"options.role.lucidDreamer.detail" : "The Lucid Dreamer can leave the meeting to make amazing discoveries."
 "options.role.lucidDreamer.numOfLeave" : "# Of Leaving"
-"options.role.lucidDreamer.canLeaveMultiple" : "Can Leave Multipe"
+"options.role.lucidDreamer.canLeaveMultiple" : "Can Leave Multiple"
 "options.role.lucidDreamer.maxLeftVotingTimeForLeaving" : "Max Left Voting Time For Leaving"
 "options.role.lucidDreamer.numOfCanCompleteTasks" : "Max Completed Tasks In Dream"
 
-# Button
+# UI
 
 "button.label.lucidDreamer.leavemeeting" : "Leave"
 "button.label.lucidDreamer.returnmeeting" : "Return"

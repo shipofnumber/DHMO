@@ -1,0 +1,46 @@
+# Assignable
+
+"role.bomber.name" : "ボンバー"
+"role.bomber.short" : "ボン"
+"role.bomber.blurb" : "エクスプロージョン！"
+
+# Document
+
+"role.bomber.doc" : "時限爆弾を他のプレイヤーに爆弾回しすることで、時間経過後に対象をキルするインポスターです。"
+"role.bomber.ability.title" : "固有能力 "恐怖の爆弾ラリー""
+"role.bomber.ability.main" : "時限爆弾を起爆すると他のプレイヤーに回せます。<br>時限爆弾には<b>2つ</b>のフェーズがあります：起動 (<var>%ACTIVE%</var>秒) と爆発 (<var>%EXPLODE%</var>秒)。<br>爆弾のカウントダウンが終了すると、爆弾を持っていたプレイヤーは爆発でキルされます。<br>起動フェーズ中に爆弾を察知して他者に回せるのはボンバーだけです。それ以外は爆発フェーズでしか回せません。"
+"role.bomber.ability.ignite" : "<title>時限爆弾</title>時限爆弾を<var>%OF%</var>に仕掛けます。"
+"role.bomber.ability.pass" : "<title>爆弾回し</title>起動済みの時限爆弾を持っている時に、対象のプレイヤーに爆弾を回します。<br>爆発までの時間は引き継ぎ、ボンバー以外のプレイヤーは爆弾回しに<b>3秒</b>のクールダウンがあります。"
+"role.bomber.ability.evidence" : "<title>爆発の痕跡</title><var>%EXPLODE%</var>秒後に時限爆弾を持っている人は爆散し、その場所に爆発の痕跡が残ります。<br>時限爆弾によるキルはベイトの通報を無効化し、設定によっては死体も残りません。"
+"role.bomber.ability.self" : "自身"
+"role.bomber.ability.other" : "他のプレイヤー"
+"role.bomber.tips" : "・爆弾は<b><color=red>インポスター</color></b>もキルできます。<br>・爆弾によるキルではベイトの通報は発生しません。<br>・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.bomber.detail" : "時限爆弾による遠隔キルができるインポスターです。"
+"options.role.bomber.igniteBombOn" : "時限爆弾の対象"
+"options.role.bomber.igniteBombOn.detail" : "時限爆弾の対象を他のプレイヤーに設定した場合、他のプレイヤーに直接爆弾を渡します。"
+"options.role.bomber.igniteBombOn.self" : "自身"
+"options.role.bomber.igniteBombOn.other" : "他のプレイヤー"
+"options.role.bomber.canVanillaKill" : "通常キル可能"
+"options.role.bomber.syncKillAndIgniteCooldown" : "通常キルと起爆のクールダウンを共有"
+"options.role.bomber.igniteBombCooldown" : "時限爆弾クールダウン"
+"options.role.bomber.activateBombDuration" : "起動までの時間"
+"options.role.bomber.activateBombDuration.detail" : "ボンバーが爆弾を起爆した時のみ、爆発に猶予時間を設けます。"
+"options.role.bomber.bombExplosionDuration" : "爆発までの時間"
+"options.role.bomber.afterMeetingResetBomb" : "会議後に爆発までの時間をリセット"
+"options.role.bomber.bombKillLeftDeadbody" : "時限爆弾のキルで死体が残る"
+
+# Game
+
+"gameAction.bomber.passbomb" : "爆弾回し"
+
+# UI
+
+"button.label.bomber.ignitebomb" : "時限爆弾"
+"button.label.game.passBomb" : "爆弾回し"
+
+# Status
+
+"state.bomb.explosion" : "爆散"

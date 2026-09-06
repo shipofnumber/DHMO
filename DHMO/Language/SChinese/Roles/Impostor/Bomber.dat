@@ -11,7 +11,7 @@
 "role.bomber.ability.main" : "点燃炸弹后可以传递给他人，当炸弹倒计时结束时，持有炸弹者会因爆炸而亡。<br>炸弹拥有<b>2</b>个阶段：激活（<var>%ACTIVE%秒</var>）与燃烧（<var>%EXPLODE%秒</var>），只有炸弹王本人才可在激活阶段察觉炸弹并传递给他人，除此之外只能在燃烧阶段传递。"
 "role.bomber.ability.ignite" : "<title>点燃</title>使用后点燃炸弹，%OF%"
 "role.bomber.ability.pass" : "<title>传递</title>使用后传递炸弹给他人，并继承自己的炸弹持续时间。<br>除炸弹王本身外其余人传递拥有<b>3秒</b>冷却时间。"
-"role.bomber.ability.evidence" : "炸弹爆炸后遗留在场景的痕迹。"
+"role.bomber.ability.evidence" : "<title>爆炸痕迹</title><var>%EXPLODE%</var>秒后，持有炸弹的玩家将被炸飞，并在现场留下爆炸痕迹。<br>炸弹击杀不会触发诱饵报告，根据设置也可能不会留下尸体。"
 "role.bomber.ability.self" : "并安装在<var>自身</var>。"
 "role.bomber.ability.other" : "并安装在<var>他人</var>。"
 "role.bomber.tips" : "・炸弹也可以击杀<b><color=red>伪装者</color></b>。<br>・爆炸不会触发诱饵报告。<br>・本职业由<b>DHMO</b>添加。"
@@ -20,25 +20,27 @@
 
 "options.role.bomber.detail" : "炸弹王可以通过炸弹炸死其他玩家。"
 "options.role.bomber.igniteBombOn" : "炸弹点燃安装方式"
+"options.role.bomber.igniteBombOn.detail" : "当设置为其他玩家时，炸弹会直接传递给该玩家。"
 "options.role.bomber.igniteBombOn.self" : "自身"
 "options.role.bomber.igniteBombOn.other" : "他人"
 "options.role.bomber.canVanillaKill" : "可以进行普通击杀"
 "options.role.bomber.syncKillAndIgniteCooldown" : "普通击杀与点燃共用冷却时间"
 "options.role.bomber.igniteBombCooldown" : "点燃冷却时间"
 "options.role.bomber.activateBombDuration" : "炸弹激活时间"
+"options.role.bomber.activateBombDuration.detail" : "仅在炸弹王点燃炸弹时提供爆炸前的宽限时间。"
 "options.role.bomber.bombExplosionDuration" : "炸弹爆炸时间"
 "options.role.bomber.afterMeetingResetBomb" : "会议结束后重置炸弹爆炸时间"
 "options.role.bomber.bombKillLeftDeadbody" : "炸弹击杀留下尸体"
 
-# GameAction
+# Game
 
 "gameAction.bomber.passbomb" : "传递炸弹"
 
-# Button
+# UI
 
 "button.label.bomber.ignitebomb" : "点燃"
 "button.label.game.passBomb" : "传递"
 
-# State
+# Status
 
 "state.bomb.explosion" : "爆炸"

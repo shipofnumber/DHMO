@@ -1,0 +1,31 @@
+# Assignable
+
+"role.overclocker.name" : "パラドックス"
+"role.overclocker.short" : "パラ"
+"role.overclocker.blurb" : "時間逆行エントロピー"
+
+# Document
+
+"role.overclocker.doc" : "クールダウンを超越して貯められるインポスターです。"
+"role.overclocker.ability.title" : "固有能力 "タイム・ブレイク""
+"role.overclocker.ability.main" : "キルと能力のクールダウンが上限を超えて溜まります。<br>能力を使用する際は、溜まったクールダウンから優先的に消費されます。"
+"role.overclocker.ability.outtime" : "<title>超越時計</title>使用した相手の<var>%RANDOM%</var>を、超過したクールダウンの<var>%PERCENTAGE%%</var>分変化させます。<br>同陣営のプレイヤーに使用すると短縮され、他陣営のプレイヤーに使用すると増加します。<br>使用後、この能力のクールダウンは対象の変化分＋設定クールダウンだけ増加します。"
+"role.overclocker.ability.random" : "<var>ランダムなアビリティのクールダウン</var>"
+"role.overclocker.ability.all" : "<var>全アビリティのクールダウン</var>"
+"role.overclocker.tips" : "・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.overclocker.detail" : "クールダウンを余分に貯められるインポスターです。"
+"options.role.overclocker.killCooldown" : "キルクールダウン"
+"options.role.overclocker.maxStorageKillCooldown" : "キルの超過上限"
+"options.role.overclocker.overTimeCooldown" : "超越時計クールダウン"
+"options.role.overclocker.maxStorageOverTimeCooldown" : "超越時計の超過上限"
+"options.role.overclocker.changeTimePercentage" : "超越時計の使用割合"
+"options.role.overclocker.changeTimePercentage.detail" : "溜まっているクールダウン(-1s以下)から設定割合分を使用します。"
+"options.role.overclocker.randomChangeCooldown" : "ランダムなアビリティに適用"
+"options.role.overclocker.randomChangeCooldown.detail" : "オフだと超越時計は使用した相手の全てのアビリティのクールダウンを変化させます。<br>オンだと使用した相手の持つアビリティからランダムな一つのクールダウンを変化させます。"
+
+# UI
+
+"button.label.overclocker.overTime" : "超越時計"

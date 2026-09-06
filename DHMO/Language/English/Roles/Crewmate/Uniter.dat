@@ -6,12 +6,12 @@
 
 # Document
 
-"role.uniter.doc" : "A crewmate who can unite others' votes to your own vote."
+"role.uniter.doc" : "A crewmate who can unite others' votes to their own vote target."
 "role.uniter.tips" : "・The role is created by <b>DHMO</b>."
 
 # Options
 
-"options.role.uniter.detail" : "The Uniter can unite votes to correct choices."
+"options.role.uniter.detail" : "The Uniter can unite votes to the correct choice."
 "options.role.uniter.numOfuniting" : "Num Of Uniting"
 "options.role.uniter.numOfcanUnit" : "# Able to Unite"
 "options.role.uniter.maxLeftVotingTimeForUniting" : "Max Left Voting Time For Uniting"

@@ -14,8 +14,8 @@
 "role.raven.ability.title" : "固有能力【梦中的恶魔】"
 "role.raven.ability.main" : "可以暂时离开会议遁入梦境当中，梦境中一切和现实无异。<br>在梦境中可以获得一个目标职业，击杀对应职业的玩家以此来减员幸存玩家。%RAVENTIME%"
 "role.raven.ability.leave" : "<title>离开/返回</title>离开会议，潜入梦境，仅在距离投票结束<b>5</b>秒前才可以离开会议。<br>如果已经处于梦境中，则会返回会议。"
-"role.raven.ability.kill" : "<title>击杀</title>击杀目标职业的玩家（如果击杀<b>错误</b>则会直接返回会议）。<br>当场上的幸存玩家中不存在伪装者时，渡鸦可以在任务阶段击杀其他玩家。"
-"role.raven.ability.ravenTime" : "<br>当场上还剩余<var>%NUM%</var>名玩家时，渡鸦会进入<b>“渡鸦时刻”</b>，在渡鸦时刻期间无法报告和击杀渡鸦。<br>渡鸦时刻持续<var>%DURATION%</var>秒，时间结束时若渡鸦未能达成胜利条件，则会直接自杀并结束渡鸦时刻。"
+"role.raven.ability.kill" : "<title>击杀</title>击杀目标职业的玩家（如果击杀<b>错误</b>则会直接返回会议，且本次会议无法再次离开）。<br>当场上的幸存玩家中不存在伪装者时，渡鸦可以在任务阶段击杀其他玩家。"
+"role.raven.ability.ravenTime" : "<br>当场上还剩余<var>%NUM%</var>名玩家时，渡鸦会进入<b>“渡鸦时刻”</b>，在渡鸦时刻期间无法报告、击杀渡鸦、使用管道或破坏。<br>渡鸦时刻持续<var>%DURATION%</var>秒，时间结束时若渡鸦未能达成胜利条件，则会直接自杀并结束渡鸦时刻。"
 "role.raven.tips" : "・本职业由<b>DHMO</b>添加。"
 
 # Options
@@ -31,21 +31,18 @@
 "options.role.raven.ravenTimeDuration" : "渡鸦时刻持续时间"
 "options.role.raven.taskPhaseRestartEnterRavenTimeDisperse" : "任务阶段重启时触发分散"
 
-# Button
+# UI
 
 "button.label.raven.leavemeeting" : "离开"
 "button.label.raven.returnmeeting" : "返回"
-
-# UI
-
 "role.raven.killtarget" : "杀死一个%ROLE%。"
 "timeMoment.raven" : "杀或者被杀。(%TIME%s)"
 
-# Team
+# Game
 
 "teams.raven" : "渡鸦"
 "end.raven" : "渡鸦%EXTRA%胜利"
 
-# State
+# Status
 
 "state.missing" : "失踪"

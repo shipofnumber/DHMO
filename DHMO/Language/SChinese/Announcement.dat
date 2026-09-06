@@ -1,0 +1,6 @@
+# Announcement
+
+"announcement.dhmo.v2.1.title" : "DHMO v2.1"
+"announcement.dhmo.v2.1.subTitle" : "无穷无尽的bug需要修复..."
+"announcement.dhmo.v2.1.shortTitle" : "秋天的第N次更新！"
+"announcement.dhmo.v2.1.detail" : "在经过了一周之后，<b>DHMO v2.1</b>发布了更新。<br><br>我（Water）对以下问题以及表现进行了修复和优化：<br>1.%ROLE:PELICAN(Pelican)%的逻辑再次进行了优化。<br>2.优化了Journalist (记者)会议上发送照片的表现，以及现在会议上可以看见热度和照片的进度。<br>3.修复了如标记界面和记者猜测玩家界面的名片不会生效的问题。<br>4.修复了死亡轮次错误的问题。<br>5.现在死亡后无法将视角切换到被吞噬的玩家。<br><br>以上就是本次更新，感谢大家游玩！如果你对更新日志还有疑问，可以访问[https://www.bilibili.com/video/BV1GJ411x7h7?]Github仓库[]查看更详细信息。<br><br>DHMO, Water"

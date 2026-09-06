@@ -10,35 +10,34 @@
 # Document
 
 "document.tip.winCond.journalist.title" : "Public Opinion Win"
-"document.tip.winCond.journalist" : "When reaches enough news buzz, it will steer public opinion to hype own self up as a win."
+"document.tip.winCond.journalist" : "When enough news buzz is reached, public opinion will be steered to hype yourself up as a win."
 
-"role.journalist.doc" : "A neutral who takes photo of the selected player, and discloses it at the meeting.<br>Guess the hidden player of the picture to find who he is !"
-"role.journalist.winCond" : "Reach enough buzz and photo count, the Journalist will win."
+"role.journalist.doc" : "A neutral who takes photos of the selected player and discloses them at the meeting.<br>Speculate the hidden player in the picture to find out who they are!"
+"role.journalist.winCond" : "Reach enough buzz and photo count, and the Journalist will win."
 "role.journalist.ability.title" : "Inherent Ability [Hot News]"
-"role.journalist.ability.main" : "Take photos from the cam of the selected player to disclose at the meeting, and the selected player will be hidden in the photo.<br>All players can click on the photo to guess who the hidden player in the picture is. <br>A incorrect guess adds 1 point of buzz, while making no guess adds 0.5 points of buzz."
+"role.journalist.ability.main" : "Take photos from the cam of the tracked player to disclose at the meeting, and the tracked player will be hidden in the photo.<br>All players can click on the photo to speculate who the hidden player in the picture is. An incorrect speculation adds 1 point of buzz, while making no speculation adds 0.5 points of buzz."
 "role.journalist.tips" : "・The role is created by <b>DHMO</b>."
 
 # Options
 
-"options.role.journalist.detail" : "The Journalist may shot of the selected player and discloses it at the meeting."
-"options.role.journalist.miniCamCoolDown" : "Mini Cam Cooldown"
+"options.role.journalist.detail" : "The Journalist may take photos of the selected player and disclose them at the meeting."
+"options.role.journalist.trackCoolDown" : "Track Cooldown"
 "options.role.journalist.requiredBuzz" : "Required Buzz"
 "options.role.journalist.requiredPhotos" : "Required Photos"
 "options.role.journalist.telephotoFinderSize" : "Telephoto Finder Size"
 "options.role.journalist.wideAngleFinderSize" : "Wide-angle Finder Size"
 
-# Button
+# UI
 
 "ui.action.journalist.camera" : "Take a photo of the finder."
 "ui.action.journalist.toggle" : "Change the direction of the viewfinder."
-"button.label.journalist.miniCam" : "Mini Cam"
+"button.label.journalist.track" : "Track"
+"button.label.journalist.monitor" : "Monitor"
 "button.label.journalist.shot" : "Shot"
+"role.journalist.whoIsHe" : "Who is he?"
+"ui.journalist.photoInfo" : "Click to speculate the hidden player in the picture.<br><b>Incorrect Speculation</b> or <b>No Speculation</b> will both accumulate buzz for the Journalist."
 
-# UI
-
-"ui.journalist.photoInfo" : "Click to guess the hidden player in the picture<br><b>Incorrect Guess</b> or <b>No Guess</b> will both accumulate buzz for the Journalist."
-
-# Team
+# Game
 
 "teams.journalist" : "Journalist"
 "end.journalist" : "Journalist Wins%EXTRA%"

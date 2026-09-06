@@ -6,24 +6,26 @@
 
 # Document
 
-"role.overclocker.doc" : "An impostor who can overclock own abilities to store more cooldown."
+"role.overclocker.doc" : "An impostor who can overclock their own abilities to store extra cooldown."
 "role.overclocker.ability.title" : "Inherent Ability [Overclock]"
-"role.overclocker.ability.main" : "The abilities will be overclocked and it means they can store more extra cooldown just in case.<br>When uses them, prioritize using its stored cooldown."
-"role.overclocker.ability.outtime" : "<title>Overclock</title>When used on allies, it reduces the target's %RANDOM% by <var>%PERCENTAGE%%</var> based on the stored cooldown of this ability.<br>otherwise, it increases it.。<br>After using the ability, this ability cooldown will increase the cooldown of target plus the set cooldown."
+"role.overclocker.ability.main" : "Abilities can be overclocked, meaning they can store extra cooldown beyond the limit for later use.<br>When using abilities, the stored cooldown is consumed first."
+"role.overclocker.ability.outtime" : "<title>Overclock</title>When used on allies, it reduces the target's %RANDOM% by <var>%PERCENTAGE%%</var> based on this ability's stored cooldown; otherwise, it increases it.<br>After using the ability, this ability's cooldown increases by the target's changed cooldown plus the set cooldown."
 "role.overclocker.ability.random" : "<var>random ability cooldown</var>"
-"role.overclocker.ability.all" : "<var>all ability cooldown</var>"
+"role.overclocker.ability.all" : "<var>all ability cooldowns</var>"
 "role.overclocker.tips" : "・The role is created by <b>DHMO</b>."
 
 # Options
 
-"options.role.overclocker.detail" : "The Overclocker can store more cooldown."
+"options.role.overclocker.detail" : "The Overclocker can store extra cooldown."
 "options.role.overclocker.killCooldown" : "Kill Cooldown"
 "options.role.overclocker.maxStorageKillCooldown" : "Max Storage Kill Cooldown"
 "options.role.overclocker.overTimeCooldown" : "Overclock Cooldown"
 "options.role.overclocker.maxStorageOverTimeCooldown" : "Max Storage Overclock Cooldown"
 "options.role.overclocker.changeTimePercentage" : "Change Cooldown Percentage"
+"options.role.overclocker.changeTimePercentage.detail" : "The amount of cooldown changed = the current overclock ability's <b>stored cooldown</b> × the set percentage."
 "options.role.overclocker.randomChangeCooldown" : "Random Change Cooldown"
+"options.role.overclocker.randomChangeCooldown.detail" : "When off, Overclock changes the cooldowns of all of the target's abilities.<br>When on, it changes the cooldown of one random ability from the target's abilities."
 
-# Button
+# UI
 
 "button.label.overclocker.overTime" : "Overclock"

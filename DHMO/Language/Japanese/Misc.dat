@@ -1,0 +1,39 @@
+# ClientOption
+
+"config.client.introRoleTextBold" : "イントロの太字役職テキスト"
+
+# Certification
+
+"certification.notification" : " %PLAYER% が %REASON% です！"
+"certification.unmatchedAddon.extra" : "余分なアドオン"
+"certification.unmatchedAddon.missing" : "不足しているアドオン"
+"certification.unmatchedAddon.hashMismatched" : "ハッシュ値の不一致"
+
+# LobbyRule
+
+"ui.lobbyRules.noTitle" : "ロビールール"
+"ui.lobbyRules.host" : "ホスト"
+"ui.lobbyRules.confirmation" : "決定"
+"ui.lobbyRules.back" : "戻る"
+"ui.lobbyRules.rule" : "ロビールール入力欄"
+"ui.lobbyRules.fieldNoText" : "入力欄は空白にできません。"
+"ui.lobbyRules.selectFileSuccessfully" : "<b>ロビールール</b>: %FILE% に設定する。"
+"ui.lobbyRules.noTextError" : "ロビールールに内容がありません。"
+
+# TimeMoment
+
+"role.timeMoment.meetingButtonText" : "危険がひそかに近づいている..."
+
+# Round
+
+"game.end.round" : "%ROUND%T"
+"game.player.deadRound" : "%ROUND%T"
+
+# Help
+
+"help.command.showRule" : "ロビールールを表示"
+
+# Action
+
+"input.pass" : "爆弾回しアクション"
+"input.pass.detail" : "ボンバーの時限爆弾の爆弾回しに使われる割り当てです。。"

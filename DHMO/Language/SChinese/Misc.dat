@@ -20,14 +20,14 @@
 "ui.lobbyRules.selectFileSuccessfully" : "%FILE%被设为当前房规。"
 "ui.lobbyRules.noTextError" : "房规无内容。"
 
+# TimeMoment
+
+"role.timeMoment.meetingButtonText" : "危险悄然降临..."
+
 # Round
 
 "game.end.round" : "共%ROUND%轮"
 "game.player.deadRound" : "第%ROUND%轮"
-
-# TimeMoment
-
-"role.timeMoment.meetingButtonText" : "危险悄然降临..."
 
 # Help
 
@@ -36,3 +36,4 @@
 # Action
 
 "input.pass" : "传递行动"
+"input.pass.detail" : "该行动用于炸弹王的炸弹传递。"

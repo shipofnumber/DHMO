@@ -1,0 +1,47 @@
+# Assignable
+
+"role.jailor.name" : "ウォーデン"
+"role.jailor.short" : "ウ"
+"role.jailor.blurb" : "疑わしきは罰せよ"
+
+# Document
+
+"role.jailor.doc" : "プレイヤーを投獄し、処刑できるクルーメイトです。"
+"role.jailor.ability.title" : "固有能力 "尋問""
+"role.jailor.ability.main" : ""
+"role.jailor.ability.jail" : "<title>投獄</title>プレイヤーに数秒接触して投獄します。<var><br>%JAILINAROW%</var>"
+"role.jailor.ability.execute" : "<title>処刑</title>投獄したプレイヤーを会議でキルできます。<br>クルーメイトを処刑すると、プレイヤーに投票できなくなる他投獄できなくなります。<br><var>%CANEXECUTELOVER%</var>"
+"role.jailor.ability.inJail" : "<title>投獄されたプレイヤー</title>投獄されたプレイヤーには会議画面にて左のマークが付きます。"
+"role.jailor.ability.jailinArow" : "会議終了後、投獄したプレイヤーは他のプレイヤーを投獄するまで開放されません。"
+"role.jailor.ability.clearJailed" : "会議を終えると、投獄したプレイヤーは開放されます。"
+"role.jailor.ability.canExecuteLover" : "ラバーズであれば、クルーメイトでも処刑できます。"
+"role.jailor.tips" : "・この役職は、Among Us Mod <b>Town of Us Mira</b> から移植され、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.jailor.detail" : "プレイヤーを投獄し、処刑できるクルーメイトです。"
+"options.role.jailor.jailCooldown" : "投獄クールダウン"
+"options.role.jailor.jailDuration" : "投獄所要時間"
+"options.role.jailor.jailinArow" : "連続して投獄可能"
+"options.role.jailor.limitAbilityUsesOf" : "能力の回数制限"
+"options.role.jailor.limitAbilityUsesOf.jail" : "投獄"
+"options.role.jailor.limitAbilityUsesOf.execute" : "処刑"
+"options.role.jailor.numOfjail" : "投獄可能回数"
+"options.role.jailor.numOfexecute" : "処刑可能回数"
+"options.role.jailor.maxLeftVotingTimeForExecuting" : "処刑可能な残り会議時間"
+"options.role.jailor.canExecuteLovers" : "ラバーズを処刑可能"
+"options.role.jailor.hasJailorchat" : "牢獄チャット"
+
+# Game
+
+"chat.jailor" : "[牢獄]"
+"chat.jailortext" : "牢獄"
+
+# UI
+
+"button.label.jailor.jail" : "投獄"
+"button.label.jailor.execute" : "処刑"
+
+# Status
+
+"state.execution" : "処刑"

@@ -1,3 +1,7 @@
+# ClientOption
+
+"config.client.introRoleTextBold" : "Bold Role Text on Intro"
+
 # Certification
 
 "certification.notification" : "%PLAYER%%REASON%！"
@@ -32,3 +36,4 @@
 # Action
 
 "input.pass" : "Pass Action"
+"input.pass.detail" : "This action is used for passing the bomb in the Bomber's bomb relay.<br>This setting was added by the <b>DHMO</b> add-on."

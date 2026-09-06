@@ -5,15 +5,14 @@
 
 # Document
 
-"role.radar.doc" : "The Radar will track the player closest to himself within its detection range."
+"role.radar.doc" : "The Radar will track the player closest to itself within its detection range."
 
 # Options
 
-"options.role.radar.detail" : "The Radar will track the player closest to himself."
-"options.role.radar.detectDistance" : "Detect DiStance"
+"options.role.radar.detail" : "The Radar will track the closest player to itself."
+"options.role.radar.detectDistance" : "Detect Distance"
 "options.role.radar.updateInterval" : "Update Arrow Interval"
 
 # Game
-
 
 # UI

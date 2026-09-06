@@ -1,0 +1,7 @@
+# Chat
+
+"options.chat" : "チャットオプション"
+"options.chat.detail" : "チャットに関する設定です。"
+"options.chat.numOfchatHistory" : "チャットの履歴上限"
+"options.chat.numOfchatHistory.detail" : "値を大きくしすぎるとメモリを超える可能性があります。"
+"options.chat.numOffreeChatMaxChar" : "フリーチャットの文字数上限"

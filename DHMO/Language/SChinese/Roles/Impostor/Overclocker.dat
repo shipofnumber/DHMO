@@ -22,9 +22,10 @@
 "options.role.overclocker.overTimeCooldown" : "超频冷却时间"
 "options.role.overclocker.maxStorageOverTimeCooldown" : "最大可储存超频冷却时间"
 "options.role.overclocker.changeTimePercentage" : "冷却时间变更百分比"
-"options.role.overclocker.changeTimePercentage.detail" : "冷却时间变更数值 = 当前超频技能的<b>储存冷却时间</b> * 设置的百分比。" 
+"options.role.overclocker.changeTimePercentage.detail" : "冷却时间变更数值 = 当前超频技能的<b>储存冷却时间</b> × 设置的百分比。"
 "options.role.overclocker.randomChangeCooldown" : "随机变更冷却时间"
+"options.role.overclocker.randomChangeCooldown.detail" : "关闭时，超频会变更目标所有技能的冷却时间。<br>开启时，会从目标持有的技能中随机选择一个变更其冷却时间。"
 
-# Button
+# UI
 
 "button.label.overclocker.overTime" : "超频"

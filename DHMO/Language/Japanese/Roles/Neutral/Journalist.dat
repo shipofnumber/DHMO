@@ -1,0 +1,41 @@
+# Assignable
+
+"role.journalist.name" : "ジャーナリスト"
+"role.journalist.short" : "ジャー"
+"role.journalist.blurb" : "成功への礎"
+"role.journalist.taskText" : "撮影し、バズポイントを稼ぐ<br>(%DETAIL%)"
+"role.journalist.taskTextBuzz" : "バズポイント: %CB%/%GB%"
+"role.journalist.taskTextPhoto" : "撮影対象: %CP%/%GP%"
+
+# Document
+
+"document.tip.winCond.journalist.title" : "特殊勝利"
+"document.tip.winCond.journalist" : "指定数のプレイヤーの写真とバズポイントを獲得すると勝利します。"
+
+"role.journalist.doc" : "プレイヤーを撮影し、会議にてバズポイントを稼ぐ第三陣営です。<br>他のプレイヤーは撮影対象を予想してバズポイントの獲得を防ぎましょう。"
+"role.journalist.winCond" : "指定数のプレイヤーの写真とバズポイントを獲得する。"
+"role.journalist.ability.title" : "固有能力 "ホットトピック""
+"role.journalist.ability.main" : "選択したプレイヤーを素性を隠して(=カモフラージュして)撮影し、会議にて全体に公開できます。<br>他のプレイヤーが予想を外すと1バズポイント、予想しないと0.5バズポイントを各個人から獲得します。"
+"role.journalist.tips" : "・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.journalist.detail" : "プレイヤーを撮影し、会議にてバズポイントを稼ぐ第三陣営です。"
+"options.role.journalist.miniCamCoolDown" : "選択クールダウン"
+"options.role.journalist.requiredBuzz" : "勝利に必要なバズポイント"
+"options.role.journalist.requiredPhotos" : "勝利に必要な撮影対象の数"
+"options.role.journalist.telephotoFinderSize" : "望遠ファインダーサイズ"
+"options.role.journalist.wideAngleFinderSize" : "広角ファインダーサイズ"
+
+# UI
+
+"ui.action.journalist.camera" : "写真を撮影します。"
+"ui.action.journalist.toggle" : "ファインダーの向きを90度回転させます。"
+"button.label.journalist.miniCam" : "選択"
+"button.label.journalist.shot" : "撮影"
+"ui.journalist.photoInfo" : "ジャーナリストの写真を<b>クリック</b>して真っ黒な撮影対象を予想します。<br>予想が外れたり、予想しないとジャーナリストがバズポイントを獲得してしまいます。"
+
+# Game
+
+"teams.journalist" : "ジャーナリスト"
+"end.journalist" : "ジャーナリスト%EXTRA%勝利"

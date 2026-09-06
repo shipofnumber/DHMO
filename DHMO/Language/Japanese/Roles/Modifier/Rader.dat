@@ -1,0 +1,18 @@
+# Assignable
+
+"role.radar.name" : "センサー"
+"role.radar.generalBlurb" : "身近に潜む危険"
+
+# Document
+
+"role.radar.doc" : "有効範囲内で自身に最も近いプレイヤーに矢印が向きます。"
+
+# Options
+
+"options.role.radar.detail" : "センサーは最も近いプレイヤーに矢印が向きます。"
+"options.role.radar.detectDistance" : "有効範囲"
+"options.role.radar.updateInterval" : "矢印の位置更新間隔"
+
+# Game
+
+# UI

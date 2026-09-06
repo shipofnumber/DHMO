@@ -1,0 +1,16 @@
+# Assignable
+
+"role.communicator.name" : "コミュニケーター"
+"role.communicator.generalBlurb" : "情報社会"
+
+# Document
+
+"role.communicator.doc" : "会議後に、前回終了位置にスポーンします。"
+
+# Options
+
+"options.role.communicator.detail" : "コミュニケーターは会議後に前回終了位置から再開します。"
+
+# Game
+
+# UI

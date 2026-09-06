@@ -1,6 +1,7 @@
 # Chat
 
 "options.chat" : "Chat Options"
+"options.chat.detail" : "About Chat."
 "options.chat.numOfchatHistory" : "# Of Chat History"
 "options.chat.numOfchatHistory.detail" : "Excessively large values may cause memory overflow."
 "options.chat.numOffreeChatMaxChar" : "# Of Free Chat Chars"

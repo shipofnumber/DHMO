@@ -1,0 +1,48 @@
+# Assignable
+
+"role.raven.name" : "レイヴン"
+"role.raven.short" : "レイ"
+"role.raven.blurb" : "君と過ごす夜"
+
+# Document
+
+"document.tip.winCond.raven.title" : "完全撲滅勝利"
+"document.tip.winCond.raven" : "全生存者が自陣営のプレイヤーになると勝利します。"
+
+"role.raven.doc" : "会議中に夜襲し、ターゲットをキルできる第三キル陣営です。"
+"role.raven.winCond" : "自分以外の全員を殲滅する。"
+"role.raven.ability.title" : "固有能力 "夢中の鬼""
+"role.raven.ability.main" : "一時的に会議を離れて夢に入ります。夢の中は現実と全く同じです。<br>夢の中ではターゲットの役職が割り当てられ、対応する役職のプレイヤーをキルすることで生存者を減らせます。 %RAVENTIME%"
+"role.raven.ability.leave" : "<title>夜襲/帰還</title>会議を離れて夢に入ります。投票終了の<b>5秒</b>前以内でないと離れられません。<br>すでに夢の中にいる場合は、会議に帰還します。"
+"role.raven.ability.kill" : "<title>キル</title>ターゲットの役職をキルします。キルを外すと強制帰還し、この会議中は再び離れられません。<br>生存者にインポスターがいない場合、タスクターンに通常キルができます。"
+"role.raven.ability.ravenTime" : "<br>生存人数が自分を含めて<var>%NUM%</var>人まで減ると、<b>"レイヴンタイム"</b>に突入します。<br>レイヴンタイム中レイヴンは幽霊のような状態になり、全員が緊急ボタン、ベント、通報、サボタージュを使用不可になります。<br>突入から<var>%DURATION%</var>秒経過すると、レイヴンが死亡してレイヴンタイムが終わります。"
+"role.raven.tips" : "・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.raven.detail" : "会議中に直接キルできる第三キル陣営です。"
+"options.role.raven.killCooldown" : "キルクールダウン"
+"options.role.raven.canMultipleKills" : "会議中の複数キル"
+"options.role.raven.multipleKillsCount" : "追加キル可能回数"
+"options.role.raven.hasDeadBodyArrow" : "死体に矢印を表示"
+"options.role.raven.group.ravenTime" : "レイヴンタイム設定"
+"options.role.raven.ravenTime" : "レイヴンタイム"
+"options.role.raven.ravenTimeAlived" : "レイヴンタイムに必要な残り生存者数"
+"options.role.raven.ravenTimeDuration" : "レイヴンタイム持続時間"
+"options.role.raven.taskPhaseRestartEnterRavenTimeDisperse" : "会議後に全員を分散する"
+
+# UI
+
+"button.label.raven.leavemeeting" : "夜襲"
+"button.label.raven.returnmeeting" : "帰還"
+"role.raven.killtarget" : "ターゲットの役職: %ROLE%"
+"timeMoment.raven" : "レイヴンの夜が明けるまであと %TIME%"
+
+# Game
+
+"teams.raven" : "レイヴン"
+"end.raven" : "レイヴン%EXTRA%勝利"
+
+# Status
+
+"state.missing" : "失踪"

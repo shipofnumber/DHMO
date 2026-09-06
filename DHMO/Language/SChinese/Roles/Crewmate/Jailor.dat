@@ -8,10 +8,10 @@
 
 "role.jailor.doc" : "典狱长可以关押其他玩家来逼问信息。"
 "role.jailor.ability.title" : "固有能力【审讯】"
-"role.jailor.ability.main" : "关押怀疑对象限制他们的行动，并处决你心中的坏人。"
+"role.jailor.ability.main" : ""
 "role.jailor.ability.jail" : "<title>关押</title>尝试关押目标，并在会议上监禁。<br>%JAILINAROW%"
-"role.jailor.ability.execute" : "<title>处决</title>使用后会<b>击杀</b>被监禁者。%CANEXECUTELOVER%<br>若处决对象为船员，将无法再次关押他人（自身为叛徒不受影响），同时自身因失去公信力无法投票。"
-"role.jailor.ability.inJail" : "会议上在被监禁者的玩家图标上会显现被监禁图标。"
+"role.jailor.ability.execute" : "<title>处决</title>使用后会尝试击杀被监禁者。%CANEXECUTELOVER%<br>若处决对象为船员阵营，将无法再次关押他人，同时自身因失去公信力无法投票。"
+"role.jailor.ability.inJail" : "<title>被监禁</title>会议上在被监禁者的玩家图标上会显示监禁标记。<br>被监禁的玩家无法使用技能也无法被投票。"
 "role.jailor.ability.jailinArow" : "<var>会议结束后会继续监禁原目标，期间可以更换监禁目标。</var>"
 "role.jailor.ability.clearJailed" : "<var>会议结束后，会释放被监禁者。</var>"
 "role.jailor.ability.canExecuteLover" : "<br><b>可以处决恋人。</b>"
@@ -23,7 +23,6 @@
 "options.role.jailor.jailCooldown" : "关押冷却时间"
 "options.role.jailor.jailDuration" : "关押所需时间"
 "options.role.jailor.jailinArow" : "连续关押"
-"options.role.jailor.jailinArow.detail" : "会议结束后不会释放被监禁者。"
 "options.role.jailor.limitAbilityUsesOf" : "限制能力次数"
 "options.role.jailor.limitAbilityUsesOf.jail" : "限制关押"
 "options.role.jailor.limitAbilityUsesOf.execute" : "限制处决"
@@ -33,16 +32,16 @@
 "options.role.jailor.canExecuteLovers" : "可以处决恋人"
 "options.role.jailor.hasJailorchat" : "典狱长会议聊天"
 
-# Button
-
-"button.label.jailor.jail" : "关押"
-"button.label.jailor.execute" : "处决"
-
-# Chat
+# Game
 
 "chat.jailor" : "[审讯室频道]"
 "chat.jailortext" : "审讯室"
 
-# State
+# UI
+
+"button.label.jailor.jail" : "关押"
+"button.label.jailor.execute" : "处决"
+
+# Status
 
 "state.execution" : "处决"

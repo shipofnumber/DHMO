@@ -1,0 +1,21 @@
+# Assignable
+
+"role.uniter.name" : "ユナイター"
+"role.uniter.short" : "ユナ"
+"role.uniter.blurb" : "心を一つに"
+
+# Document
+
+"role.uniter.doc" : "複数の選択したプレイヤーの投票先を自身の投票先に変更できるクルーメイトです。"
+"role.uniter.tips" : "・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.uniter.detail" : "複数人の投票先を自身の投票先に変更できるクルーメイトです。"
+"options.role.uniter.numOfuniting" : "統率使用可能回数"
+"options.role.uniter.numOfcanUnit" : "最大統率人数"
+"options.role.uniter.maxLeftVotingTimeForUniting" : "統率可能残り会議時間"
+
+# Game
+
+"roles.uniter.leftUniting" : "残り統率可能回数"

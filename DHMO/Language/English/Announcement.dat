@@ -1,0 +1,6 @@
+# Announcement
+
+"announcement.dhmo.v2.1.title" : "DHMO v2.1"
+"announcement.dhmo.v2.1.subTitle" : "Endless bugs are waiting for me."
+"announcement.dhmo.v2.1.shortTitle" : "Update N In Autumn!"
+"announcement.dhmo.v2.1.detail" : "After a week, <b>DHMO v2.1</b> has received an update.<br><br>I (Water) have fixed and optimized the following issues and behaviors:<br>1. Re‑optimized the logic for %ROLE:PELICAN(Pelican)%.<br>2. Optimized the behavior of %ROLE:JOURNALIST(Journalist)% sending photos during meetings; heat values and photo progress can now be viewed in meetings.<br>3. Fixed an issue where nameplates failed to work on menus such as the mark menu.<br>4. Fixed incorrect death‑round calculation.<br>5. Players can no longer switch their view to devoured players after dying.<br><br>That concludes this update. Thank you for playing! If you have questions about the changelog, you may visit [https://www.bilibili.com/video/BV1GJ411x7h7?]the Github repository[] for more detailed information.<br><br>DHMO, Water"

@@ -6,39 +6,41 @@
 
 # Document
 
-"role.bomber.doc" : "An impostor who can pass the bomb to other to kill he."
+"role.bomber.doc" : "An impostor who can pass the bomb to others to kill them."
 "role.bomber.ability.title" : "Inherent Ability [Bomb]"
-"role.bomber.ability.main" : "After igniting the bomb, it can be passed to others. When the bomb's countdown ends, the player holding the bomb will be killed by the explosion.<br>The bomb has <b>2</b> phases: Activation (<var>%ACTIVE%s</var>) and Explosion (<var>%EXPLODE%s</var>). <br>Only the Bomber can detect the bomb and pass it to others during the Activation phase. Otherwise, the bomb can only be passed during the Explosion phase."
+"role.bomber.ability.main" : "After igniting the bomb, it can be passed to others. When the bomb's countdown ends, the player holding the bomb will be killed by the explosion.<br>The bomb has <b>2</b> phases: Activation (<var>%ACTIVE%s</var>) and Explosion (<var>%EXPLODE%s</var>).<br>Only the Bomber can detect the bomb and pass it to others during the Activation phase. Otherwise, the bomb can only be passed during the Explosion phase."
 "role.bomber.ability.ignite" : "<title>Ignite</title>Ignite a bomb, %OF%"
-"role.bomber.ability.pass" : "<title>Pass</title>Pass own bomb to other else, the bomb will inherit the original explosion timer. <br>Except the Bomber, the Pass Ability has <b>3s</b> cooldown on everyone."
-"role.bomber.ability.evidence" : "The evidence after explosion in the scence."
-"role.bomber.ability.self" : "and on <var>own self</var>."
-"role.bomber.ability.other" : "and on <var>other</var>."
-"role.bomber.tips" : "・The bomb can also kill the <b><color=red>impostor</color></b>.<br>・Explosion cannot invoke the Bait Report.<br>・The role is created by <b>DHMO</b>."
+"role.bomber.ability.pass" : "<title>Pass</title>Pass your bomb to someone else; the bomb will inherit the original explosion timer.<br>Except for the Bomber, the Pass ability has a <b>3s</b> cooldown for everyone."
+"role.bomber.ability.evidence" : "<title>Explosion Evidence</title>After <var>%EXPLODE%</var> seconds, the player holding the bomb will be blown up, leaving evidence of the explosion at the scene.<br>Bomb kills do not trigger the Bait report, and depending on settings, no dead body may be left."
+"role.bomber.ability.self" : "and on <var>your own self</var>."
+"role.bomber.ability.other" : "and on <var>another player</var>."
+"role.bomber.tips" : "・The bomb can also kill the <b><color=red>impostor</color></b>.<br>・Explosions cannot trigger the Bait report.<br>・The role is created by <b>DHMO</b>."
 
 # Options
 
-"options.role.bomber.detail" : "The Bomber kills others by his bomb."
+"options.role.bomber.detail" : "The Bomber kills others with his bomb."
 "options.role.bomber.igniteBombOn" : "Ignite Bomb On"
+"options.role.bomber.igniteBombOn.detail" : "When set to another player, the bomb is directly passed to that player."
 "options.role.bomber.igniteBombOn.self" : "Own Self"
 "options.role.bomber.igniteBombOn.other" : "Other"
 "options.role.bomber.canVanillaKill" : "Can Vanilla Kill"
 "options.role.bomber.syncKillAndIgniteCooldown" : "Sync Kill And Ignite Cooldown"
 "options.role.bomber.igniteBombCooldown" : "Ignite Cooldown"
 "options.role.bomber.activateBombDuration" : "Bomb Activate Duration"
+"options.role.bomber.activateBombDuration.detail" : "Provides a grace period before explosion only when the Bomber ignites the bomb."
 "options.role.bomber.bombExplosionDuration" : "Bomb Explosion Duration"
 "options.role.bomber.afterMeetingResetBomb" : "Reset Bomb Time After Meeting"
 "options.role.bomber.bombKillLeftDeadbody" : "Leave Dead Body"
 
-# GameAction
+# Game
 
 "gameAction.bomber.passbomb" : "Pass Bomb"
 
-# Button
+# UI
 
 "button.label.bomber.ignitebomb" : "Ignite"
 "button.label.game.passBomb" : "Pass"
 
-# State
+# Status
 
 "state.bomb.explosion" : "Explosion"

@@ -1,0 +1,47 @@
+# Assignable
+
+"role.pelican.name" : "ペリカン"
+"role.pelican.short" : "ペリ"
+"role.pelican.blurb" : "食べ放題!"
+
+# Document
+
+"document.tip.winCond.pelican.devour.title" : "完全撲滅勝利"
+"document.tip.winCond.pelican.devour" : "全生存者が自陣営のプレイヤーになると勝利します。丸呑みしたプレイヤーは生存者に含みません。"
+"document.tip.winCond.pelican.timeOver.title" : "特殊勝利"
+"document.tip.winCond.pelican.timeOver" : "ペリカンタイムを生き残ると勝利します。"
+
+"role.pelican.doc" : "プレイヤーを丸呑みし、会議開始時に消化してキルする第三キル陣営です。"
+"role.pelican.winCond" : "自分以外の全員を殲滅する。丸呑みしたプレイヤーは生存者に含まない。<var>%WIN%</var>"
+"role.pelican.winCond.pelicanTimeOver" : "<br>もしくは、ペリカンタイムを生き残る。"
+"role.pelican.ability.title" : "固有能力 "ぺろりんちょ""
+"role.pelican.ability.main" : "プレイヤーをまるごと丸呑みできます。丸呑みされたプレイヤーは死亡せず、会議開始時に消化され死体なしでキルします。 %PELICANTIME%"
+"role.pelican.ability.devour" : "<title>丸呑み</title>プレイヤーを生存状態で行動不能にし、会議開始時に死体を出さずにキルします。<br>丸呑みされたプレイヤーはペリカン視点に固定されます。"
+"role.pelican.ability.pelicanTime" : "<br>生存人数が自分を含めて<var>%NUM%</var>人まで減ると、<b>"ペリカンタイム"</b>に突入します。<br>ペリカンタイム中は全員が緊急ボタン、ベント、通報、サボタージュを使用不可になります。<br>突入から<var>%DURATION%</var>秒経過し、生きていればペリカンが勝利します。"
+"role.pelican.tips" : "・丸呑み可能距離はキル可能距離の<b>1.25倍</b>あります。<br>・丸呑みしたペリカンがキルされると、丸呑みされたプレイヤーは全員開放されます。<br>・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.pelican.detail" : "プレイヤーを丸呑みできる第三キル陣営です。"
+"options.role.pelican.devourCooldown" : "キルクールダウン"
+"options.role.pelican.additionalCooldown" : "丸呑み毎のキルクールダウン短縮時間"
+"options.role.pelican.canCallEmergencyMeeting" : "緊急会議ボタンを使用可能"
+"options.role.pelican.group.pelicanTime" : "ペリカンタイム設定"
+"options.role.pelican.pelicanTime" : "ペリカンタイム"
+"options.role.pelican.pelicanTimeAlived" : "ペリカンタイムに必要な残り生存者数"
+"options.role.pelican.pelicanTimeDuration" : "ペリカンタイム持続時間"
+"options.role.pelican.taskPhaseRestartEnterPelicanTimeDisperse" : "会議後に全員を分散する"
+
+# UI
+
+"button.label.pelican.devour" : "丸呑み"
+"timeMoment.pelican" : "ペリカンの勝利の宴まであと %TIME%"
+
+# Game
+
+"teams.pelican" : "ペリカン"
+"end.pelican" : "ペリカン%EXTRA%勝利"
+
+# Status
+
+"state.digestion" : "消化"

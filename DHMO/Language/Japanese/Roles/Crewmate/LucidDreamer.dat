@@ -1,0 +1,26 @@
+# Assignable
+
+"role.lucidDreamer.name" : "レム"
+"role.lucidDreamer.short" : "レム"
+"role.lucidDreamer.blurb" : "夢の世界に落ちる奇跡"
+
+# Document
+
+"role.lucidDreamer.doc" : "会議中に夢見し、移動やタスクをできるクルーメイトです。"
+"role.lucidDreamer.ability.title" : "固有能力 "明晰夢""
+"role.lucidDreamer.ability.main" : "会議を離れると、現実がそのまま再現された特殊な夢空間に入ります。<br>夢の中で完了したタスクは現実にも反映され、夢の中で最大<var>%NUM%</var>個のタスクを完了できます。"
+"role.lucidDreamer.ability.leave" : "<title>夢見/帰還</title>会議を離れて夢に入ります。投票終了の<var>%MAXLEAVINGTIME%</var>秒前以内でないと離れられません。<br>すでに夢の中にいる場合は、会議に帰還します。"
+"role.lucidDreamer.tips" : "・夢見中は、使用ボタンのキーボードショートカットを使えません。<br>・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.lucidDreamer.detail" : "会議を離れられるクルーメイトです。"
+"options.role.lucidDreamer.numOfLeave" : "夢見可能回数"
+"options.role.lucidDreamer.canLeaveMultiple" : "一会議で複数回使用可能"
+"options.role.lucidDreamer.maxLeftVotingTimeForLeaving" : "夢見可能な残り会議時間"
+"options.role.lucidDreamer.numOfCanCompleteTasks" : "会議ごとのタスク可能数"
+
+# UI
+
+"button.label.lucidDreamer.leavemeeting" : "夢見"
+"button.label.lucidDreamer.returnmeeting" : "帰還"

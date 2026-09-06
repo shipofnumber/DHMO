@@ -6,16 +6,16 @@
 
 # Document
 
-"document.tip.winCond.raven.title" : "Kill Tigger"
+"document.tip.winCond.raven.title" : "Kill Trigger"
 "document.tip.winCond.raven" : "The Raven wins by killing all enemies."
 
-"role.raven.doc" : "A neutral who can leave meeting to kill the target."
-"role.raven.winCond" : "All enemies are be killed."
+"role.raven.doc" : "A neutral who can leave the meeting to kill the target."
+"role.raven.winCond" : "All enemies are killed."
 "role.raven.ability.title" : "Inherent Ability [Demon In Dream]"
-"role.raven.ability.main" : "You can temporarily leave the meeting and go into a dream, where everything is identical to reality.<br>You will be assigned a target role in the dream. Killing surviving players by killing players of the corresponding role. %RAVENTIME%"
-"role.raven.ability.leave" : "<title>Leave/Return</title>Leave the meeting and enter the dream. You may only leave the meeting <b>5</b>s before the voting ends.<br>If you are already in the dream, you will return to the meeting."
-"role.raven.ability.kill" : "<title>Kill</title>Kill the player of the target role. If you kill incorrectly, you will return to the meeing and cannot leave during this meeting.<br>When there are no Impostors among the alive players, you can kill other players during the task phase."
-"role.raven.ability.ravenTime" : "<br>When only <var>%NUM%</var> players alive, it will start <b>"Raven Time"</b>.<br>In the Time, you cannot kill the Raven, report, use the vent or sabotage.<br>It lasts <var>%DURATION%</var>s. if anyone still survives when time is over, the Raven will suicide."
+"role.raven.ability.main" : "You can temporarily leave the meeting and enter a dream, where everything is identical to reality.<br>You will be assigned a target role in the dream. Kill surviving players by killing players of the corresponding role. %RAVENTIME%"
+"role.raven.ability.leave" : "<title>Leave/Return</title>Leave the meeting and enter the dream. You may leave the meeting only within <b>5</b>s before the voting ends.<br>If you are already in the dream, you will return to the meeting."
+"role.raven.ability.kill" : "<title>Kill</title>Kill the player of the target role. If you kill incorrectly, you will return to the meeting and cannot leave again during this meeting.<br>When there are no Impostors among the alive players, you can kill other players during the task phase."
+"role.raven.ability.ravenTime" : "<br>When only <var>%NUM%</var> players are alive, <b>\"Raven Time\"</b> will begin.<br>During this time, you cannot kill the Raven, report, use vents, or sabotage.<br>It lasts <var>%DURATION%</var>s. If anyone still survives when time is over, the Raven will commit suicide."
 "role.raven.tips" : "・The role is created by <b>DHMO</b>."
 
 # Options
@@ -24,28 +24,25 @@
 "options.role.raven.killCooldown" : "Kill Cooldown"
 "options.role.raven.canMultipleKills" : "Can Multiple Kills"
 "options.role.raven.multipleKillsCount" : "Max Multiple Kills"
-"options.role.raven.hasDeadBodyArrow" : "Has Dead BodyArrow"
+"options.role.raven.hasDeadBodyArrow" : "Has Dead Body Arrow"
 "options.role.raven.group.ravenTime" : "Raven Time"
 "options.role.raven.ravenTime" : "Can Start Raven Time"
 "options.role.raven.ravenTimeAlived" : "Max Alive Players For Starting"
 "options.role.raven.ravenTimeDuration" : "Time Duration"
 "options.role.raven.taskPhaseRestartEnterRavenTimeDisperse" : "Disperse When Task Phase Restart"
 
-# Button
+# UI
 
 "button.label.raven.leavemeeting" : "Leave"
 "button.label.raven.returnmeeting" : "Return"
-
-# UI
-
 "role.raven.killtarget" : "Kill a %ROLE%."
 "timeMoment.raven" : "Kill Or Be Killed. (%TIME%s)"
 
-# Team
+# Game
 
 "teams.raven" : "Raven"
 "end.raven" : "Raven Wins%EXTRA%"
 
-# State
+# Status
 
 "state.missing" : "Missing"
