@@ -88,7 +88,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
     [OnlyMyPlayer]
     void OnPlayerDieOrDisconnected(PlayerDieOrDisconnectEvent ev)
     {
-        if (AmongUsLLImpl.AmongUsClientInstance.AmHost)
+        if (AmongUsLLImpl.AmongUsClientInstance.AmHost && ev.Player.PlayerState == explosion)
         {
             NebulaSyncObject.RpcInstantiate(BombEvidence.MyTag, [ev.Player.Position.x, ev.Player.Position.y]);
         }
@@ -96,14 +96,14 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
         Release();
     }
     
-    void OnMeetingPreStart(MeetingPreStartEvent ev) => Timer?.Pause();
+    void OnMeetingPreStart(MeetingPreStartEvent ev) => Timer.Pause();
 
     void OnTaskPhaseRestart(TaskPhaseRestartEvent ev)
     {
         if (global::DHMO.Roles.Impostor.Bomber.AfterMeetingResetBombTime)
-            Timer?.Start();
+            Timer.Start();
         else
-            Timer?.Resume();
+            Timer.Resume();
     }
 
     public readonly static RemoteProcess<(GamePlayer player, GamePlayer bomber, float duration)> RPCSetBomb = new("BomberSetBomb", (message, _) =>

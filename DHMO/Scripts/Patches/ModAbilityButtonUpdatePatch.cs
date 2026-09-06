@@ -5,26 +5,26 @@ public static class ModAbilityButtonUpdatePatch
 {
     public static bool Prefix(ModAbilityButtonImpl __instance)
     {
-        if (GamePlayer.LocalPlayer != null && GamePlayer.LocalPlayer.TryGetAbility<Overclocker.Ability>(out var ability) && __instance != null && (ability.killButton == __instance || ability.overTimeButton == __instance))
-        {
-            __instance.UpdateVisibility();
+        if (GamePlayer.LocalPlayer == null ||
+            !GamePlayer.LocalPlayer.TryGetAbility<Overclocker.Ability>(out var ability) ||
+            (ability.killButton != __instance && ability.overTimeButton != __instance)) return true;
+        
+        __instance.UpdateVisibility();
 
-            __instance.OnUpdate?.Invoke(__instance);
+        __instance.OnUpdate?.Invoke(__instance);
 
-            if (__instance.EffectActive && (__instance.EffectTimer == null || !__instance.EffectTimer.IsProgressing)) __instance.InactivateEffect();
+        if (__instance is { EffectActive: true, EffectTimer: not { IsProgressing: true } }) __instance.InactivateEffect();
 
-            __instance.VanillaButton.SetCooldownFill(__instance.CurrentTimer?.Percentage ?? 0f);
+        __instance.VanillaButton.SetCooldownFill(__instance.CurrentTimer?.Percentage ?? 0f);
 
-            string timerText = __instance.CurrentTimer?.TimerText ?? "";
-            __instance.cooldownTextObserver.Set(timerText);
-            __instance.cooldownTextColorObserver.Set(__instance.EffectActive);
+        string timerText = __instance.CurrentTimer?.TimerText ?? "";
+        __instance.cooldownTextObserver.Set(timerText);
+        __instance.cooldownTextColorObserver.Set(__instance.EffectActive);
 
-            if ((__instance.keyCode?.KeyDownInGame ?? false) || (__instance.canUseByMouseClick && __instance.CheckMouseClick() && !AmongUsUtil.UsingMouseMovement)) __instance.DoClick();
-            if (__instance.subKeyCode?.KeyDownInGame ?? false) __instance.DoSubClick();
+        if ((__instance.keyCode?.KeyDownInGame ?? false) || (__instance.canUseByMouseClick && __instance.CheckMouseClick() && !AmongUsUtil.UsingMouseMovement)) __instance.DoClick();
+        if (__instance.subKeyCode?.KeyDownInGame ?? false) __instance.DoSubClick();
 
-            return false;
-        }
+        return false;
 
-        return true;
     }
 }

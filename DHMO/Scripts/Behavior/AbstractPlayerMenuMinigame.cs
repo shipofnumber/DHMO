@@ -125,6 +125,21 @@ public abstract class AbstractPlayerMenuMinigame : Minigame
             var ev = NebulaAPI.RunEvent<PlayerDecorateNameEvent>(new PlayerDecorateNameEvent(player, "", false));
             panel.NameText.color = ev.Color?.ToUnityColor() ?? VColor.White.ToUnityColor();
             
+            if (!panel.gameObject.TryGetComponent<NebulaMenuNameplate>(out var nebulaPlate))
+                nebulaPlate = panel.gameObject.AddComponent<NebulaMenuNameplate>();
+
+            var plate = HatManager.Instance.GetNamePlateById(player.DefaultOutfit.outfit.NamePlateId);
+            if ((object)plate != null && MoreCosmic.AllNameplates.TryGetValue(plate.ProductId, out var mPlate))
+            {
+                nebulaPlate.AdaptiveRenderer.sprite = mPlate.Adaptive?.GetSprite(0);
+                nebulaPlate.AdaptiveRenderer.transform.localPosition = new VVector3(0, 0, mPlate.AdaptiveInFront ? -0.1f : 0.1f);
+                PlayerMaterial.SetColors(player.PlayerId, nebulaPlate.AdaptiveRenderer);
+            }
+            else
+            {
+                nebulaPlate.AdaptiveRenderer.sprite = null;
+            }
+            
             var localPos = panel.ColorBlindName.transform.localPosition;
             localPos.x = -0.947f;
             localPos.z -= 0.15f;

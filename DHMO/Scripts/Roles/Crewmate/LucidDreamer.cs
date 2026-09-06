@@ -1,4 +1,6 @@
-﻿namespace DHMO.Roles.Crewmate;
+﻿using MeetingHudExtension = Nebula.Extensions.MeetingHudExtension;
+
+namespace DHMO.Roles.Crewmate;
 
 public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Ability>, DefinedRole, HasCitation, IAssignableDocument
 {

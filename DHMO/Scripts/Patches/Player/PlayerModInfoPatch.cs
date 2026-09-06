@@ -16,6 +16,6 @@ public static class PlayerModInfoPatch
 
         var appendText = $"({Language.Translate("game.player.deadRound")
             .Replace("%ROUND%", round)})".Color(PlayerModInfo.FakeTaskColor);
-        __result = __result.Replace(state, $"{state} {appendText}");
+        __result = __result.Replace(state, $"{state}{appendText}");
     }
 }

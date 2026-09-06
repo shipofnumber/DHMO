@@ -1,5 +1,6 @@
 ﻿using Cpp2IL.Core.Extensions;
 using Il2CppInterop.Runtime.Injection;
+using MeetingHudExtension = Nebula.Extensions.MeetingHudExtension;
 using Object = UnityEngine.Object;
 
 namespace DHMO.Roles.Neutral;
@@ -212,7 +213,7 @@ public class JournalistShot : MonoBehaviour
 
             if (myPlayer.Role is Journalist.Instance journalist)
             {
-                journalist.Shot = (pictureScalerObj.GetUnityTransform(), this);
+                journalist.Shot = (pictureScalerObj.GetUnityTransform(), selectedPlayer.PlayerId, this);
             }
 
             NebulaManager.Instance.StartCoroutine(CoScale().WrapToIl2Cpp());
@@ -227,14 +228,14 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
 {
     static readonly public RoleTeam MyTeam = NebulaAPI.Preprocessor!.CreateTeam("teams.journalist", new(218, 165, 32), TeamRevealType.OnlyMe);
     
-    private Journalist() : base("journalist", MyTeam.Color, RoleCategory.NeutralRole, MyTeam, [MiniCamCoolDownOption, RequiredBuzzOption, RequiredPhotosOption, TelephotoFinderSizeOption, WideAngleFinderSizeOption, VentConfiguration])
+    private Journalist() : base("journalist", MyTeam.Color, RoleCategory.NeutralRole, MyTeam, [TrackCoolDownOption, RequiredBuzzOption, RequiredPhotosOption, TelephotoFinderSizeOption, WideAngleFinderSizeOption, VentConfiguration])
     {
         ConfigurationHolder?.AddTags(ConfigurationTags.TagFunny, ConfigurationTags.TagDifficult);
     }
     
     RuntimeRole RuntimeAssignableGenerator<RuntimeRole>.CreateInstance(GamePlayer player, int[] arguments) => new Instance(player, arguments);
     
-    static private FloatConfiguration MiniCamCoolDownOption = NebulaAPI.Configurations.Configuration("options.role.journalist.miniCamCoolDown", (5f, 30f, 2.5f), 20f, FloatConfigurationDecorator.Second);
+    static private FloatConfiguration TrackCoolDownOption = NebulaAPI.Configurations.Configuration("options.role.journalist.trackCoolDown", (5f, 30f, 2.5f), 20f, FloatConfigurationDecorator.Second);
     static private FloatConfiguration RequiredBuzzOption = NebulaAPI.Configurations.Configuration("options.role.journalist.requiredBuzz", (10f, 20f, 0.5f), 12f);
     static private IntegerConfiguration RequiredPhotosOption = NebulaAPI.Configurations.Configuration("options.role.journalist.requiredPhotos", (1, 5), 3);
     static internal FloatConfiguration TelephotoFinderSizeOption = NebulaAPI.Configurations.Configuration("options.role.journalist.telephotoFinderSize", (0.25f, 0.75f, 0.125f), 0.625f, FloatConfigurationDecorator.Ratio);
@@ -245,6 +246,9 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
     bool IAssignableDocument.HasTips => true;
     bool IAssignableDocument.HasWinCondition => true;
 
+    static private Image? cameraButtonSprite = NebulaAPI.AddonAsset.GetResource("Button/CameraButton.png")?.AsImage(115f);
+    static private Image? trackButtonSprite = NebulaAPI.AddonAsset.GetResource("Button/JournalistTrackButton.png")?.AsImage(115f);
+    
     static public readonly Journalist MyRole = new();
 
     [NebulaRPCHolder]
@@ -254,11 +258,12 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
         
         public override DefinedRole Role => MyRole;
         
-        public (Transform holder, JournalistShot shot)? Shot { get; internal set; } = null;
+        public (Transform holder, byte playerId, JournalistShot shot)? Shot { get; internal set; } = null;
         
         private HudContent? shotsHolder = null;
         public GamePlayer? SelectedPlayer { get; private set; } = null;
 
+        private bool isMonitor;
         private float buzz = 0f;
         private int photos = 0;
 
@@ -271,47 +276,55 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
             if (AmOwner)
             {
                 JournalistShot? lastFinder = null;
-
+                
                 shotsHolder = HudContent.InstantiateContent("Pictures", true, true, false, true);
                 this.BindGameObject(shotsHolder.gameObject);
 
-                var miniCamButton = NebulaAPI.Modules.AbilityButton(this, MyPlayer,
-                    Virial.Compat.VirtualKeyInput.Ability, MiniCamCoolDownOption, "journalist.miniCam",
-                    SpectatorsAbility.spectatorChangeSprite,
-                    _ => MyPlayer.CanMove && Shot == null
+                ObjectTracker<GamePlayer> myTracker = ObjectTrackers.ForPlayer(this, null, MyPlayer, p => ObjectTrackers.StandardPredicate(p) && !isMonitor); 
+                
+                var trackButton = NebulaAPI.Modules.AbilityButton(this, MyPlayer,
+                    Virial.Compat.VirtualKeyInput.Ability, TrackCoolDownOption, "journalist.track",
+                    trackButtonSprite,
+                    _ => MyPlayer.CanMove && myTracker.CurrentTarget != null && Shot == null,
+                    _ => !isMonitor && !MyPlayer.IsDead
                 );
-                miniCamButton.OnClick = (button) =>
+                trackButton.OnMeeting = (button) => SelectedPlayer = null;
+                trackButton.OnClick = (button) =>
                 {
-                    if (AmongUsLLImpl.HudManagerInstance.PlayerCam.Target == MyPlayer.VanillaPlayer)
+                    SelectedPlayer = myTracker.CurrentTarget;
+                    button.StartCoolDown();
+                };
+                
+                var monitorButton = NebulaAPI.Modules.AbilityButton(this, MyPlayer,
+                    Virial.Compat.VirtualKeyInput.SecondaryAbility, 10f, "journalist.monitor",
+                    SpectatorsAbility.spectatorChangeSprite,
+                    _ => MyPlayer.CanMove && Shot == null && SelectedPlayer != null
+                );
+                monitorButton.OnClick = (button) =>
+                {
+                    if (SelectedPlayer == null) return;
+                    
+                    isMonitor = !isMonitor;
+                    AmongUsUtil.SetCamTarget(isMonitor ? SelectedPlayer.VanillaPlayer : null, true);
+                    button.StartCoolDown();
+                };
+                monitorButton.OnUpdate = (button) =>
+                {
+                    if ((SelectedPlayer == null || MyPlayer.IsDead || MyPlayer.IsDevoured) && isMonitor)
                     {
-                        var menu = AbstractPlayerMenuMinigame.Create<SelectPlayerMenu>();
+                        if (!MyPlayer.IsDevoured)
+                            AmongUsUtil.SetCamTarget(null);
                         
-                        menu.Begin((p) =>
-                        {
-                            if (p.IsDead || GamePlayer.AllPlayers.Any(p =>
-                                    p.Role is Pelican.Instance pelican &&
-                                    pelican.DevouredPlayerMask.Test(SelectedPlayer)))
-                            {
-                                return;
-                            }
-
-                            SelectedPlayer = p;
-                            AmongUsUtil.SetCamTarget(SelectedPlayer.VanillaPlayer, true);
-                            menu.CloseInternal();
-                        }, (p) => p.DeadRound == null || (ModSingleton<DGameManager>.Instance.CurrentRound - p.DeadRound) == 1);
+                        isMonitor = false;
                     }
-                    else
-                    {
-                        AmongUsUtil.SetCamTarget(MyPlayer.VanillaPlayer);
-                        SelectedPlayer = null;
-                    }
-
-                    miniCamButton.StartCoolDown();
+                    
+                    if (SelectedPlayer == null) return;
+                    if (SelectedPlayer.IsDead || SelectedPlayer.IsDevoured) SelectedPlayer = null;
                 };
 
                 var shotButton = NebulaAPI.Modules.AbilityButton(this, MyPlayer,
-                        Virial.Compat.VirtualKeyInput.SecondaryAbility, "journalist.camera", 0f, "journalist.shot",
-                        Paparazzo.cameraButtonSprite,
+                        Virial.Compat.VirtualKeyInput.Ability, "journalist.camera", 0f, "journalist.shot",
+                        cameraButtonSprite,
                         _ => lastFinder.AsBoolFast() && Shot == null && SelectedPlayer != null,
                         _ => AmongUsLLImpl.HudManagerInstance.PlayerCam.Target == SelectedPlayer?.VanillaPlayer
                     ).BindSubKey(Virial.Compat.VirtualKeyInput.AidAction, "journalist.toggle", true)
@@ -334,6 +347,8 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                     NebulaManager.Instance.StartCoroutine(CoTakePicture(lastFinder).WrapToIl2Cpp());
                     lastFinder = null;
                     AmongUsUtil.SetCamTarget(MyPlayer.VanillaPlayer);
+                    monitorButton.StartCoolDown();
+                    isMonitor = false;
                 };
                 ButtonEffect.SetAidAction(shotButton, this, null, MyPlayer, () =>
                 {
@@ -350,11 +365,10 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                 GameOperatorManager.Instance?.RegisterReleasedAction(DestroyFinder, this);
                 GameOperatorManager.Instance?.Subscribe<GameUpdateEvent>(ev =>
                 {
-                    var camTarget = AmongUsLLImpl.HudManagerInstance.PlayerCam.Target == SelectedPlayer?.VanillaPlayer;
-                    bool predicate = MyPlayer is { IsDead: false, CanMove: true } && camTarget &&
+                    bool predicate = MyPlayer is { IsDead: false, CanMove: true } && isMonitor &&
                                      !AmongUsUtil.InMeeting;
 
-                    if (lastFinder == null && predicate && !(shotButton.CoolDownTimer?.IsProgressing ?? true))
+                    if (lastFinder == null && predicate)
                     {
                         lastFinder = Object.Instantiate(NebulaAsset.PaparazzoShot, null).AddComponent<JournalistShot>();
                         lastFinder.SetPlayer(SelectedPlayer);
@@ -366,9 +380,13 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                         lastFinder.transform.localPosition = pos;
                     }
 
-                    if (lastFinder != null && (!predicate || GamePlayer.AllPlayers.Any(p =>
-                            p.Role is Pelican.Instance pelican && pelican.DevouredPlayerMask.Test(SelectedPlayer))))
+                    if (lastFinder != null && !predicate)
                         DestroyFinder();
+                }, this);
+                
+                GameOperatorManager.Instance?.Subscribe<UpdateSpectatorEvent>(ev =>
+                {
+                    ev.CanMonitorAlives &= !isMonitor;
                 }, this);
             }
         }
@@ -418,7 +436,7 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
             float timer = 20f;
 
             var hourglass = UnityHelper.CreateObject<SpriteRenderer>("Hourglass", shotsHolder!.transform,
-                new VVector3(0.6f, -0.25f, -10f));
+                new VVector3(0.4f, -0.25f, -10f));
             hourglass.sprite = Paparazzo.Instance.hourGlassSprite.GetSprite();
             var hourText = Object.Instantiate(AmongUsLLImpl.HudManagerBridge.KillButton.cooldownTimerText,
                 hourglass.transform);
@@ -426,13 +444,30 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
             hourText.transform.localScale = new VVector3(0.5f, 0.5f, 1f);
             hourText.gameObject.SetActive(true);
 
+            var progressText = Object.Instantiate(MeetingHud.Instance.judgeUsesRemaining,
+                MeetingHud.Instance.judgeUsesRemaining.transform.parent);
+            progressText.gameObject.SetActive(true);
+            progressText.transform.localPosition = new VVector3(1f, -2.21f, -1f);
+            progressText.gameObject.AddComponent<ScriptBehaviour>().UpdateHandler += () =>
+            {
+                progressText.text = Language.Translate("role.journalist.taskTextBuzz")
+                    .Replace("%CB%", buzz.ToString())
+                    .Replace("%GB%", RequiredBuzzOption.GetValue().ToString());
+                
+                if (RequiredPhotosOption > 1)
+                {
+                    progressText.text += " | " + Language.Translate("role.journalist.taskTextPhoto")
+                        .Replace("%CP%", photos.ToString())
+                        .Replace("%GP%", RequiredPhotosOption.GetValue().ToString());
+                }
+            };
 
             IEnumerator CoWaitSharing()
             {
                 while (!shareFlag && timer > 0f && MeetingHudExtension.CanShowPhotos)
                 {
                     timer -= Time.deltaTime;
-                    hourText.text = Mathf.CeilToInt(timer).ToString();
+                    hourText.text = Mathn.CeilToInt(timer).ToString();
 
                     yield return null;
                 }
@@ -451,11 +486,11 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
             button.OnMouseOver.AddListener(() => { AmongUsUtil.SetHighlight(shot.shot.centerRenderer, true); });
             button.OnClick.AddListener(() =>
             {
-                if (MyPlayer.IsDead || SelectedPlayer == null) return;
+                if (MyPlayer.IsDead) return;
 
-                DisclosePicture(shot.shot);
+                DisclosePicture(shot.shot, shot.playerId);
                 
-                MeetingHudExtension.RequestEditDiscussionTime.Invoke(60);
+                MeetingHudExtension.RequestEditDiscussionTime.Invoke(10);
                 shareFlag = true;
             });
         }
@@ -486,14 +521,12 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
             Shot = null;
         }
         
-        void DisclosePicture(JournalistShot shot)
+        void DisclosePicture(JournalistShot shot, byte playerId)
         {
-            if (SelectedPlayer == null) return;
-
             RpcSharePicture.Invoke((shot.centerRenderer.transform.localScale.x,
                 shot.transform.localEulerAngles.z,
                 [.. shot.centerRenderer.sprite.texture.EncodeToJPG(60)],
-                [MyPlayer.PlayerId, SelectedPlayer.PlayerId]));
+                [MyPlayer.PlayerId, playerId]));
         }
 
         public static readonly Dictionary<int, (float scale, float angle, int length, byte[]?[] bytes)> storedTexture = [];
@@ -543,10 +576,10 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                     if (stored.bytes.All(b => b != null))
                     {
                         var obj = Object.Instantiate(NebulaAsset.PaparazzoShot, null);
-                        AddRightContent(obj);
+                        MeetingHudExtension.AddRightContent(obj);
                         var renderer = obj.transform.GetChild(3).GetComponent<SpriteRenderer>();
                         List<byte> data = [];
-                        foreach (var b in stored.bytes) data.AddRange(b!);
+                        foreach (var b in stored.bytes) data.AddRange(b);
                         Texture2D texture = new(1, 1);
                         texture.LoadImage(data.ToArray());
                         renderer.sprite = texture.ToSprite(100f);
@@ -555,7 +588,7 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                         storedTexture.Remove(divided.id);
                         obj.transform.localEulerAngles = new(0, 0, stored.angle);
                         obj.ForEachChild((Il2CppSystem.Action<GameObject>)(o => o.layer = LayerExpansion.GetUILayer()));
-
+                        
                         GamePlayer journalist = GamePlayer.GetPlayer(divided.journalistId)!;
                         
                         bool cannotClick = GamePlayer.LocalPlayer!.IsDead || journalist.AmOwner;
@@ -606,6 +639,12 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                                 yield return null;
                             }
 
+                            TextMeshPro tmPro = null!;
+                            var text = new NoSGUIText(Virial.Media.GUIAlignment.Left, new(NebulaAPI.GUI.GetAttribute(Virial.Text.AttributeParams.StandardBaredBoldLeftNonFlexible)) { Alignment = Virial.Text.TextAlignment.BottomLeft, FontSize = new(1.6f), Size = new(3f, 1f) }, new RawTextComponent("")) { PostBuilder = t => { tmPro = t; tmPro.sortingOrder = 0; } };
+                            text.Instantiate(new Virial.Media.Anchor(new(0f, 0f), new(-0.5f, -0.5f, 0f)), new(20f, 20f), out var _)?.transform.SetParent(MeetingHud.Instance.transform);
+                            tmPro.transform.localPosition = new VVector3(5.725f, 0.9f, -40f);
+                            tmPro.text = Language.Translate("role.journalist.whoIsHe");
+                            
                             if (obj.AsBoolFast()) obj.transform.localScale = VVector3.One * 0.4f;
                         }
 
@@ -614,13 +653,6 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                         if (MeetingHud.Instance.AsBoolFast()) MeetingHud.Instance.ResetPlayerState();
                     }
                 });
-        
-        public static void AddRightContent(GameObject obj)
-        {
-            obj.transform.SetParent(MeetingHud.Instance.transform);
-            obj.layer = LayerExpansion.GetUILayer();
-            obj.transform.localPosition = new VVector3(4.6f, 1.4f, -40f);
-        }
         
         private static readonly RemoteProcess<GamePlayer> RpcAddPhoto = new("JournalistAddPhoto", (message, _) =>
         {

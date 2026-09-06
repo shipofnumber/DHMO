@@ -7,11 +7,20 @@ namespace DHMO.Utilities;
 [NebulaRPCHolder]
 public static class APICompat
 {
-    private static OutfitDefinition UnknownOutfit = new(NebulaGameManager.UnknownOutfitId, new() { PlayerName = "", ColorId = NebulaPlayerTab.CamouflageColorId, HatId = "hat_NoHat", SkinId = "skin_None", VisorId = "visor_EmptyVisor", PetId = "pet_EmptyPet" }, []);
-    
-    public static void Destroy(this UnityEngine.Object obj) => UnityEngine.Object.Destroy(obj);
+    public readonly static RemoteProcess<(string key, string message, VColor color, int sprtieId, bool playSound)> RpcAddLobbyNotification = new("AddLobbyNotificationMod", (message, _) =>
+    {
+        Image? image = null;
+        switch (message.sprtieId)
+        {
+            case 0: break;
+            case 1: image = WarningImage; break;
+        }
 
-    public static void DestroyImmediate(this UnityEngine.Object obj) => UnityEngine.Object.DestroyImmediate(obj);
+        AddLobbyNotification(message.key, message.message, (UnityEngine.Color)message.color, image, message.playSound);
+    });
+
+    // Property
+    internal static Virial.Game.Player[] AlivePlayers => GamePlayer.AllPlayers.Where(p => p.IsAlive).ToArray();
 
     public static NebulaPreSpawnLocation[] AllPreLocations
     {
@@ -26,38 +35,58 @@ public static class APICompat
         }
     }
 
-    extension(GamePlayer player)
-    {
-        public int? DeadRound => ModSingleton<DGameManager>.Instance.GetPlayerDeadRound(player);
-    }
+    public static Image? WarningImage { get; internal set; }
 
-    extension<T>(EditableBitMask<T> mask)
+    // Methods
+    private static void AddChatBubble(ChatController chatController, PlayerControl sourcePlayer, string chatText, bool censor, Action<ChatBubble, bool> configureBubble)
     {
-        public int Count => BitOperations.PopCount(mask.AsRawPattern);
-    }
-    
-    internal static Virial.Game.Player[] AlivePlayers => GamePlayer.AllPlayers.Where(p => p.IsAlive).ToArray();
-
-    public static UColor ShadeColor(this VColor color, float darkness = 0)
-    {
-        bool isDarker = darkness >= 0;
-        if (!isDarker) darkness = -darkness;
-        float weight = isDarker ? 0 : darkness;
-        float r = (color.R + weight) / (darkness + 1);
-        float g = (color.G + weight) / (darkness + 1);
-        float b = (color.B + weight) / (darkness + 1);
+        ChatBubble pooledBubble = chatController.GetPooledBubble();
         
-        return new UColor(r, g, b, color.A);
+        try
+        {
+            pooledBubble.transform.SetParent(chatController.scroller.Inner);
+            pooledBubble.transform.localScale = VVector3.One;
+
+            if (sourcePlayer.AmOwner)
+                pooledBubble.SetRight();
+            else
+                pooledBubble.SetLeft();
+
+            var didVote = MeetingHud.Instance.AsBoolFast(out var meetingHud) && meetingHud.DidVote(sourcePlayer.PlayerId);
+
+            configureBubble(pooledBubble, didVote);
+
+            if (censor && AmongUs.Data.DataManager.Settings.Multiplayer.CensorChat == true)
+                chatText = BlockedWords.CensorWords(chatText, false);
+            
+            pooledBubble.SetText(chatText);
+            pooledBubble.AlignChildren();
+            chatController.AlignAllBubbles();
+
+            if (!chatController.IsOpenOrOpening && chatController.notificationRoutine == null)
+                chatController.notificationRoutine = chatController.StartCoroutine(chatController.BounceDot());
+
+            if (!sourcePlayer.AmOwner && !chatController.IsOpenOrOpening)
+            {
+                var soundPlayer = AmongUsLLImpl.SoundManagerInstance.PlaySound(chatController.messageSound, false, 1f, null);
+                soundPlayer.pitch = 0.5f + sourcePlayer.PlayerId / 15f;
+                chatController.chatNotification.SetUp(sourcePlayer, chatText);
+            }
+        }
+        catch (Exception e)
+        {
+            DLog.Log(e);
+            chatController.chatBubblePool.Reclaim(pooledBubble);
+        }
     }
-    
+
     public static void AddLobbyNotification(string key, string message, UnityEngine.Color color, Image? image = null, bool playSound = true)
     {
         var notifier = AmongUsLLImpl.HudManagerInstance.Notifier;
         int messageKey = key.Sum(c => c);
         string text = $"<font=\"Barlow-Black SDF\" material=\"Barlow-Black Outline\">{message}</font>";
 
-        bool isClear = false;
-        if (color.Compare((UColor)VColor.Clear)) isClear = true;
+        bool isClear = false || color.Compare((UColor)VColor.Clear);
 
         if (notifier.lastMessageKey == messageKey && notifier.activeMessages.Count > 0)
             notifier.activeMessages[^1].UpdateMessage(text);
@@ -76,19 +105,16 @@ public static class APICompat
         if (playSound) AmongUsLLImpl.SoundManagerInstance.PlaySoundImmediate(notifier.settingsChangeSound, false, 1f, 1f, null);
     }
 
-    public static Image? WarningImage { get; internal set; }
-
-    public readonly static RemoteProcess<(string key, string message, VColor color, int sprtieId, bool playSound)> RpcAddLobbyNotification = new("AddLobbyNotificationMod", (message, _) =>
+    public static bool Approximately(this float a, float b)
     {
-        Image? image = null;
-        switch (message.sprtieId)
-        {
-            case 0: break;
-            case 1: image = WarningImage; break;
-        }
+        float tolerance = Math.Max(1e-6f * Math.Max(Math.Abs(a), Math.Abs(b)), 8f * float.Epsilon);
 
-        AddLobbyNotification(message.key, message.message, (UnityEngine.Color)message.color, image, message.playSound);
-    });
+        return Math.Abs(b - a) < tolerance;
+    }
+
+    public static void Destroy(this UnityEngine.Object obj) => UnityEngine.Object.Destroy(obj);
+
+    public static void DestroyImmediate(this UnityEngine.Object obj) => UnityEngine.Object.DestroyImmediate(obj);
 
     public static GamePlayer? GetClosestPlayer(GamePlayer myPlayer, float detectDistance)
     {
@@ -119,78 +145,35 @@ public static class APICompat
             return null;
 
         var minDistance = candidates.Min(x => x.Distance);
-        var closest = candidates.Where(x => x.Distance.AlmostEqual(minDistance)).ToList();
+        var closest = candidates.Where(x => x.Distance.Approximately(minDistance)).ToList();
 
         return closest[0].Player;
     }
 
-    public static bool AlmostEqual(this double a, double b, double absoluteTolerance = 1e-9, double relativeTolerance = 1e-9)
+    public static bool IsLightColor(UColor color)
     {
-        if (double.IsNaN(a) || double.IsNaN(b)) return false;
-        if (double.IsInfinity(a) || double.IsInfinity(b)) return a == b;
+        float gray = color.grayscale;
 
-        double diff = Math.Abs(a - b);
-        if (diff <= absoluteTolerance) return true;
-        return diff <= Math.Max(Math.Abs(a), Math.Abs(b)) * relativeTolerance;
+        return gray >= 0.5f;
     }
-
-    public static bool AlmostEqual(this float a, float b, float absoluteTolerance = 1e-6f, float relativeTolerance = 1e-6f)
-    {
-        if (float.IsNaN(a) || float.IsNaN(b)) return false;
-        if (float.IsInfinity(a) || float.IsInfinity(b)) return a == b;
-
-        float diff = Math.Abs(a - b);
-        if (diff <= absoluteTolerance) return true;
-        return diff <= Math.Max(Math.Abs(a), Math.Abs(b)) * relativeTolerance;
-    }
+    
+    public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.ModGameObject(false).LocalPosition.x > 15;
 
     public static bool ModAbilityMeetingButton() => AmongUsUtil.InMeeting && MeetingHud.Instance.CurrentState is not MeetingHud.MeetingStates.Animating and not MeetingHud.MeetingStates.Discussion and not MeetingHud.MeetingStates.Results and not MeetingHud.MeetingStates.Proceeding;
 
-    public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.ModGameObject(false).LocalPosition.x > 15;
-
-    private static void AddChatBubble(ChatController chatController, PlayerControl sourcePlayer, string chatText, bool censor, Action<ChatBubble, bool> configureBubble)
+    public static UColor ShadeColor(this VColor color, float darkness = 0)
     {
-        ChatBubble pooledBubble = chatController.GetPooledBubble();
-
-        try
-        {
-            var bubbleObj = pooledBubble.ModGameObject();
-            bubbleObj.GetUnityTransform().SetParent(chatController.scroller.Inner);
-            bubbleObj.LocalScale = VVector3.One;
-
-            if (sourcePlayer.AmOwner)
-                pooledBubble.SetRight();
-            else
-                pooledBubble.SetLeft();
-
-            var didVote = MeetingHud.Instance.AsBoolFast(out var meetingHud) && meetingHud.DidVote(sourcePlayer.PlayerId);
-
-            configureBubble(pooledBubble, didVote);
-
-            if (censor && AmongUs.Data.DataManager.Settings.Multiplayer.CensorChat == true)
-                chatText = BlockedWords.CensorWords(chatText, false);
-
-            pooledBubble.SetText(chatText);
-            pooledBubble.AlignChildren();
-            chatController.AlignAllBubbles();
-
-            if (!chatController.IsOpenOrOpening && chatController.notificationRoutine == null)
-                chatController.notificationRoutine = chatController.StartCoroutine(chatController.BounceDot());
-
-            if (!sourcePlayer.AmOwner && !chatController.IsOpenOrOpening)
-            {
-                var soundPlayer = AmongUsLLImpl.SoundManagerInstance.PlaySound(chatController.messageSound, false, 1f, null);
-                soundPlayer.pitch = 0.5f + sourcePlayer.PlayerId / 15f;
-                chatController.chatNotification.SetUp(sourcePlayer, chatText);
-            }
-        }
-        catch (Exception e)
-        {
-            DLog.Log(e);
-            chatController.chatBubblePool.Reclaim(pooledBubble);
-        }
+        bool isDarker = darkness >= 0;
+        if (!isDarker) darkness = -darkness;
+        float weight = isDarker ? 0 : darkness;
+        float r = (color.R + weight) / (darkness + 1);
+        float g = (color.G + weight) / (darkness + 1);
+        float b = (color.B + weight) / (darkness + 1);
+        
+        return new UColor(r, g, b, color.A);
     }
-    
+
+    // Extension
     extension(ChatController chatController)
     {
         public void AddCustomChat(PlayerControl sourcePlayer, PlayerControl cosmetics, string title, string chatText, bool censor = true)
@@ -199,6 +182,8 @@ public static class APICompat
             AddChatBubble(chatController, sourcePlayer, chatText, censor, (bubble, didVote) =>
             {
                 bubble.SetCosmetics(cosmetics.Data);
+                bubble.playerInfo = null;
+                
                 bubble.SetName(title ?? sourcePlayerData.PlayerName, sourcePlayerData.IsDead, didVote, PlayerNameColor.Get(sourcePlayerData));
             });
         }
@@ -208,11 +193,27 @@ public static class APICompat
             var sourcePlayerData = sourcePlayer.Data;
             AddChatBubble(chatController, sourcePlayer, chatText, censor, (bubble, didVote) =>
             {
-                bubble.playerInfo = sourcePlayerData;
-                bubble.Player.UpdateFromPlayerOutfit(UnknownOutfit.outfit, PlayerMaterial.MaskType.ScrollingUI, sourcePlayerData.IsDead, false, null);
+                bubble.playerInfo = null;
+                bubble.Player.UpdateFromPlayerOutfit(NebulaGameManager.Instance?.UnknownOutfit.outfit,
+                    PlayerMaterial.MaskType.ScrollingUI, sourcePlayerData.IsDead, false, null);
+                bubble.Player.ToggleName(false);
+                bubble.maskLayer = 51 + bubble.PoolIndex;
+                bubble.SetMaskLayer();
+                bubble.SetColorblindText();
                 bubble.ColorBlindName.text = "???";
                 bubble.SetName("???" + titleSuffix, sourcePlayerData.IsDead, didVote, VColor.White.ToUnityColor());
             });
         }
+    }
+
+    extension(GamePlayer player)
+    {
+        public bool IsDevoured => player.Position.Distance(new VVector2(-100f, 10f)).Approximately(0f);
+        public int? DeadRound => ModSingleton<DGameManager>.Instance.GetPlayerDeadRound(player);
+    }
+
+    extension<T>(EditableBitMask<T> mask)
+    {
+        public int Count => BitOperations.PopCount(mask.AsRawPattern);
     }
 }

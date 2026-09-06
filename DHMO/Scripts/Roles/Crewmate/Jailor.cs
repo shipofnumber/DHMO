@@ -1,4 +1,5 @@
 ﻿using Image = Virial.Media.Image;
+using MeetingHudExtension = Nebula.Extensions.MeetingHudExtension;
 
 namespace DHMO.Roles.Crewmate;
 

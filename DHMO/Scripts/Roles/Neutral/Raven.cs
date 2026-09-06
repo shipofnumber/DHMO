@@ -1,4 +1,5 @@
 ﻿using Image = Virial.Media.Image;
+using MeetingHudExtension = Nebula.Extensions.MeetingHudExtension;
 using Random = UnityEngine.Random;
 
 namespace DHMO.Roles.Neutral;

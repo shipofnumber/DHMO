@@ -88,6 +88,11 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
     {
         deadPlayers.Remove(ev.Player.PlayerId);
     }
+
+    void OnMeetingPreStart(MeetingPreStartEvent ev)
+    {
+        MeetingHudExtensionPatch.RightContents.Clear();
+    }
     
     void OnMeetingPreEnd(MeetingPreEndEvent ev)
     {

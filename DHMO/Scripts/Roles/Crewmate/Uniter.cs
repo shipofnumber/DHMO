@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using MeetingHudExtension = Nebula.Extensions.MeetingHudExtension;
 
 namespace DHMO.Roles.Crewmate;
 
@@ -27,7 +28,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
         Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(1200f);
         int leftUniting = NumOfUnitingOption;
 
-        public EditableBitMask<GamePlayer> selected = BitMasks.AsPlayer();
+        private EditableBitMask<GamePlayer> selected = BitMasks.AsPlayer();
 
         public Ability(GamePlayer player, int leftUses) : base(player)
         {
@@ -51,11 +52,9 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
                 var p = state.MyPlayer;
                 if (!state.IsSelected)
                 {
-                    if (BitOperations.PopCount(selected.AsRawPattern) < NumOfCanUnitOption)
-                    {
-                        selected.Add(p);
-                        state.SetSelect(true);
-                    }
+                    if (BitOperations.PopCount(selected.AsRawPattern) >= NumOfCanUnitOption) return;
+                    selected.Add(p);
+                    state.SetSelect(true);
                 }
                 else
                 {
@@ -69,7 +68,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
         void OnVote(PlayerVoteCastLocalEvent ev)
         {
             if (selected.ForEach(GamePlayer.AllPlayers).Any()) --leftUniting;
-            RpcUpdateStatus.Invoke((MyPlayer, selected.AsRawPattern));
+            RpcAddSelected.Invoke((MyPlayer, selected.AsRawPattern));
         }
 
         void FixVote(PlayerFixVoteHostEvent ev)
@@ -85,11 +84,11 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
                 }
             }
         }
+        
+        static private readonly RemoteProcess<(GamePlayer uniter, uint mask)> RpcAddSelected = new("UpdateUniter", (message, _) => 
+        {
+            if (!message.uniter.TryGetAbility<Uniter.Ability>(out var uniter)) return;
+            uniter.selected = BitMasks.AsPlayer(message.mask);
+        });
     }
-
-    static private readonly RemoteProcess<(GamePlayer uniter, uint mask)> RpcUpdateStatus = new("UpdateUniter", (message, _) => 
-    {
-        if (!message.uniter.TryGetAbility<Uniter.Ability>(out var uniter)) return;
-        uniter.selected = BitMasks.AsPlayer(message.mask);
-    });
 }

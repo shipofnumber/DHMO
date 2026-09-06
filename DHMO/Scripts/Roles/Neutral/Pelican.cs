@@ -46,7 +46,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
     public class Instance(GamePlayer player) : RuntimeVentRoleTemplate(player, VentConfiguration), RuntimeRole
     {
         public static GameEnd? PelicanTeamWin = NebulaAPI.Preprocessor?.CreateEnd("pelican", MyRole.RoleColor);
-        public EditableBitMask<GamePlayer> DevouredPlayerMask { get; private set; } = BitMasks.AsPlayer();
+        public EditableBitMask<GamePlayer> DevouredPlayerMask { get; } = BitMasks.AsPlayer();
         
         public override DefinedRole Role => MyRole;
         bool RuntimeAssignable.CanCallEmergencyMeeting => CanCallEmergencyMeeting;
@@ -91,9 +91,11 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                     var target = devourTracker.CurrentTarget;
                     if (target == null) return;
 
-                    if (target is IFakePlayer || target.RealPlayer.TryGetAbility<Bait.Ability>(out var a) || target.RealPlayer.Modifiers.Any(m => m.Modifier.InternalName.Contains("bait")))
+                    if (target is IFakePlayer || target.RealPlayer.TryGetAbility<Bait.Ability>(out var a) ||
+                        target.RealPlayer.Modifiers.Any(m => m.Modifier.InternalName.Contains("bait")))
                     {
-                        var cancelable = NebulaAPI.RunEvent(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
+                        var cancelable =
+                            NebulaAPI.RunEvent(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
                         if (!(cancelable?.IsCanceled ?? false))
                             MyPlayer.MurderPlayer(target, Digestion, null, KillParameter.NormalKill);
 
@@ -102,13 +104,17 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                     }
 
                     RpcDevoured.Invoke((MyPlayer, target.RealPlayer));
-                    
+
                     devourButton.CoolDownTimer.Start(GetCurrentCooldown());
                     NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
                 };
             }
+            
+            GameOperatorManager.Instance?.Subscribe<UpdateSpectatorEvent>(ev =>
+            {
+                ev.CanMonitorAlives &= !DevouredPlayerMask.Test(GamePlayer.LocalPlayer);
+            }, this);
         }
-
         private float GetCurrentCooldown() => Mathn.Min(DevourCooldown.Cooldown + DevouredPlayerMask.Count * IncreaseTime, 60f);
 
         [OnlyHost]
@@ -128,11 +134,8 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             
             if (DevouredPlayerMask.Test(localPlayer))
             {
-                if (AmongUsLLImpl.AmongUsClientInstance.AmHost)
-                {
-                    MyPlayer.MurderPlayer(localPlayer, Digestion, null, KillParameter.WithAssigningGhostRole,
-                        KillCondition.BothAlive);
-                }
+                MyPlayer.MurderPlayer(localPlayer, Digestion, null, KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE,
+                    KillCondition.BothAlive);
 
                 localPlayer.VanillaPlayer.NetTransform.RpcSnapTo(MyPlayer.Position);
                 AmongUsUtil.SetCamTarget(null);
@@ -143,7 +146,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
         void OnPlayerDieOrDisconnected(PlayerDieOrDisconnectEvent ev)
         {
-            if (MyPlayer == ev.Player)
+            if (MyPlayer.PlayerId == ev.Player.PlayerId)
             {
                 GamePlayer? localPlayer = GamePlayer.LocalPlayer;
                 if (localPlayer == null) return;
@@ -154,12 +157,14 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                     AmongUsUtil.SetCamTarget(null);
                 }
                 
+                DLog.Log(DevouredPlayerMask.AsRawPattern);
                 DevouredPlayerMask.Clear();
             }
             else if (DevouredPlayerMask.Test(ev.Player))
             {
                 ev.Player.Logic.SnapTo(MyPlayer.Position);
                 if (ev.Player.AmOwner) AmongUsUtil.SetCamTarget(null);
+                
                 DevouredPlayerMask.Remove(ev.Player);
             }
         }
@@ -180,6 +185,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                 if (ev.Cancelled) return;
                 
                 if (message.devoured.AmOwner) AmongUsUtil.SetCamTarget(pelican.MyPlayer.VanillaPlayer);
+                
                 message.devoured.Logic.SnapTo(new VVector2(-100f, 10f));
                 pelican.DevouredPlayerMask.Add(message.devoured);
             }
