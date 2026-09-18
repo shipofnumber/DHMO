@@ -4,17 +4,15 @@
 public static class GameHistoryPatch
 {
     [HarmonyPatch(nameof(LastGameHistory.SetHistory))]
-    static bool Prefix(ref string endCondition)
+    static void Prefix(ref string endCondition)
     {
-        if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard or IGameModeFreePlay) return true;
+        if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard) return;
         int round = ModSingleton<DGameManager>.Instance.CurrentRound;
         
-        var appendText = $"({Language.Translate("game.end.round").Replace("%ROUND%", round.ToString())})".Color(PlayerModInfo.FakeTaskColor);
+        var appendText = $"({Language.Translate("game.end.round").Replace("%ROUND%", round.ToString())})".Sized(75).Color(PlayerModInfo.FakeTaskColor);
         if (!endCondition.EndsWith(appendText))
         {
             endCondition += appendText;
         }
-
-        return true;
     }
 }

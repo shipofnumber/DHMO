@@ -486,7 +486,7 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
             button.OnMouseOver.AddListener(() => { AmongUsUtil.SetHighlight(shot.shot.centerRenderer, true); });
             button.OnClick.AddListener(() =>
             {
-                if (MyPlayer.IsDead) return;
+                if (MyPlayer.IsDead || !MeetingHudExtension.CanShowPhotos) return;
 
                 DisclosePicture(shot.shot, shot.playerId);
                 

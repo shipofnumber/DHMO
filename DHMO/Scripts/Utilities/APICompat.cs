@@ -21,6 +21,7 @@ public static class APICompat
 
     // Property
     internal static Virial.Game.Player[] AlivePlayers => GamePlayer.AllPlayers.Where(p => p.IsAlive).ToArray();
+    static public VanillaAsset.VanillaAudioClip HnSRefreshClip { get; private set; } = new("CooldownRefresh");
 
     public static NebulaPreSpawnLocation[] AllPreLocations
     {
@@ -104,7 +105,7 @@ public static class APICompat
 
         if (playSound) AmongUsLLImpl.SoundManagerInstance.PlaySoundImmediate(notifier.settingsChangeSound, false, 1f, 1f, null);
     }
-
+    
     public static bool Approximately(this float a, float b)
     {
         float tolerance = Math.Max(1e-6f * Math.Max(Math.Abs(a), Math.Abs(b)), 8f * float.Epsilon);

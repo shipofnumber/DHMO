@@ -28,9 +28,7 @@ public static class AddonHandshakeHashPatch
                     md5.TransformBlock(buffer, 0, bytesRead, buffer, 0);
             }
             md5.TransformFinalBlock([], 0, 0);
-            if (md5.Hash == null) return addon.HandshakeHash;
-
-            return BitConverter.ToString(md5.Hash).ComputeConstantHash();
+            return md5.Hash == null ? addon.HandshakeHash : BitConverter.ToString(md5.Hash).ComputeConstantHash();
         }
         catch
         {

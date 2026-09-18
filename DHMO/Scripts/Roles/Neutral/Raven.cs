@@ -54,11 +54,13 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
     {
         public DeadbodyArrowAbility? ArrowAbility { get; private set; }
         DefinedRole RuntimeRole.Role => MyRole;
+        IEnumerable<IPlayerAbility?> RuntimeAssignable.MyAbilities => [blockUsingUtilityAbility];
 
         public static GameEnd? RavenTeamWin = NebulaAPI.Preprocessor?.CreateEnd("raven", MyRole.RoleColor);
 
         private static ModAbilityButton? killButton, meetingKillButton;
         public static bool IsInRavenTime;
+        private IPlayerAbility? blockUsingUtilityAbility;
         private Coroutine? coroutine;
 
         private TextMeshPro? tmPro;
@@ -109,7 +111,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
         void OnHudUpdate(GameHudUpdateEvent ev)
         {
-            var time = TimeMoment.AllTimes.FirstOrDefault(t => t.Id == "raven");
+            var time = global::DHMO.Modules.TimeMoment.AllTimes.FirstOrDefault(t => t.Id == "raven");
             IsInRavenTime = (time?.IsRunning ?? false) && time.CanRunning;
         }
 
@@ -121,6 +123,8 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
             if (AmOwner)
             {
+                blockUsingUtilityAbility = new BlockUsingUtilityAbility(MyPlayer, () => !APICompat.IsOutMeeting()).Register(this);
+                
                 GameOperatorManager.Instance?.Subscribe<MeetingPreEndEvent>(ev => RpcCamouflage.Invoke((MyPlayer, false)), this);
 
                 GameOperatorManager.Instance?.Subscribe<PlayerDieOrDisconnectEvent>(ev =>
@@ -150,7 +154,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                     if (APICompat.IsOutMeeting() && MeetingHudExtension.VotingTimer <= 5f && coroutine == null)
                         coroutine = NebulaManager.Instance.StartCoroutine(CoLeaveOrJoinMeeting(false).WrapToIl2Cpp());
 
-                    meetingButton.SetLabel(APICompat.IsOutMeeting() ? "raven.returnmeeting" : "raven.leavemeeting");
+                    meetingButton.SetLabel(APICompat.IsOutMeeting() ? "raven.returnMeeting" : "raven.leaveMeeting");
                 };
 
                 var mkillTracker = ObjectTrackers.ForPlayer(this, null, MyPlayer, p => ObjectTrackers.LocalKillablePredicate(p) && APICompat.IsOutMeeting(), null, false, false);
@@ -214,10 +218,9 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
 
             if (isleaving && tmPro == null)
             {
-                var textHolder = UnityHelper.CreateObject("RavenTarget", hud.transform, VVector3.Zero, LayerExpansion.GetUILayer());
+                var textHolder = UnityHelper.CreateObject("RavenTarget", hud.transform, VVector3.Zero);
                 this.BindGameObject(textHolder);
 
-                if (NebulaGUIWidgetEngine.API != null)
                 {
                     var textAttribute = new TextAttribute(NebulaGUIWidgetEngine.API.GetAttribute(AttributeParams.StandardBaredBoldLeftNonFlexible))
                     {
@@ -226,29 +229,27 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
                         Size = new Size(3f, 1f)
                     };
                     var noSGUIText = new NoSGUIText(GUIAlignment.Bottom, textAttribute, new RawTextComponent("")) { PostBuilder = t => tmPro = t };
-                    var instantiatedObj = noSGUIText.Instantiate(new Anchor(new VVector2(0f, 0f), new VVector3(-0.5f, -0.5f, 0f)), new Size(20f, 20f), out _)?.ModGameObject();
+                    var instantiatedObj = noSGUIText.Instantiate(new Anchor(new VVector2(0f, 0f), new VVector3(-0.5f, -0.5f)), new Size(20f, 20f), out _)?.ModGameObject();
                     instantiatedObj?.GetUnityTransform().SetParent(textHolder.transform, false);
                 }
 
-                if (GameOperatorManager.Instance is null) yield break;
-                GameOperatorManager.Instance.Subscribe<GameUpdateEvent>(ev =>
+                GameOperatorManager.Instance?.Subscribe<GameUpdateEvent>(ev =>
                 {
-                    if (!tmPro) return;
+                    if (!tmPro.AsBoolFast()) return;
                     var textObj = tmPro?.ModGameObject();
 
                     if (APICompat.IsOutMeeting() && !killed)
                     {
-                        if (NebulaGameManager.Instance is null) return;
                         if (targetRole == null || !GamePlayer.AllPlayers.Any(p => p.IsAlive && targetRole.Id == p.Role.Role.Id))
                         {
                             var allAlive = GamePlayer.AllPlayers.Where(p => !p.IsDead && p.Role is not Raven.Instance).ToList();
                             targetRole = allAlive.Count > 0 ? allAlive[Random.Range(0, allAlive.Count)].Role.Role : null;
                         }
-                        tmPro?.gameObject.SetActive(true);
+                        tmPro?.gameObject.SetActive(targetRole != null);
 
                         var iconTag = targetRole != null ? targetRole.GetRoleIconTag() : "";
                         tmPro?.UseRoleIcon();
-                        tmPro?.text = Language.Translate("role.raven.killtarget").Replace("%ROLE%", iconTag + (targetRole?.DisplayColoredName ?? ""));
+                        tmPro?.text = Language.Translate("role.raven.killTarget").Replace("%ROLE%", iconTag + (targetRole?.DisplayColoredName ?? ""));
                         textObj?.LocalPosition = new VVector3(-0.07f, -2.45f, 0f);
                     }
                     else if ((MyPlayer.IsDead && APICompat.IsOutMeeting()) || !APICompat.IsOutMeeting() || killed)
@@ -299,6 +300,7 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
         }
 
         bool RuntimeRole.EyesightIgnoreWalls => true;
+        
 
         public static RemoteProcess<(GamePlayer player, bool add)> RpcCamouflage = new("RavenCamouflage", (message, b) =>
         {
@@ -311,5 +313,18 @@ public class Raven : DefinedRoleTemplate, HasCitation, DefinedRole, DefinedSingl
             else
                 message.player.Unbox().RemoveOutfit(tag);
         });
+    }
+}
+
+public class BlockUsingUtilityAbility : DependentLifespan,IPlayerAbility, IBindPlayer
+{
+    public Func<bool> Predicate { get; }
+    public Player MyPlayer { get; }
+    public bool BlockUsingUtility => Predicate.Invoke();
+
+    public BlockUsingUtilityAbility(Player myPlayer, Func<bool> predicate)
+    {
+        Predicate = predicate;
+        MyPlayer = myPlayer;
     }
 }

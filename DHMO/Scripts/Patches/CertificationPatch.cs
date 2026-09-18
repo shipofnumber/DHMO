@@ -43,8 +43,8 @@ public readonly record struct AddonInfo
     {
         var local = AllAddonInfos.ToDictionary(a => a.Id);
         var client = addonInfos.ToDictionary(a => a.Id);
-        var unmatches = new List<(IEnumerable<AddonInfo>, UnmatchedReason)>();
 
+        var unmatches = new List<(IEnumerable<AddonInfo>, UnmatchedReason)>();
         foreach (var remotePair in client)
         {
             if (!local.TryGetValue(remotePair.Key, out var localAddon))
@@ -52,11 +52,20 @@ public readonly record struct AddonInfo
             else if (localAddon.Hash != remotePair.Value.Hash)
                 unmatches.Add(([localAddon, remotePair.Value], UnmatchedReason.HashMismatched));
         }
+        unmatches.AddRange(from localPair in local
+            where !client.ContainsKey(localPair.Key)
+            select ((IEnumerable<AddonInfo>, UnmatchedReason))([localPair.Value], UnmatchedReason.Missing));
 
-        unmatches.AddRange(from localPair in local where !client.ContainsKey(localPair.Key) select ((IEnumerable<AddonInfo>, UnmatchedReason))([localPair.Value], UnmatchedReason.Missing));
+        results =
+        [
+            .. unmatches
+                .GroupBy(u => u.Item2)
+                .Select(g => ((IEnumerable<AddonInfo>, UnmatchedReason))(
+                    [.. g.SelectMany(u => u.Item1).Distinct()],
+                    g.Key))
+        ];
 
-        results = unmatches;
-        return unmatches.Count > 0;
+        return results.Any();
     }
 
     public static string ResultToString(IEnumerable<(IEnumerable<AddonInfo> addons, UnmatchedReason reason)> results)
@@ -66,7 +75,9 @@ public readonly record struct AddonInfo
         {
             Text.AppendLine($"{Language.Translate($"certification.unmatchedAddon.{reason.ToString().HeadLower()}")}".Bold());
             foreach (var addon in addons)
-                Text.AppendLine($"- {addon.Name} ({addon.Id})".Sized(80).Bold().Color(VColor.Red));
+            {
+                Text.AppendLine($"- {addon.Name}{(addon.Name == addon.Id ? "" : $" ({addon.Id})")}".Sized(80).Bold().Color(VColor.Red));
+            }
         }
 
         return Text.ToString();

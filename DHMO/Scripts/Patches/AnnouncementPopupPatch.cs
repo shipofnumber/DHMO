@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 using AmongUs.Data.Player;
 using Assets.InnerNet;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
@@ -17,7 +18,7 @@ public class AddonNewsAsset
 
 public class AddonNews
 {
-    public int Id => 200000 + AddonNewsHistory.AllAddonNews.IndexOf(this); 
+    public int Id => 100000 + AddonNewsHistory.AllAddonNews.IndexOf(this); 
 
     [JsonSerializableField]
     public string translationKey = "";
@@ -117,26 +118,25 @@ public static class AddonNewsLoader
 public static class AddonNewsHistory
 {
     public readonly static List<AddonNews> AllAddonNews = [];
+    public static CultureInfo Culture { get; internal set; } = new("en-US");
     
     [HarmonyPatch(typeof(PlayerAnnouncementData), nameof(PlayerAnnouncementData.SetAnnouncements)), HarmonyPrefix]
     [HarmonyPriority(-10)]
-    public static bool SetAddonAnnouncements(PlayerAnnouncementData __instance, [HarmonyArgument(0)] ref Il2CppReferenceArray<Announcement> aRange)
+    public static void SetAddonAnnouncements(ref Il2CppReferenceArray<Announcement> aRange)
     {        
         List<Announcement> temp =
         [
             .. aRange,
             .. AllAddonNews.Where(m => !m.debug).Select(m => m.ToAnnouncement())
         ];
-        temp.Sort((a1, a2) => string.Compare(a2.Date, a1.Date));
+        temp.Sort((a1, a2) => string.CompareOrdinal(a2.Date, a1.Date));
         aRange = temp.ToArray();
-        
-        return true;
     }
 
     [HarmonyPatch(typeof(AnnouncementPanel), nameof(AnnouncementPanel.SetUp)), HarmonyPostfix, HarmonyPriority(-10)]
     public static void SetUpPanel(AnnouncementPanel __instance, [HarmonyArgument(0)] Announcement announcement)
     {
-        if (announcement.Number < 200000) return;
+        if (announcement.Number < 10000) return;
 
         var label = __instance.transform.FindChild("ModLabel");
         if (label == null) return;

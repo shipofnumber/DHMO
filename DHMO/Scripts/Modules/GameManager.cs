@@ -19,7 +19,45 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
     static DGameManager() => DIManager.Instance.RegisterModule(() => new DGameManager());
     public DGameManager() => ModSingleton<DGameManager>.Instance = this;
 
-    protected override void OnInjected(Game container) => this.Register(container);
+    protected override void OnInjected(Game container)
+    {
+        this.Register(container);
+        
+        string[] audioStrings =
+        [
+            "AMB_EngineShock",
+            "AMB_EngineSteam",
+            "Decontamination_doorOpen",
+            "Decontamination_doorClose",
+            "Door_balconyClose",
+            "Door_balconyOpen",
+            "Decontamination_Spray",
+            "door_close",
+            "door_open",
+            "AMB_shower",
+            "AMB_Electricshock1",
+            "AMB_Electricshock2",
+            "AMB_Electricshock3",
+            "AMB_Electricshock4",
+            "AMB_Jungle",
+            "AMB_Reactor"
+        ];
+
+        List<AudioClip> clips = [];
+        foreach (var name in audioStrings)
+        {
+            var clip = VanillaAsset.GetAudioClip(name);
+            if (clip == null)
+            {
+                DLog.Log($"{name} is null.");
+                continue;
+            }
+            
+            clips.Add(clip);
+        }
+
+        shouldChangeInMeeting = [.. clips];
+    }
 
     private static Func<KeyCode> GetModKeyCodeGetter(string translationKey, KeyCode defaultKey)
     {
@@ -61,13 +99,50 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         CurrentRound += 1;
     }
 
-    [EventPriority(-1000000)]
+    [EventPriority(-100000)]
     void OnShowIntro(GameShowIntroLocalEvent ev)
     {
+        var vanillaRole = AmongUsLLImpl.LocalPlayer.Data.Role;
+        var roleSound = vanillaRole.IntroSound;
+
+        if (GamePlayer.LocalPlayer!.Role.AssignableOnHelp.FirstOrDefault(r => r is DefinedRole) is not DefinedRole role) return;
+        
+        if (role.InternalName.Contains("justice") || role is EvilJudge)
+            vanillaRole.IntroSound = AmongUsUtil.GetRolePrefab<JudgeRole>()?.IntroSound;
+        else if (role.InternalName.Contains("engineer"))
+            vanillaRole.IntroSound = AmongUsUtil.GetRolePrefab<EngineerRole>()?.IntroSound;
+
+        if (role.Category == RoleCategory.NeutralRole)
+        {
+            if (role.IsKiller)
+                vanillaRole.IntroSound = AmongUsUtil.GetRolePrefab<ShapeshifterRole>()?.IntroSound;
+            
+            if (role.InternalName.Contains("moran"))
+                vanillaRole.IntroSound = NebulaAsset.GetAudioClip(NebulaAudioClip.SniperEquip);
+        }
+
+        vanillaRole.IntroSound = role switch
+        {
+            Paparazzo or Journalist => NebulaAsset.GetAudioClip(NebulaAudioClip.Camera),
+            Oracle or Investigator or Seer => AmongUsUtil.GetRolePrefab<DetectiveRole>()?.IntroSound,
+            NiceTracker or EvilTracker => AmongUsUtil.GetRolePrefab<TrackerRole>()?.IntroSound,
+            Doctor => AmongUsUtil.GetRolePrefab<ScientistRole>()?.IntroSound,
+            Sheriff => APICompat.HnSRefreshClip.Clip,
+            Noisemaker => AmongUsUtil.GetRolePrefab<NoisemakerRole>()?.IntroSound,
+            Bubblegun => NebulaAsset.GetAudioClip(NebulaAudioClip.Bubble1),
+            Sniper => NebulaAsset.GetAudioClip(NebulaAudioClip.SniperEquip),
+            Effacer => AmongUsUtil.GetRolePrefab<PhantomRole>()?.IntroSound,
+            Viper => AmongUsUtil.GetRolePrefab<ViperRole>()?.IntroSound,
+            _ => roleSound
+        };
+
+        if (GamePlayer.LocalPlayer.IsMadmate)
+            vanillaRole.IntroSound = AmongUsUtil.GetRolePrefab<ImpostorRole>()?.IntroSound;
+
         if (ClientOption.GetValue((ClientOption.ClientOptionType)51) == 0) return;
-        
+
         var roleText = IntroCutscene.Instance.RoleText;
-        
+
         roleText.fontWeight = TMPro.FontWeight.Thin;
         roleText.SetOutlineColor(ev.RoleColor.ShadeColor(0.1f).SetAlpha(0.38f));
         roleText.SetOutlineThickness(0.17f);
@@ -89,8 +164,38 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
         deadPlayers.Remove(ev.Player.PlayerId);
     }
 
+    private static AudioClip[] shouldChangeInMeeting = [];
+
+    private static void ChangeAudiosMixer(bool inMeeting)
+    {
+        if (!AmongUsLLImpl.SoundManagerInstance.AsBoolFast(out var soundManager)) return;
+        if (shouldChangeInMeeting.Length == 0) return;
+
+        var targetChannel = inMeeting ? soundManager.AmbienceChannel : soundManager.SfxChannel;
+        var soundPlayers = soundManager.soundPlayers;
+
+        foreach (var audioClip in shouldChangeInMeeting)
+        {
+            if (soundManager.allSources.TryGetValue(audioClip, out var source))
+            {
+                source.outputAudioMixerGroup = targetChannel;
+                continue;
+            }
+
+            foreach (var player in soundPlayers)
+            {
+                if (player.Player.clip.EqualsFast(audioClip))
+                {
+                    player.Player.outputAudioMixerGroup = targetChannel;
+                }
+            }
+        }
+    }
+
+    
     void OnMeetingPreStart(MeetingPreStartEvent ev)
     {
+        ChangeAudiosMixer(true);
         MeetingHudExtensionPatch.RightContents.Clear();
     }
     
@@ -107,6 +212,8 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
                 DLog.Log(e);
             }
         }
+        
+        ChangeAudiosMixer(false);
     }
 
     void CheckPlayerStepSound(PlayerCheckPlayFootSoundEvent ev)
@@ -118,7 +225,7 @@ public class DGameManager : AbstractModule<Virial.Game.Game>, IGameOperator
     {
         var local = GamePlayer.LocalPlayer;
         if (local is null || (local != ev.Player && !(NebulaGameManager.Instance?.CanSeeAllInfo ?? false))) return;
-
+        
         NebulaManager.Instance.ScheduleDelayAction(() => AnimationEffects.CoPlayRoleNameEffect(ev.Player.RoleText.transform, new VVector3(0f, 0f, -0.1f), ev.NextRole.Color.ToUnityColor(), ev.Player.RoleText.gameObject.layer, 1.42857146f).StartOnScene());
     }
 }

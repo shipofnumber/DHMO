@@ -44,7 +44,7 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
         public int canCompleteTasks = NumOfCanCompleteTasks;
         bool canLeave;
         private Coroutine? coroutine;
-
+        
         public Ability(GamePlayer player, bool isUsurped, int leave) : base(player, isUsurped)
         {
             leftLeave = leave;

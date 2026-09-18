@@ -10,7 +10,6 @@ public static class HudManagerExtensionPatch
         if (ModSingleton<TimeMomentManager>.Instance.IsAnyTimeRun)
         {
             bridge.ReportButton.ToggleVisible(false);
-            bridge.SabotageButton.ToggleVisible(false);
         }
     }
 }

@@ -17,7 +17,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 
     public GamePlayer MyPlayer => myPlayer;
 
-    public static GameActionType PassBombAction = new("bomber.passbomb", Roles.Impostor.Bomber.MyRole);
+    public static GameActionType PassBombAction = new("bomber.passBomb", Roles.Impostor.Bomber.MyRole);
     public static Image passBombImage = NebulaAPI.AddonAsset.GetResource("Button/PassBombButton.png")?.AsImage(115f)!;
     public static IDividedSpriteLoader ExplosionSprite = DividedSpriteLoader.FromResource("Nebula.Resources.ExplosionAnim.png", 120f, 4, 2);
     public static TranslatableTag explosion = new("state.bomb.explosion");
@@ -39,7 +39,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
             passButton.Visibility = _ => MyPlayer.IsAlive && (MyPlayer.PlayerId == Bomber.PlayerId || Timer.CurrentTime <= global::DHMO.Roles.Impostor.Bomber.BombExplosionDuration);
             passButton.Availability = _ => MyPlayer.CanMove && passTracker.CurrentTarget != null;
             passButton.PlayFlashWhile = _ => true;
-            passButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, MyPlayer.PlayerId == Bomber.PlayerId ? 0f : 3f).SetAsAbilityTimer().Start(null);
+            passButton.CoolDownTimer = NebulaAPI.Modules.Timer(this, MyPlayer.PlayerId == Bomber.PlayerId ? 0f : 3f).SetAsAbilityTimer().Start();
 
             passButton.OnClick = _ =>
             {
@@ -162,7 +162,7 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
     public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility
     {
         public static ModAbilityButton? igniteBomb;
-        bool IPlayerAbility.HideKillButton => (!igniteBomb?.IsBroken ?? false) || !CanVanillaKill;
+        bool IPlayerAbility.HideKillButton => (!igniteBomb?.IsBroken ?? false) && !CanVanillaKill;
         int[] IPlayerAbility.AbilityArguments => [IsUsurped.AsInt()];
 
         float time = ActivateBombDuration + BombExplosionDuration;
@@ -176,7 +176,7 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
                     igniteTracker = ObjectTrackers.ForPlayer(this, null, MyPlayer, p => ObjectTrackers.StandardPredicate(p), VColor.ImpostorColor.ToUnityColor(), false, false);
 
                 igniteBomb = NebulaAPI.Modules.AbilityButton(this, isArrangedAsKillButton: !CanVanillaKill).BindKey(CanVanillaKill ? VirtualKeyInput.Ability : VirtualKeyInput.Kill)
-                 .SetLabel("bomber.ignitebomb")
+                 .SetLabel("bomber.igniteBomb")
                  .SetLabelType(ModAbilityButton.LabelType.Impostor)
                  .SetAsUsurpableButton(this);
 
@@ -204,10 +204,11 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
 
                     NebulaGameManager.Instance?.RpcDoGameAction(MyPlayer, MyPlayer.Position, Bomb.PassBombAction);
 
-                    if (SyncKillAndIgniteCooldown && CanVanillaKill)
-                        NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
-                    else
+                    if (CanVanillaKill)
                         button.StartCoolDown();
+
+                    if (SyncKillAndIgniteCooldown || !CanVanillaKill)
+                        NebulaAPI.CurrentGame?.KillButtonLikeHandler.StartCooldown();
                 };
 
                 if (!CanVanillaKill)

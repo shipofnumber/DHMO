@@ -11,7 +11,11 @@ public static class ChatControllerPatch
     [HarmonyPostfix]
     public static void HudManagerStartPostfix(HudManager __instance)
     {
-        APICompat.WarningImage = new CacheSpriteLoader(() => __instance.LobbyTimerExtensionUI.gameObject.transform.TryDig("WarningContainer", "Icon")?.GetComponent<SpriteRenderer>().sprite!);
+        if (__instance.LobbyTimerExtensionUI.gameObject.transform.TryFindChild(out var image, "WarningContainer",
+                "Icon"))
+        {
+            APICompat.WarningImage = new CacheSpriteLoader(() => image.GetComponent<SpriteRenderer>().sprite);
+        }
 
         __instance.Chat.chatBubblePool.poolSize = ChatSystem.NumOfChatHistory;
     }

@@ -185,7 +185,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
             if (AmOwner && isMissed) RpcInsulate.Invoke(MyPlayer);
             MeetingHudExtension.AddSealedMask(1 << Jailed.PlayerId);
-            if (Jailed.AmOwner) MeetingHudExtension.CanUseAbility = false;
+            MeetingHudExtension.RemoveUsingAbilityMask(1 << Jailed.PlayerId);
 
             foreach (var voteArea in MeetingHud.Instance.playerStates.GetFastEnumerator())
             {

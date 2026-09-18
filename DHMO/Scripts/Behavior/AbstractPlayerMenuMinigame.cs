@@ -25,6 +25,7 @@ public abstract class AbstractPlayerMenuMinigame : Minigame
     {
         var originalMenu = AmongUsUtil.GetRolePrefab<ShapeshifterRole>()!.ShapeshifterMenu;
         var newMenu = Instantiate(originalMenu);
+        newMenu.transform.localPosition = new VVector3(0f, 0f, -100f);
         var customMenu = newMenu.ModGameObject(false).AddComponent<TMenu>();
 
         var customMenuObj = customMenu.ModGameObject(false);
@@ -51,8 +52,7 @@ public abstract class AbstractPlayerMenuMinigame : Minigame
         menuTransform.SetParent(Camera.main.transform, false);
         customMenuObj.LocalPosition = new VVector3(0f, 0f, -60f);
 
-        var phoneUI = menuTransform.TryDig("PhoneUI");
-        if (phoneUI.AsBoolFast(out var phone))
+        if (menuTransform.TryFindChild(out var phone, "PhoneUI"))
         {
             var bodyMat = GamePlayer.LocalPlayer?.VanillaCosmetics.currentBodySprite.BodySprite.material;
             phone.GetChild(0)?.GetComponent<SpriteRenderer>()?.SetMaterial(bodyMat);

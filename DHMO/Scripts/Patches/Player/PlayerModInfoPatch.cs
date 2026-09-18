@@ -6,7 +6,7 @@ public static class PlayerModInfoPatch
     [HarmonyPatch(nameof(PlayerModInfo.GetStateText))]
     static void Postfix(PlayerModInfo __instance, ref string __result)
     {
-        if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard or IGameModeFreePlay) return;
+        if (NebulaAPI.CurrentGame?.GameMode is not IGameModeStandard) return;
         if (__instance.MyState == null || !__instance.IsDead) return;
 
         var round = ModSingleton<DGameManager>.Instance.GetPlayerDeadRound(__instance).ToString();
@@ -15,7 +15,7 @@ public static class PlayerModInfoPatch
         if (round == null) return;
 
         var appendText = $"({Language.Translate("game.player.deadRound")
-            .Replace("%ROUND%", round)})".Color(PlayerModInfo.FakeTaskColor);
+            .Replace("%ROUND%", round)})".Sized(75).Color(PlayerModInfo.FakeTaskColor);
         __result = __result.Replace(state, $"{state}{appendText}");
     }
 }

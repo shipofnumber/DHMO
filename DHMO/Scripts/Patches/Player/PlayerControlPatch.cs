@@ -8,7 +8,7 @@ public static class PlayerControlPatch
     [HarmonyPostfix]
     public static void PlayerCanMovePatch(PlayerControl __instance, ref bool __result)
     {
-        if (Minigame.Instance.AsBoolFast() || AmongUsLLImpl.HudManagerBridge.Chat.IsOpenOrOpening || AmongUsLLImpl.HudManagerInstance.KillOverlay.IsOpen || AmongUsLLImpl.HudManagerInstance.GameMenu.IsOpen) return;
+        if (Minigame.Instance.AsBoolFast() || !__instance.moveable || __instance.MyPhysics.DoingCustomAnimation || AmongUsLLImpl.HudManagerBridge.Chat.IsOpenOrOpening || AmongUsLLImpl.HudManagerInstance.KillOverlay.IsOpen || AmongUsLLImpl.HudManagerInstance.GameMenu.IsOpen) return;
         var modInfo = __instance.GetModInfo();
         if (modInfo != null && !__result && APICompat.IsOutMeeting() && NebulaAPI.CurrentGame != null && (modInfo.Role is Raven.Instance || modInfo.TryGetAbility<LucidDreamer.Ability>(out _)))
             __result = true;

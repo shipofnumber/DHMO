@@ -1,4 +1,6 @@
-﻿namespace DHMO.Events.Game;
+﻿using TimeMoment = DHMO.Modules.TimeMoment;
+
+namespace DHMO.Events.Game;
 
 public class TimeMomentStartEvent(Virial.Game.Game game, TimeMoment timeMoment) : Virial.Events.Game.AbstractGameEvent(game)
 {
