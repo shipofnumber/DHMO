@@ -26,7 +26,6 @@ public class LucidDreamer : DefinedSingleAbilityRoleTemplate<LucidDreamer.Abilit
     IEnumerable<AssignableDocumentImage> IAssignableDocument.GetDocumentImages() { yield return new(buttonImage!, "role.lucidDreamer.ability.leave"); }
     IEnumerable<AssignableDocumentReplacement> IAssignableDocument.GetDocumentReplacements()
     {
-        yield return new("%MAXLEAVINGTIME%", MaxLeftVotingTimeForLeaving.GetValue().ToString());
         yield return new("%NUM%", NumOfCanCompleteTasks.GetValue().ToString());
     }
 

@@ -9,8 +9,7 @@ public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
     static readonly Image? MarkImage = NebulaAPI.AddonAsset?.GetResource("Button/MarkButton.png")?.AsImage();
     public static BoolConfiguration CanUseMark = NebulaAPI.Configurations.Configuration("options.meeting.canUseMark", true);
 
-    public Dictionary<byte, HashSet<DefinedAssignable>> MarkRoleDic { get; private set; } = [];
-    public MetaScreen? LastMarkWindow = null;
+    public Dictionary<byte, HashSet<DefinedAssignable>> MarkRoleDic { get; private set; }
     private GamePlayer myPlayer;
 
     public GamePlayer MyPlayer => myPlayer;
@@ -51,9 +50,8 @@ public class RoleMarkAbility : FlexibleLifespan, IBindPlayer, IGameOperator
 
     public string GetModifierString(byte id)
     {
-        if (MarkRoleDic == null) return string.Empty;
-        var modifiers = MarkRoleDic[id].Where(a => a is DefinedModifier);
-        if (modifiers.Any() && modifiers != null)
+        var modifiers = MarkRoleDic[id].Where(a => a is DefinedModifier).ToArray();
+        if (modifiers.Length > 0)
         {
             string text = $"{Language.Translate("role.category.modifier").Bold()}";
             foreach (var modifier in modifiers)

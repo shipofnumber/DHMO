@@ -4,14 +4,23 @@
 public static class PlayerControlPatch
 {
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CanMove), MethodType.Getter)]
-    [HarmonyPriority(1)]
-    [HarmonyPostfix]
-    public static void PlayerCanMovePatch(PlayerControl __instance, ref bool __result)
+    [HarmonyPrefix]
+    public static bool PlayerCanMovePatch(PlayerControl __instance, ref bool __result)
     {
-        if (Minigame.Instance.AsBoolFast() || !__instance.moveable || __instance.MyPhysics.DoingCustomAnimation || AmongUsLLImpl.HudManagerBridge.Chat.IsOpenOrOpening || AmongUsLLImpl.HudManagerInstance.KillOverlay.IsOpen || AmongUsLLImpl.HudManagerInstance.GameMenu.IsOpen) return;
+        if (Minigame.Instance.AsBoolFast() || TextField.AnyoneValid || !Nebula.Patches.PlayerCanMovePatch.CameraAllowMoving() || !__instance.moveable || __instance.MyPhysics.DoingCustomAnimation
+            || AmongUsLLImpl.HudManagerBridge.Chat.IsOpenOrOpening
+            || AmongUsLLImpl.HudManagerInstance.KillOverlay.IsOpen
+            || AmongUsLLImpl.HudManagerInstance.GameMenu.IsOpen) return true;
+
         var modInfo = __instance.GetModInfo();
-        if (modInfo != null && !__result && APICompat.IsOutMeeting() && NebulaAPI.CurrentGame != null && (modInfo.Role is Raven.Instance || modInfo.TryGetAbility<LucidDreamer.Ability>(out _)))
+        if (modInfo != null && !__result && APICompat.IsOutMeeting() && !modInfo.IsTeleporting &&
+            (modInfo.Role is Raven.Instance || modInfo.TryGetAbility<LucidDreamer.Ability>(out _)))
+        {
             __result = true;
+            return false;
+        }
+
+        return true;
     }
 
     [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.CmdReportDeadBody))]
@@ -20,12 +29,12 @@ public static class PlayerControlPatch
     public static bool ReportDeadBodyPatch(PlayerControl __instance, NetworkedPlayerInfo target)
     {
         if (NebulaGameManager.Instance == null || target == null) return true;
-        if (ModSingleton<TimeMomentManager>.Instance.IsAnyTimeRun) return false;
+        if (ModSingleton<TimeHuntManager>.Instance.IsAnyTimeRun) return false;
 
         try
         {
             var reporter = __instance.GetModInfo();
-            var reported = GamePlayer.GetPlayer(target.PlayerId);
+            var reported = target.Object.GetModInfo();
 
             if (reporter == null || reported == null || reporter.Role.GetAbility<Bomber.Ability>() == null)
                 return true;
@@ -65,10 +74,7 @@ public static class PlayerControlPatch
             if (forceGhost)
             {
                 amDead = true; 
-                playerControl.gameObject.layer = LayerExpansion.GetGhostLayer();
             }
-            else 
-                playerControl.gameObject.layer = LayerExpansion.GetPlayersLayer();
         }
     }
 }

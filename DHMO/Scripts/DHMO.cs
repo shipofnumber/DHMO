@@ -1,4 +1,5 @@
-﻿using DHMO.Roles.Abilities;
+﻿using Cpp2IL.Core.Extensions;
+using DHMO.Roles.Abilities;
 using Virial.Runtime;
 
 namespace DHMO;
@@ -6,20 +7,50 @@ namespace DHMO;
 [NebulaPreprocess(PreprocessPhase.PostFixStructure)]
 public class DHMO
 {
-    internal static Harmony? harmony = new("DHMO");
-
+    internal static Harmony? Harmony { get; } = new("DHMO");
     static void Preprocess(NebulaPreprocessor preprocessor)
     {
-        NebulaGameEnd.RegisterWinCondTip(Journalist.Instance.JournalistTeamWin!, () => ((ISpawnable)Journalist.MyRole).CanSpawnInCurrentGame, "journalist", null);
-        NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame, "pelican.devour", null);
-        NebulaGameEnd.RegisterWinCondTip(Pelican.Instance.PelicanTeamWin!, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame && Pelican.InvokePelicanTime, "pelican.timeOver", null);
-        NebulaGameEnd.RegisterWinCondTip(Raven.Instance.RavenTeamWin!, () => ((ISpawnable)Raven.MyRole).CanSpawnInCurrentGame, "raven", null);
+        NebulaGameEnd.RegisterWinCondTip(AddonGameTags.JournalistEnd, () => ((ISpawnable)Journalist.MyRole).CanSpawnInCurrentGame, "journalist");
+        NebulaGameEnd.RegisterWinCondTip(AddonGameTags.LoveTriangleEnd, () => ((ISpawnable)Lover.MyRole).CanSpawnInCurrentGame && !Lover.AvengerModeOption && DGameManager.TriangleModeOption, "loveTriangle");
+        NebulaGameEnd.RegisterWinCondTip(AddonGameTags.PelicanEnd, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame, "pelican.devour");
+        NebulaGameEnd.RegisterWinCondTip(AddonGameTags.PelicanEnd, () => ((ISpawnable)Pelican.MyRole).CanSpawnInCurrentGame && Pelican.InvokePelicanHunt, "pelican.huntOver");
+        NebulaGameEnd.RegisterWinCondTip(AddonGameTags.RavenEnd, () => ((ISpawnable)Raven.MyRole).CanSpawnInCurrentGame, "raven");
     }
 
     static DHMO()
     {
-        harmony?.PatchAll();
+        Harmony?.PatchAll();
         GeneralConfigurations.MeetingOptions.AppendConfiguration(RoleMarkAbility.CanUseMark);
+    }
+}
+
+[NebulaPreprocess(PreprocessPhase.PostLoadAddons)]
+public static class DHMOAsset
+{
+    public static AssetBundle AssetBundle { get; set; } = null!;
+
+    public static AudioClip ChildSingingScaryMelodyMusic { get; set; } = null!;
+    public static AudioClip DuckIntroSound { get; set; } = null!;
+    public static AudioClip PelicanIntroSound { get; set; } = null!;
+    public static AudioClip RavenIntroSound { get; set; } = null!;
+    public static AudioClip SillyGooseIntroSound { get; set; } = null!;
+    public static AudioClip VultureIntroSound { get; set; } = null!;
+
+    private static T Load<T>(string path) where T : UnityEngine.Object => AssetBundle.LoadAsset<T>(path).MarkDontUnload();
+    public static IEnumerator Preprocess(NebulaPreprocessor preprocessor)
+    {
+        yield return preprocessor;
+
+        var stream = NebulaAPI.AddonAsset.GetResource("Asset/dhmo_asset")?.AsStream();
+        if (stream == null) yield break;
+
+        AssetBundle = AssetBundle.LoadFromMemory(stream.ReadBytes());
+        ChildSingingScaryMelodyMusic = Load<AudioClip>("ChildSingingScaryMelody.wav");
+        DuckIntroSound = Load<AudioClip>("duckintro.wav");
+        PelicanIntroSound = Load<AudioClip>("pelicanIntroSound.wav");
+        RavenIntroSound = Load<AudioClip>("ravenIntroSound.wav");
+        SillyGooseIntroSound = Load<AudioClip>("sillyGooseIntroSound.wav");
+        VultureIntroSound = Load<AudioClip>("vultureIntro.wav");
     }
 }
 

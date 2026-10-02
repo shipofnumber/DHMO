@@ -9,6 +9,7 @@ public class BombEvidence(VVector2 pos) : NebulaSyncStandardObject(pos, NebulaSy
 }
 
 [NebulaRPCHolder]
+[NebulaPreprocess(PreprocessPhase.PreFixStructure)]
 public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
 {
     private GamePlayer myPlayer { get; set; }
@@ -20,13 +21,12 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
     public static GameActionType PassBombAction = new("bomber.passBomb", Roles.Impostor.Bomber.MyRole);
     public static Image passBombImage = NebulaAPI.AddonAsset.GetResource("Button/PassBombButton.png")?.AsImage(115f)!;
     public static IDividedSpriteLoader ExplosionSprite = DividedSpriteLoader.FromResource("Nebula.Resources.ExplosionAnim.png", 120f, 4, 2);
-    public static TranslatableTag explosion = new("state.bomb.explosion");
 
     public Bomb(GamePlayer player, GamePlayer bomber, float duration)
     {
         this.myPlayer = player;
         Bomber = bomber;
-
+        
         Timer = NebulaAPI.Modules.Timer(this, duration);
         Timer.Start();
         
@@ -78,7 +78,7 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
                 killParam |= KillParameter.WithDeadBody;
 
             var ev = NebulaAPI.RunEvent(new BombExplodeEvent(MyPlayer));
-            Bomber.MurderPlayer(ev.Player, explosion, explosion, killParam,
+            Bomber.MurderPlayer(ev.Player, AddonGameTags.Explosion, null, killParam,
                 KillCondition.TargetAlive | KillCondition.InTaskPhase);
         }
 
@@ -88,9 +88,9 @@ public class Bomb : FlexibleLifespan, IGameOperator, IBindPlayer
     [OnlyMyPlayer]
     void OnPlayerDieOrDisconnected(PlayerDieOrDisconnectEvent ev)
     {
-        if (AmongUsLLImpl.AmongUsClientInstance.AmHost && ev.Player.PlayerState == explosion)
+        if (ev.Player.PlayerState == AddonGameTags.Explosion)
         {
-            NebulaSyncObject.RpcInstantiate(BombEvidence.MyTag, [ev.Player.Position.x, ev.Player.Position.y]);
+            NebulaSyncObject.LocalInstantiate(BombEvidence.MyTag, [ev.Player.Position.x, ev.Player.Position.y]);
         }
 
         Release();
@@ -151,8 +151,6 @@ public class Bomber : DefinedSingleAbilityRoleTemplate<Bomber.Ability>, HasCitat
 
     IEnumerable<AssignableDocumentReplacement> IAssignableDocument.GetDocumentReplacements()
     {
-        yield return new("%ACTIVE%", ActivateBombDuration.GetValue().ToString());
-        yield return new("%EXPLODE%", BombExplosionDuration.GetValue().ToString());
         yield return new("%OF%", IgniteBombOn.GetValue() == 0 ? Language.Translate("role.bomber.ability.self") : Language.Translate("role.bomber.ability.other"));
     }
 

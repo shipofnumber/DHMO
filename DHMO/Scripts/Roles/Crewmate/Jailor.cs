@@ -26,7 +26,6 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
     public static readonly Image? injailImage = NebulaAPI.AddonAsset?.GetResource("InJail.png")?.AsImage();
 
     Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/JailorIcon.png")?.AsImage(200f);
-    public static readonly TranslatableTag execution = new("state.execution");
     public static readonly Jailor MyRole = new();
     bool IAssignableDocument.HasAbility => true;
     bool IAssignableDocument.HasTips => true;
@@ -40,13 +39,12 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
     IEnumerable<AssignableDocumentReplacement> IAssignableDocument.GetDocumentReplacements()
     {
         yield return new("%JAILINAROW%", Language.Translate(JailInARow ? "role.jailor.ability.jailinArow" : "role.jailor.ability.clearJailed"));
-        yield return new("%CANEXECUTELOVER%", CanExecuteLoversOption ? Language.Translate("role.jailor.ability.canExecuteLover") : "");
     }
 
     public Citation? Citation => DHMOCitations.TownOfUsMira;
 
-    private static bool IsLimiltJailUses() => LimitAbilityUsesOption.GetValue() == 0;
-    private static int GetAbilityUses() => IsLimiltJailUses() ? NumOfJailOption : NumOfExecuteOption;
+    private static bool IsLimitJailUses() => LimitAbilityUsesOption.GetValue() == 0;
+    private static int GetAbilityUses() => IsLimitJailUses() ? NumOfJailOption : NumOfExecuteOption;
 
     [NebulaRPCHolder]
     public class Ability : AbstractPlayerUsurpableAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
@@ -66,7 +64,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
 
             if (HasPrivateChat)
             {
-                PrivateChat.RegisterPublicChannel(MyRole.Color, MyRole.Color, $"Jailor{MyPlayer.PlayerId}", Language.Translate("chat.jailortext"), this,
+                PrivateChat.RegisterPublicChannel(MyRole.Color, MyRole.Color, $"Jailor{MyPlayer.PlayerId}", Language.Translate("chat.jailorText"), this,
                     () => AmongUsUtil.InMeeting && Jailed is { IsAlive: true } && (MyPlayer.AmOwner || Jailed.AmOwner), true,
                     text => RpcSendChat.Invoke((MyPlayer, GamePlayer.LocalPlayer ?? MyPlayer, text)));
             }
@@ -90,7 +88,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                     {
                         if (!(GameOperatorManager.Instance?.Run(new PlayerInteractPlayerLocalEvent(MyPlayer, tracker.CurrentTarget, new(RealPlayerOnly: true))).IsCanceled ?? false))
                         {
-                            if (IsLimiltJailUses())
+                            if (IsLimitJailUses())
                             {
                                 --leftUses;
                                 button.UpdateUsesIcon(leftUses.ToString());
@@ -122,35 +120,35 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 executeButton.OnClick = button =>
                 {
                     if (Jailed == null) return;
-                    MyPlayer.MurderPlayer(Jailed, execution, execution, KillParameter.MeetingKill, KillCondition.TargetAlive);
+                    MyPlayer.MurderPlayer(Jailed, AddonGameTags.Execution, AddonGameTags.Execution, KillParameter.MeetingKill, KillCondition.TargetAlive);
                 };
 
-                if (IsLimiltJailUses())
+                if (IsLimitJailUses())
                     jailButton.ShowUsesIcon(3, leftUses.ToString());
                 else
                     executeButton.ShowUsesIcon(3, leftUses.ToString());
             }
         }
 
-        private bool CanExecute(GamePlayer target)
+        private static bool CanExecute(GamePlayer target)
         {
             bool canExecute;
-            if (target.Role.Role == Madmate.MyRole) canExecute = true;
+            if (target.Role.Role == Madmate.MyRole || target.IsMadmate) canExecute = true;
             else if (target.Role is JekyllAndHyde.Instance jah && !jah.AmJekyll) canExecute = true;
-            else if (target.TryGetModifier<Lover.Instance>(out _) && CanExecuteLoversOption) canExecute = true;
-            else if (target.Role.Role.Category == RoleCategory.CrewmateRole) canExecute = false;
+            else if ((target.TryGetModifier<Lover.Instance>(out _) || target.TryGetModifier<LoveTriangle.Instance>(out _)) && CanExecuteLoversOption) canExecute = true;
+            else if (target.Role.Role.Category == RoleCategory.CrewmateRole && target.Role.Role.Team == NebulaTeams.CrewmateTeam) canExecute = false;
             else canExecute = true;
 
-            return GameOperatorManager.Instance?.Run(new SheriffCheckKillEvent(MyPlayer, target, canExecute)).CanKill ?? canExecute;
+            return canExecute;
         }
 
         [Local]
         void CheckPlayerMurdered(PlayerMurderedEvent ev)
         {
             if (ev.Dead.PlayerId != Jailed?.PlayerId || !AmongUsUtil.InMeeting) return;
-            if (ev.Murderer == MyPlayer && ev.Dead.PlayerState == execution)
+            if (ev.Murderer == MyPlayer && ev.Dead.PlayerState == AddonGameTags.Execution)
             {
-                var canExecute = this.CanExecute(ev.Dead);
+                var canExecute = CanExecute(ev.Dead);
 
                 if (!canExecute && MyPlayer.IsTrueCrewmate)
                 {
@@ -161,11 +159,11 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
                 }
                 else
                 {
-                    if (!IsLimiltJailUses()) return;
+                    if (!IsLimitJailUses()) return;
                     --leftUses;
                 }
 
-                if (IsLimiltJailUses())
+                if (IsLimitJailUses())
                     jailButton?.UpdateUsesIcon(leftUses.ToString());
                 else
                     executeButton?.UpdateUsesIcon(leftUses.ToString());
@@ -209,7 +207,7 @@ public class Jailor : DefinedSingleAbilityRoleTemplate<Jailor.Ability>, DefinedR
             }
 
             if (!AmOwner) return;
-            if (IsLimiltJailUses() && leftUses > 0)
+            if (IsLimitJailUses() && leftUses > 0)
             {
                 leftUses--;
                 jailButton?.UpdateUsesIcon(leftUses.ToString());

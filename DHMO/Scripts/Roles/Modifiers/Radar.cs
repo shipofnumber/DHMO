@@ -41,7 +41,7 @@ public class RadarTrackingArrowAbility(GamePlayer? target, GamePlayer radar, flo
     GamePlayer radar = radar; 
     float interval = interval;
     float timer = -1f;
-    Arrow? arrow = null;
+    Arrow? arrow;
     VColor color = color;
 
     public void SetTarget(GamePlayer? target)

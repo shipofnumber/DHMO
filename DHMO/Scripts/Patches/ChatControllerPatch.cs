@@ -7,60 +7,6 @@ namespace DHMO.Patches;
 [HarmonyPatch]
 public static class ChatControllerPatch
 {
-    [HarmonyPatch(typeof(HudManager), nameof(HudManager.Start))]
-    [HarmonyPostfix]
-    public static void HudManagerStartPostfix(HudManager __instance)
-    {
-        if (__instance.LobbyTimerExtensionUI.gameObject.transform.TryFindChild(out var image, "WarningContainer",
-                "Icon"))
-        {
-            APICompat.WarningImage = new CacheSpriteLoader(() => image.GetComponent<SpriteRenderer>().sprite);
-        }
-
-        __instance.Chat.chatBubblePool.poolSize = ChatSystem.NumOfChatHistory;
-    }
-
-    static bool ShouldSkipNotification()
-    {
-        var bridge = AmongUsLLImpl.HudManagerBridge;
-        var chat = bridge.Chat;
-        if (!chat.AsBoolFast()) return false;
-
-        var chatButton = chat.chatButton;
-        if (!chatButton.AsBoolFast()) return false;
-
-        return !chatButton.isActiveAndEnabled;
-    }
-
-    [HarmonyPatch(typeof(ChatNotification), nameof(ChatNotification.SetUp))]
-    [HarmonyTranspiler]
-    public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        var codes = instructions.ToList();
-
-        var shipStatusInstanceGetter = AccessTools.PropertyGetter(typeof(ShipStatus), "Instance");
-        var skipCheckMethod = AccessTools.Method(typeof(ChatControllerPatch), nameof(ShouldSkipNotification));
-
-        for (int i = 0; i < codes.Count - 1; i++)
-        {
-            if (codes[i].opcode == OpCodes.Call && codes[i].operand is System.Reflection.MethodInfo method && method == shipStatusInstanceGetter &&
-                (codes[i + 1].opcode == OpCodes.Brtrue_S || codes[i + 1].opcode == OpCodes.Brtrue))
-            {
-                var newCall = new CodeInstruction(OpCodes.Call, skipCheckMethod);
-
-                if (codes[i].labels != null && codes[i].labels.Count > 0)
-                {
-                    newCall.labels.AddRange(codes[i].labels);
-                }
-
-                codes[i] = newCall;
-                break;
-            }
-        }
-
-        return codes.AsEnumerable();
-    }
-
     [HarmonyPostfix]
     [HarmonyPatch(typeof(TextBoxTMP), nameof(TextBoxTMP.Start))]
     public static void TextBoxPostfix(TextBoxTMP __instance)
@@ -102,7 +48,7 @@ public static class ChatControllerPatch
         ModGameObject backObj = back.ModGameObject(false);
         ModGameObject fieldObj = __instance.ModGameObject(false);
 
-        float height = Math.Max(0.62f, textArea.TextHeight + 0.2f);
+        float height = Mathn.Max(0.62f, textArea.TextHeight + 0.2f);
         VVector2 size = back.size;
         size.y = height;
         back.size = size;

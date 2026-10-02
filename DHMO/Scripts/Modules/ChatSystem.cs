@@ -22,7 +22,6 @@ public class ChatSystem : AbstractModule<Virial.Game.Game>, IGameOperator
     public ChatSystem()
     {
         Instance = this;
-        ModSingleton<ChatSystem>.Instance = this;
     }
 
     protected override void OnInjected(Virial.Game.Game container) => this.Register(container);

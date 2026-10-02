@@ -4,7 +4,6 @@ public class Communicator : DefinedAllocatableModifierTemplate, DefinedAllocatab
 {
     private Communicator() : base("communicator", "COMR", new(151, 189, 216))
     {
-        ConfigurationHolder?.AddTags(ConfigurationTags.TagBeginner);
     }
 
     Citation? HasCitation.Citation => Citations.TheOtherRoles;

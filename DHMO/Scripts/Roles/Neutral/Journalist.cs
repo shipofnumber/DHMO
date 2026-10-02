@@ -8,7 +8,7 @@ namespace DHMO.Roles.Neutral;
 public class JournalistShot : MonoBehaviour
 {
     private GamePlayer? selectedPlayer = null;
-    
+
     SpriteRenderer flashRenderer = null!;
     SpriteRenderer frameRenderer = null!;
     public SpriteRenderer centerRenderer = null!;
@@ -29,7 +29,7 @@ public class JournalistShot : MonoBehaviour
     {
         selectedPlayer = player;
     }
-    
+
     public void Awake()
     {
         frameRenderer = transform.GetChild(0).GetComponent<SpriteRenderer>();
@@ -50,7 +50,8 @@ public class JournalistShot : MonoBehaviour
         button.OnClick.AddListener(() =>
         {
             if (!focus) return;
-            action.Invoke(); GameObject.Destroy(button);
+            action.Invoke();
+            GameObject.Destroy(button);
         });
     }
 
@@ -62,7 +63,7 @@ public class JournalistShot : MonoBehaviour
         var mouseInfo = PlayerModInfo.LocalMouseInfo;
 
         var dis = Mathn.Min(mouseInfo.distance, 2.4f + Mathn.Abs(Mathn.Cos(mouseInfo.angle)) * 1.7f);
-        
+
         var anchorPos = selectedPlayer.Position;
         var mouseDir = new VVector2(Mathn.Cos(mouseInfo.angle), Mathn.Sin(mouseInfo.angle));
 
@@ -78,7 +79,8 @@ public class JournalistShot : MonoBehaviour
 
         var targetPos = anchorPos + offset;
 
-        transform.localPosition -= (transform.localPosition - targetPos.AsUnityVector3(-10f)) * (FastMethods.GetDeltaTimeFast() * 8.6f);
+        transform.localPosition -= (transform.localPosition - targetPos.AsUnityVector3(-10f)) *
+                                   (FastMethods.GetDeltaTimeFast() * 8.6f);
 
         var scale = transform.localScale.x;
         float targetP = dis switch
@@ -87,7 +89,8 @@ public class JournalistShot : MonoBehaviour
             > 3.5f => 1f,
             _ => (dis - 2.1f) / (3.5f - 2.1f)
         };
-        float targetScale = Mathn.Lerp(Journalist.WideAngleFinderSizeOption, Journalist.TelephotoFinderSizeOption, targetP);
+        float targetScale = Mathn.Lerp(Journalist.WideAngleFinderSizeOption, Journalist.TelephotoFinderSizeOption,
+            targetP);
 
         scale -= (scale - targetScale) * FastMethods.GetDeltaTimeFast() * 5.4f;
         transform.localScale = new(scale, scale, 1f);
@@ -99,21 +102,20 @@ public class JournalistShot : MonoBehaviour
     public void TakePicture(GamePlayer myPlayer, Action<bool>? callback = null)
     {
         focus = false;
-
+        if (selectedPlayer == null) return;
         var scale = transform.localScale;
-        
+
         GameObject camObj = new("CamObj");
         camObj.transform.SetParent(transform);
         camObj.transform.localScale = new VVector3(1, 1);
         camObj.transform.localPosition = new VVector3(0f, 0f, -10f);
         camObj.transform.localEulerAngles = new VVector3(0, 0, 0);
-        
+
         //zを名前テキストより奥へ
         var pos = camObj.transform.position;
         pos.z = -0.4f;
         camObj.transform.position = pos;
         centerRenderer.gameObject.SetActive(false);
-
         Camera cam = camObj.AddComponent<Camera>();
         cam.orthographic = true;
         cam.orthographicSize = transform.localScale.y * frameRenderer.size.y * 0.5f;
@@ -122,113 +124,118 @@ public class JournalistShot : MonoBehaviour
         cam.nearClipPlane = -100;
         cam.farClipPlane = 100;
         cam.enabled = true;
-        RenderTexture rt = new((int)(frameRenderer.size.x * 100f * scale.x), (int)(frameRenderer.size.y * 100f * scale.y), 16);
+        RenderTexture rt = new((int)(frameRenderer.size.x * 100f * scale.x),
+            (int)(frameRenderer.size.y * 100f * scale.y), 16);
         rt.Create();
         cam.targetTexture = rt;
-
-        foreach (var usable in AmongUsLLImpl.ShipStatusInstance.GetComponentsInChildren<IUsable>()) usable.SetOutline(false, false);
+        foreach (var usable in AmongUsLLImpl.ShipStatusInstance.GetComponentsInChildren<IUsable>())
+            usable.SetOutline(false, false);
+        
         if (collider.OverlapPoint(selectedPlayer.Position))
         {
-            selectedPlayer.Unbox().AddOutfit(new OutfitCandidate(NebulaGameManager.Instance!.UnknownOutfit, "ShotComm", 10000, false));
-        }
-        
-        //一時的に影を無視して描画させる
-        using(var ignoreShadow = AmongUsUtil.IgnoreShadow(false)) cam.Render();
-
-        RenderTexture.active = cam.targetTexture;
-        Texture2D texture2D = new Texture2D(rt.width, rt.height, TextureFormat.ARGB32, false, false);
-        texture2D.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-        texture2D.Apply(false, false);
-
-        //画像を保存する
-        if(ClientOption.GetValue(ClientOption.ClientOptionType.OutputPaparazzoPhoto) == 1){
-            File.WriteAllBytesAsync(NebulaManager.GetPicturePath("_Original", out _), texture2D.EncodeToPNG());
-            VVector2 vec1 = new VVector2(rt.width, rt.height).Rotate(transform.localEulerAngles.z), vec2 = new VVector2(rt.width, -rt.height).Rotate(transform.localEulerAngles.z);
-            var rotatedWidth = (int)(Mathn.Max(Mathn.Abs(vec1.x), Mathn.Abs(vec2.x)) + 0.8f);
-            var rotatedHeight = (int)(Mathn.Max(Mathn.Abs(vec1.y), Mathn.Abs(vec2.y)) + 0.8f);
-            var renderer = UnityHelper.CreateSpriteRenderer("TempImage", null, VVector3.Zero, 30);
-            renderer.sprite = texture2D.ToSprite(100f);
-            renderer.transform.localEulerAngles = transform.localEulerAngles;
-            var rotatedTexture = UnityHelper.TakeCustomPicture(null, new(0f,0f,-1f), rotatedWidth, rotatedHeight, rotatedHeight * 0.5f * 0.01f, 1 << 30, VColor.Clear.ToUnityColor(), false, false);
-            File.WriteAllBytesAsync(NebulaManager.GetPicturePath("_Rotated", out _), rotatedTexture.EncodeToPNG());
-            Object.Destroy(renderer.gameObject);
-            Object.Destroy(rotatedTexture);
+            PlayerModInfo.RpcAddOutfit.LocalInvoke((selectedPlayer.PlayerId,
+                new OutfitCandidate(NebulaGameManager.Instance!.UnknownOutfit, "ShotComm", 1000, false)));
         }
 
-        var sprite = texture2D.ToSprite(100f);
-
-        cam.targetTexture = null;
-        RenderTexture.active = null;
-        Object.Destroy(rt);
-        Object.Destroy(camObj);
-
-        centerRenderer.gameObject.SetActive(true);
-        centerRenderer.transform.localPosition = new(0f, 0f, 0.1f);
-        centerRenderer.transform.localScale = new(1f / scale.x, 1f / scale.y, 0.1f);
-        centerRenderer.sprite = sprite;
-        centerRenderer.material = VanillaAsset.GetHighlightMaterial();
-        
-        selectedPlayer.Unbox().RemoveOutfit("ShotComm");
-
-        NebulaAsset.PlaySE(NebulaAudioClip.Camera);
-        
-        //UIレイヤー上の表示に変換
-        SetLayer(LayerExpansion.GetUILayer());
-
-        var pictureScaler = UnityHelper.CreateObject("PictureScaler", AmongUsLLImpl.HudManagerBridge.MyTransform, VVector3.Zero);
-        transform.SetParent(pictureScaler.transform, true);
-        var pictureScalerObj = pictureScaler.ModGameObject();
-        pictureScalerObj.LocalScale = NebulaGameManager.Instance!.WideCamera.ViewerTransform.LocalScale;
-        pictureScalerObj.LocalEulerAngles = NebulaGameManager.Instance.WideCamera.ViewerTransform.LocalEulerAngles;
-
-        //UI変換後のスケーラ
-        IEnumerator CoScale()
+        IEnumerator CoCapture()
         {
-            float t = 5f;
-            while (t > 0f)
+            yield return new WaitForEndOfFrame();
+
+            //一時的に影を無視して描画させる
+            using (var ignoreShadow = AmongUsUtil.IgnoreShadow(false)) cam.Render();
+            RenderTexture.active = cam.targetTexture;
+            Texture2D texture2D = new Texture2D(rt.width, rt.height, TextureFormat.ARGB32, false, false);
+            texture2D.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            texture2D.Apply(false, false);
+            //画像を保存する
+            if (ClientOption.GetValue(ClientOption.ClientOptionType.OutputPaparazzoPhoto) == 1)
             {
-                pictureScalerObj.LocalScale -= (pictureScalerObj.LocalScale - VVector3.One).Delta(2f, 0.02f);
-                pictureScalerObj.LocalEulerAngles -= (pictureScalerObj.LocalEulerAngles - VVector3.Zero).Delta(2f, 0.2f);
-                transform.localPosition -= (transform.localPosition - new UVector3(0f, 0f, -10f)).Delta(8f, 0.2f);
-                t -= Time.deltaTime;
-                yield return null;
+                File.WriteAllBytesAsync(NebulaManager.GetPicturePath("_Original", out _), texture2D.EncodeToPNG());
+                VVector2 vec1 = new VVector2(rt.width, rt.height).Rotate(transform.localEulerAngles.z),
+                    vec2 = new VVector2(rt.width, -rt.height).Rotate(transform.localEulerAngles.z);
+                var rotatedWidth = (int)(Mathn.Max(Mathn.Abs(vec1.x), Mathn.Abs(vec2.x)) + 0.8f);
+                var rotatedHeight = (int)(Mathn.Max(Mathn.Abs(vec1.y), Mathn.Abs(vec2.y)) + 0.8f);
+                var renderer = UnityHelper.CreateSpriteRenderer("TempImage", null, VVector3.Zero, 30);
+                renderer.sprite = texture2D.ToSprite(100f);
+                renderer.transform.localEulerAngles = transform.localEulerAngles;
+                var rotatedTexture = UnityHelper.TakeCustomPicture(null, new(0f, 0f, -1f), rotatedWidth, rotatedHeight,
+                    rotatedHeight * 0.5f * 0.01f, 1 << 30, VColor.Clear.ToUnityColor(), false, false);
+                File.WriteAllBytesAsync(NebulaManager.GetPicturePath("_Rotated", out _), rotatedTexture.EncodeToPNG());
+                Object.Destroy(renderer.gameObject);
+                Object.Destroy(rotatedTexture);
             }
+
+            var sprite = texture2D.ToSprite(100f);
+            cam.targetTexture = null;
+            RenderTexture.active = null;
+            Object.Destroy(rt);
+            Object.Destroy(camObj);
+            centerRenderer.gameObject.SetActive(true);
+            centerRenderer.transform.localPosition = new(0f, 0f, 0.1f);
+            centerRenderer.transform.localScale = new(1f / scale.x, 1f / scale.y, 0.1f);
+            centerRenderer.sprite = sprite;
+            centerRenderer.material = VanillaAsset.GetHighlightMaterial();
+
+            selectedPlayer.Unbox().RemoveOutfit("ShotComm");
+            NebulaAsset.PlaySE(NebulaAudioClip.Camera);
+
+            //UIレイヤー上の表示に変換
+            SetLayer(LayerExpansion.GetUILayer());
+            var pictureScaler = UnityHelper.CreateObject("PictureScaler", AmongUsLLImpl.HudManagerBridge.MyTransform,
+                VVector3.Zero);
+            transform.SetParent(pictureScaler.transform, true);
+            var pictureScalerObj = pictureScaler.ModGameObject();
+            pictureScalerObj.LocalScale = NebulaGameManager.Instance!.WideCamera.ViewerTransform.LocalScale;
+            pictureScalerObj.LocalEulerAngles = NebulaGameManager.Instance.WideCamera.ViewerTransform.LocalEulerAngles;
+
+            //UI変換後のスケーラ
+            IEnumerator CoScale()
+            {
+                float t = 5f;
+                while (t > 0f)
+                {
+                    pictureScalerObj.LocalScale -= (pictureScalerObj.LocalScale - VVector3.One).Delta(2f, 0.02f);
+                    pictureScalerObj.LocalEulerAngles -=
+                        (pictureScalerObj.LocalEulerAngles - VVector3.Zero).Delta(2f, 0.2f);
+                    transform.localPosition -= (transform.localPosition - new UVector3(0f, 0f, -10f)).Delta(8f, 0.2f);
+                    t -= Time.deltaTime;
+                    yield return null;
+                }
+            }
+
+            IEnumerator CoFlash()
+            {
+                flashRenderer.color = VColor.White.ToUnityColor();
+                float a = 1f;
+                while (a > 0f)
+                {
+                    a -= Time.deltaTime * 1.4f;
+                    a = Mathn.Clamp01(a);
+                    flashRenderer.color = VColor.White.AlphaMultiplied(a).ToUnityColor();
+                    yield return null;
+                }
+
+                flashRenderer.gameObject.SetActive(false);
+                //成功時
+                callback?.Invoke(true);
+                if (myPlayer.Role is Journalist.Instance journalist)
+                {
+                    journalist.Shot = (pictureScalerObj.GetUnityTransform(), selectedPlayer.PlayerId, this);
+                }
+
+                NebulaManager.Instance.StartCoroutine(CoScale().WrapToIl2Cpp());
+            }
+
+            StartCoroutine(CoFlash().WrapToIl2Cpp());
         }
 
-        IEnumerator CoFlash()
-        {
-            flashRenderer.color = VColor.White.ToUnityColor();
-            float a = 1f;
-            while (a > 0f)
-            {
-                a -= Time.deltaTime * 1.4f;
-                a = Mathn.Clamp01(a);
-                flashRenderer.color = VColor.White.AlphaMultiplied(a).ToUnityColor();
-                yield return null;
-            }
-            flashRenderer.gameObject.SetActive(false);
-
-            //成功時
-            callback?.Invoke(true);
-
-            if (myPlayer.Role is Journalist.Instance journalist)
-            {
-                journalist.Shot = (pictureScalerObj.GetUnityTransform(), selectedPlayer.PlayerId, this);
-            }
-
-            NebulaManager.Instance.StartCoroutine(CoScale().WrapToIl2Cpp());
-        }
-
-        StartCoroutine(CoFlash().WrapToIl2Cpp());
+        StartCoroutine(CoCapture().WrapToIl2Cpp());
     }
 }
 
-
 public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
 {
-    static readonly public RoleTeam MyTeam = NebulaAPI.Preprocessor!.CreateTeam("teams.journalist", new(218, 165, 32), TeamRevealType.OnlyMe);
-    
-    private Journalist() : base("journalist", MyTeam.Color, RoleCategory.NeutralRole, MyTeam, [TrackCoolDownOption, RequiredBuzzOption, RequiredPhotosOption, TelephotoFinderSizeOption, WideAngleFinderSizeOption, VentConfiguration])
+    private Journalist() : base("journalist", AddonGameTags.JournalistTeam.Color, RoleCategory.NeutralRole, AddonGameTags.JournalistTeam, [TrackCoolDownOption, RequiredBuzzOption, RequiredPhotosOption, TelephotoFinderSizeOption, WideAngleFinderSizeOption, VentConfiguration])
     {
         ConfigurationHolder?.AddTags(ConfigurationTags.TagFunny, ConfigurationTags.TagDifficult);
     }
@@ -245,7 +252,9 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
     bool IAssignableDocument.HasAbility => true;
     bool IAssignableDocument.HasTips => true;
     bool IAssignableDocument.HasWinCondition => true;
-
+    
+    Image? DefinedAssignable.IconImage => NebulaAPI.AddonAsset.GetResource("RoleIcon/JournalistIcon.png")?.AsImage(120f);
+    
     static private Image? cameraButtonSprite = NebulaAPI.AddonAsset.GetResource("Button/CameraButton.png")?.AsImage(115f);
     static private Image? trackButtonSprite = NebulaAPI.AddonAsset.GetResource("Button/JournalistTrackButton.png")?.AsImage(115f);
     
@@ -254,8 +263,6 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
     [NebulaRPCHolder]
     public class Instance : RuntimeVentRoleTemplate, RuntimeRole
     {
-        public static GameEnd? JournalistTeamWin = NebulaAPI.Preprocessor?.CreateEnd("journalist", MyRole.RoleColor);
-        
         public override DefinedRole Role => MyRole;
         
         public (Transform holder, byte playerId, JournalistShot shot)? Shot { get; internal set; } = null;
@@ -271,6 +278,12 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
         {
         }
 
+        GUIWidget RuntimeAssignable.ProgressWidget => ProgressGUI.Holder(ProgressGUI.OneLineText(Language.Translate("role.journalist.taskTextBuzz")
+            .Replace("%CB%", buzz.ToString())
+            .Replace("%GB%", RequiredBuzzOption.GetValue().ToString())), ProgressGUI.OneLineText(Language.Translate("role.journalist.taskTextPhoto")
+            .Replace("%CP%", photos.ToString())
+            .Replace("%GP%", RequiredPhotosOption.GetValue().ToString())));
+        
         public override void OnActivated()
         {
             if (AmOwner)
@@ -403,9 +416,9 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
         void OnUpdate(GameUpdateEvent ev)
         {
             if (MyPlayer.IsDead) return;
-            if (buzz >= RequiredBuzzOption && photos >= RequiredPhotosOption && JournalistTeamWin != null)
+            if (buzz >= RequiredBuzzOption && photos >= RequiredPhotosOption)
             {
-                NebulaAPI.CurrentGame?.RequestGameEnd(JournalistTeamWin, BitMasks.AsPlayer(MyPlayer));
+                NebulaAPI.CurrentGame?.RequestGameEnd(AddonGameTags.JournalistEnd, BitMasks.AsPlayer(MyPlayer), AddonGameTags.JournalistWinDetail);
             }
         }
 
@@ -579,7 +592,7 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                         MeetingHudExtension.AddRightContent(obj);
                         var renderer = obj.transform.GetChild(3).GetComponent<SpriteRenderer>();
                         List<byte> data = [];
-                        foreach (var b in stored.bytes) data.AddRange(b);
+                        foreach (var b in stored.bytes.NotNull()) data.AddRange(b);
                         Texture2D texture = new(1, 1);
                         texture.LoadImage(data.ToArray());
                         renderer.sprite = texture.ToSprite(100f);
@@ -603,7 +616,13 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                              if (GamePlayer.LocalPlayer.IsDead || journalist.AmOwner) return;
                              if (!isSpeculated) RpcGuessPlayer?.Invoke((divided.journalistId, false, true));
                         };
-                        
+
+                        TextMeshPro tmPro = null!;
+                        var text = new NoSGUIText(Virial.Media.GUIAlignment.Left, new(NebulaAPI.GUI.GetAttribute(Virial.Text.AttributeParams.StandardBaredBoldLeftNonFlexible)) { Alignment = Virial.Text.TextAlignment.BottomLeft, FontSize = new(1.6f), Size = new(3f, 1f) }, new RawTextComponent("")) { PostBuilder = t => { tmPro = t; tmPro.sortingOrder = 0; } };
+                        text.Instantiate(new Virial.Media.Anchor(new(0f, 0f), new(-0.5f, -0.5f, 0f)), new(20f, 20f), out var _)?.transform.SetParent(MeetingHud.Instance.transform);
+                        tmPro.transform.localPosition = new VVector3(5.725f, 0.9f, -40f);
+                        tmPro.text = Language.Translate("role.journalist.whoIsHe");
+
                         var button = obj.SetUpButton();
                         button.OnClick.AddListener(() =>
                         {
@@ -623,14 +642,14 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                                 isSpeculated = true;
                                 collider2D.enabled = false;
                                 menu.CloseInternal();
-                            }, (p) => p.DeadRound == null || (ModSingleton<DGameManager>.Instance.CurrentRound - p.DeadRound) <= 1, true);
+                            }, (p) => p.DeadTurn == null || (ModSingleton<DGameManager>.Instance.CurrentTurn - p.DeadTurn) <= 1, true);
                         });
                         button.SetLocalizedOverlay("ui.journalist.photoInfo");
                         
                         IEnumerator CoShow()
                         {
                             NebulaAsset.PlaySE(NebulaAudioClip.PaparazzoDisclose, volume: 1f);
-
+                            
                             float scale = 0f;
                             while (scale < 0.4f)
                             {
@@ -638,12 +657,6 @@ public class Journalist : DefinedRoleTemplate, DefinedRole, IAssignableDocument
                                 if (obj.AsBoolFast()) obj.transform.localScale = VVector3.One * scale;
                                 yield return null;
                             }
-
-                            TextMeshPro tmPro = null!;
-                            var text = new NoSGUIText(Virial.Media.GUIAlignment.Left, new(NebulaAPI.GUI.GetAttribute(Virial.Text.AttributeParams.StandardBaredBoldLeftNonFlexible)) { Alignment = Virial.Text.TextAlignment.BottomLeft, FontSize = new(1.6f), Size = new(3f, 1f) }, new RawTextComponent("")) { PostBuilder = t => { tmPro = t; tmPro.sortingOrder = 0; } };
-                            text.Instantiate(new Virial.Media.Anchor(new(0f, 0f), new(-0.5f, -0.5f, 0f)), new(20f, 20f), out var _)?.transform.SetParent(MeetingHud.Instance.transform);
-                            tmPro.transform.localPosition = new VVector3(5.725f, 0.9f, -40f);
-                            tmPro.text = Language.Translate("role.journalist.whoIsHe");
                             
                             if (obj.AsBoolFast()) obj.transform.localScale = VVector3.One * 0.4f;
                         }

@@ -1,4 +1,5 @@
-﻿using Random = UnityEngine.Random;
+﻿using Nebula.Patches;
+using Random = UnityEngine.Random;
 
 namespace DHMO.Patches;
 
@@ -18,52 +19,76 @@ public static class MeetingHudExtensionPatch
             MeetingHudExtension.ActionCoolDown = 0.8f;
         }
     }
-    
-    [HarmonyPatch(typeof(Nebula.Extensions.MeetingHudExtension), nameof(Nebula.Extensions.MeetingHudExtension.ModCoStartMeeting)), HarmonyPrefix]
-    public static bool ModCoStartMeetingPrefix(PlayerControl reporter, NetworkedPlayerInfo deadBody, int reportType, ref IEnumerator __result)
+
+    [HarmonyPatch(typeof(MeetingHudExtension), nameof(MeetingHudExtension.InitMeetingTimer))]
+    [HarmonyPostfix]
+    public static void InitMeetingTimerPostfix()
     {
-        try
+        var judgeMeetingManager = ModSingleton<JudgeMeetingManager>.Instance;
+        if (!judgeMeetingManager.IsSpecialMeeting) return;
+
+        MeetingHudExtension.DiscussionTimer = Mathn.Max(0f, judgeMeetingManager.LastMeetingDiscussionTime);
+        MeetingHudExtension.VotingTimer = Mathn.Max(15f, judgeMeetingManager.LastMeetingVotingTime);
+    }
+
+    [HarmonyPatch(typeof(MeetingModRpc), nameof(MeetingModRpc.ForcelyVotingComplete))]
+    [HarmonyPrefix]
+    public static void VoteCompletePrefix([HarmonyArgument(2)] List<MeetingHud.VoterState> finalStates, ref byte exiled, ref byte[] exiledAll)
+    {
+        var judgeMeetingManager = ModSingleton<JudgeMeetingManager>.Instance;
+        if (!judgeMeetingManager.IsSpecialMeeting) return;
+        
+        var alivePlayers = APICompat.AlivePlayers;
+        var judges = alivePlayers.Where(p => p.Role.GetAbility<EvilJudge.Ability>() != null).ToArray();
+        if (judges.Length == 0) return;
+
+        var judgeIds = judges.Select(j => j.PlayerId).ToHashSet();
+        var skipVoters = finalStates
+            .Where(v => !v.AmDead && v.SkippedVote && !judgeIds.Contains(v.VoterId))
+            .Select(v => GamePlayer.GetPlayer(v.VoterId))
+            .NotNull()
+            .DistinctBy(p => p.PlayerId)
+            .ToArray();
+
+        if (skipVoters.Length < alivePlayers.Length / 2) return;
+
+        var sacrificeTargets = skipVoters
+            .Where(p => !judges.Any(j => j.IsSameSideOf(p)) 
+                        && EvilJudge.RoleFilterOption.Contains(p.Role.Role) 
+                        && p.Role.Role is not Jester)
+            .ToArray();
+        if (sacrificeTargets.Length <= 0) return;
+
+        var sacrificialExile = sacrificeTargets[System.Random.Shared.Next(sacrificeTargets.Length)];
+        if (exiledAll.Contains(sacrificialExile.PlayerId)) return;
+
+        judgeMeetingManager.WillSacrificialExile = sacrificialExile;
+        if (exiled == byte.MaxValue)
         {
-            __result = ModCoStartMeeting(reporter, deadBody, reportType);
-            return false;
+            exiled = sacrificialExile.PlayerId;
+            exiledAll = [exiled, ..exiledAll];
         }
-        catch (Exception e)
+        else
         {
-            DLog.Log(e);
-            return true;
+            exiledAll = [..exiledAll, sacrificialExile.PlayerId];
         }
     }
 
-    private static IEnumerator ModCoStartMeeting(PlayerControl reporter, NetworkedPlayerInfo? deadBody, int reportType)
+    [HarmonyPatch(typeof(MeetingDestroyPatch), nameof(MeetingDestroyPatch.Postfix))]
+    [HarmonyPrefix]
+    public static bool MeetingHudOnDestoryPatch()
     {
-        while (!MeetingHud.Instance.AsBoolFast()) yield return null;
+        return false;
+    }
 
-        MeetingRoomManager.Instance.RemoveSelf();
-        AmongUsLLImpl.HudManagerInstance.InitMap();
-        MapBehaviour.Instance.SetPreMeetingPosition((GamePlayer.LocalPlayer?.Position ?? VVector2.Zero).AsUnityVector3(0f), false);
+    [HarmonyPatch(typeof(PlayerControl), nameof(PlayerControl.ResetForMeeting))]
+    [HarmonyPrefix]
+    public static bool ResetForMeetingPrefix(PlayerControl __instance)
+    {
+        if (!__instance.AsBoolFast()) return true;
 
-        foreach (var player in GamePlayer.AllPlayers)
-        {
-            try
-            {
-                if (player.VanillaPlayer.AsBoolFast(out var pc)) pc.ModResetForMeeting(false);
-            }
-            catch (Exception e)
-            {
-                DLog.Log(e);
-            }
-        }
-
-        if (MapBehaviour.Instance.AsBoolFast(out var map)) map.Close();
-        if (Minigame.Instance.AsBoolFast(out var minigame)) minigame.ForceClose();
-
-        AmongUsLLImpl.ShipStatusInstance.OnMeetingCalled();
-        KillAnimation.SetMovement(reporter, true);
-        GameData.TimeLastMeetingStarted = Time.realtimeSinceStartup;
-
-        var meetingHud = MeetingHud.Instance;
-        meetingHud.StartCoroutine(Nebula.Extensions.MeetingHudExtension.ModCoMeetingHudIntro(meetingHud, reporter, deadBody, (Nebula.Extensions.MeetingHudExtension.ReportType)reportType).WrapToIl2Cpp());
-        yield break;
+        __instance.ModResetForMeeting(!MeetingHud.Instance.AsBoolFast());
+        return false;
     }
 
     public static void ModResetForMeeting(this PlayerControl player, bool spawn = true)
@@ -73,8 +98,10 @@ public static class MeetingHudExtensionPatch
         if (!player.GetComponent<DummyBehaviour>().enabled)
         {
             player.MyPhysics.ExitAllVents();
-            if (spawn && ship.AsBoolFast())
+            if (spawn)
+            {
                 ship.SpawnPlayer(player, GameData.Instance.PlayerCount, false);
+            }
         }
         player.RemoveProtection();
         player.NetTransform.enabled = true;

@@ -151,13 +151,6 @@ public static class APICompat
         return closest[0].Player;
     }
 
-    public static bool IsLightColor(UColor color)
-    {
-        float gray = color.grayscale;
-
-        return gray >= 0.5f;
-    }
-    
     public static bool IsOutMeeting() => AmongUsUtil.InMeeting && MeetingHud.Instance.ModGameObject(false).LocalPosition.x > 15;
 
     public static bool ModAbilityMeetingButton() => AmongUsUtil.InMeeting && MeetingHud.Instance.CurrentState is not MeetingHud.MeetingStates.Animating and not MeetingHud.MeetingStates.Discussion and not MeetingHud.MeetingStates.Results and not MeetingHud.MeetingStates.Proceeding;
@@ -210,7 +203,7 @@ public static class APICompat
     extension(GamePlayer player)
     {
         public bool IsDevoured => player.Position.Distance(new VVector2(-100f, 10f)).Approximately(0f);
-        public int? DeadRound => ModSingleton<DGameManager>.Instance.GetPlayerDeadRound(player);
+        public int? DeadTurn => ModSingleton<DGameManager>.Instance.GetPlayerDeadTurn(player);
     }
 
     extension<T>(EditableBitMask<T> mask)

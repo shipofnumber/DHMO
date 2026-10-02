@@ -1,12 +1,16 @@
 ﻿namespace DHMO.Patches;
 
-[HarmonyPatch(typeof(ModAbilityButtonImpl), nameof(ModAbilityButtonImpl.OnHudUpdate))]
+[HarmonyPatch(typeof(ModAbilityButtonImpl))]
 public static class ModAbilityButtonUpdatePatch
 {
-    public static bool Prefix(ModAbilityButtonImpl __instance)
+    [HarmonyPatch(nameof(ModAbilityButtonImpl.OnHudUpdate))]
+    [HarmonyPrefix]
+    public static bool HudUpdatePrefix(ModAbilityButtonImpl __instance)
     {
-        if (GamePlayer.LocalPlayer == null ||
-            !GamePlayer.LocalPlayer.TryGetAbility<Overclocker.Ability>(out var ability) ||
+        var localPlayer = GamePlayer.LocalPlayer;
+        if (localPlayer == null) return true;
+
+        if (!localPlayer.TryGetAbility<Overclocker.Ability>(out var ability) ||
             (ability.killButton != __instance && ability.overTimeButton != __instance)) return true;
         
         __instance.UpdateVisibility();

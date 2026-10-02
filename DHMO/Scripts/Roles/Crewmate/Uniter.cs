@@ -26,7 +26,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
     public class Ability : AbstractPlayerAbility, IPlayerAbility, IBindPlayer, IGameOperator, ILifespan
     {
         Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/UniterMeetingButton.png")?.AsImage(1200f);
-        int leftUniting = NumOfUnitingOption;
+        int leftUniting ;
 
         private EditableBitMask<GamePlayer> selected = BitMasks.AsPlayer();
 
@@ -52,7 +52,7 @@ public class Uniter : DefinedSingleAbilityRoleTemplate<Uniter.Ability>, DefinedS
                 var p = state.MyPlayer;
                 if (!state.IsSelected)
                 {
-                    if (BitOperations.PopCount(selected.AsRawPattern) >= NumOfCanUnitOption) return;
+                    if (selected.Count >= NumOfCanUnitOption) return;
                     selected.Add(p);
                     state.SetSelect(true);
                 }

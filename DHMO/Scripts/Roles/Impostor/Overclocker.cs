@@ -94,6 +94,13 @@ public class Overclocker : DefinedSingleAbilityRoleTemplate<Overclocker.Ability>
         {
             if (message.player.AmOwner)
             {
+                var killButton = AmongUsLLImpl.HudManagerBridge.KillButton;
+                if (killButton.AsBoolFast() && killButton.isActiveAndEnabled && killButton.IsOnCooldown)
+                {
+                    message.player.VanillaPlayer.SetKillTimer(message.player.VanillaPlayer.killTimer - message.changeTime);
+                    if (Overclocker.RandomChangeCD) return;
+                }
+
                 var buttons = GameOperatorManager.Instance?.AllOperators.OfType<ModAbilityButtonImpl>().Where(b => b.IsVisible && b.CoolDownTimer != null && b.CoolDownTimer is GameTimer).ToArray();
                 if (buttons == null) return;
 

@@ -2,8 +2,7 @@
 
 public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignableDocument
 {
-    public static readonly RoleTeam PelicanTeam = NebulaAPI.Preprocessor!.CreateTeam("teams.pelican", new(0, 153, 76), TeamRevealType.OnlyMe);
-    private Pelican() : base("pelican", PelicanTeam.Color, RoleCategory.NeutralRole, PelicanTeam, [DevourCooldown, IncreaseTime, CanCallEmergencyMeeting, new GroupConfiguration("options.role.pelican.group.pelicanTime", [InvokePelicanTime, PelicanTimeAliveNum, PelicanTimeDuration, TaskPhaseRestartPelicanTimeDisperse], PelicanTeam.Color.RGBMultiplied(0.65f)), VentConfiguration])
+    private Pelican() : base("pelican", AddonGameTags.PelicanTeam.Color, RoleCategory.NeutralRole, AddonGameTags.PelicanTeam, [DevourCooldown, IncreaseTime, CanCallEmergencyMeeting, new GroupConfiguration("options.role.pelican.group.pelicanHunt", [InvokePelicanHunt, PelicanHuntAliveNum, PelicanHuntDuration, TaskPhaseRestartPelicanHuntDisperse], AddonGameTags.PelicanTeam.Color.RGBMultiplied(0.65f)), VentConfiguration])
     {
     }
 
@@ -12,15 +11,14 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
     public static readonly IRelativeCooldownConfiguration DevourCooldown = NebulaAPI.Configurations.KillConfiguration("options.role.pelican.devourCooldown", CoolDownType.Immediate, (0f, 60f, 2.5f), 25f, (-40f, 40f, 2.5f), 0f, (0.125f, 2f, 0.125f), 1f);
     public static readonly FloatConfiguration IncreaseTime = NebulaAPI.Configurations.Configuration("options.role.pelican.additionalCooldown", (0f, 20f, 1f), 5f, FloatConfigurationDecorator.Second);
-    public static readonly BoolConfiguration InvokePelicanTime = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanTime", true);
+    public static readonly BoolConfiguration InvokePelicanHunt = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanHunt", true);
     internal static readonly BoolConfiguration CanCallEmergencyMeeting = NebulaAPI.Configurations.Configuration("options.role.pelican.canCallEmergencyMeeting", true);
-    internal static readonly IntegerConfiguration PelicanTimeAliveNum = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanTimeAlived", (2, 23), 4, () => InvokePelicanTime);
-    internal static readonly FloatConfiguration PelicanTimeDuration = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanTimeDuration", (0f, 300f, 2.5f), 40f, FloatConfigurationDecorator.Second, () => InvokePelicanTime);
-    internal static readonly BoolConfiguration TaskPhaseRestartPelicanTimeDisperse = NebulaAPI.Configurations.Configuration("options.role.pelican.taskPhaseRestartEnterPelicanTimeDisperse", true, () => InvokePelicanTime);
+    internal static readonly IntegerConfiguration PelicanHuntAliveNum = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanHuntAlive", (2, 23), 4, () => InvokePelicanHunt);
+    internal static readonly FloatConfiguration PelicanHuntDuration = NebulaAPI.Configurations.Configuration("options.role.pelican.pelicanHuntDuration", (0f, 300f, 2.5f), 40f, FloatConfigurationDecorator.Second, () => InvokePelicanHunt);
+    internal static readonly BoolConfiguration TaskPhaseRestartPelicanHuntDisperse = NebulaAPI.Configurations.Configuration("options.role.pelican.taskPhaseRestartEnterPelicanHuntDisperse", true, () => InvokePelicanHunt);
     static private readonly IVentConfiguration VentConfiguration = NebulaAPI.Configurations.NeutralVentConfiguration("role.pelican.vent", true);
 
     private static readonly Image? buttonImage = NebulaAPI.AddonAsset.GetResource("Button/DevourButton.png")?.AsImage(115f);
-    public static readonly TranslatableTag Digestion = new("state.digestion");
 
     public static Pelican MyRole = new();
 
@@ -36,16 +34,15 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
     IEnumerable<AssignableDocumentReplacement> IAssignableDocument.GetDocumentReplacements()
     {
-        yield return new("%WIN%", InvokePelicanTime ? Language.Translate("role.pelican.winCond.pelicanTimeOver") : "");
-        yield return new("%PELICANTIME%", InvokePelicanTime ? Language.Translate("role.pelican.ability.pelicanTime") : "");
-        yield return new("%NUM%", PelicanTimeAliveNum.GetValue().ToString());
-        yield return new("%DURATION%", PelicanTimeDuration.GetValue().ToString());
+        yield return new("%WIN%", InvokePelicanHunt ? Language.Translate("role.pelican.winCond.pelicanHuntOver") : "");
+        yield return new("%PELICANHUNT%", InvokePelicanHunt ? Language.Translate("role.pelican.ability.pelicanHunt") : "");
+        yield return new("%NUM%", PelicanHuntAliveNum.GetValue().ToString());
+        yield return new("%DURATION%", PelicanHuntDuration.GetValue().ToString());
     }
 
     [NebulaRPCHolder]
     public class Instance(GamePlayer player) : RuntimeVentRoleTemplate(player, VentConfiguration), RuntimeRole
     {
-        public static GameEnd? PelicanTeamWin = NebulaAPI.Preprocessor?.CreateEnd("pelican", MyRole.RoleColor);
         public EditableBitMask<GamePlayer> DevouredPlayerMask { get; } = BitMasks.AsPlayer();
         
         public override DefinedRole Role => MyRole;
@@ -53,7 +50,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
 
         void ClaimPelicanTeamRemaining(KillerTeamCallback callback)
         {
-            if (callback.ExcludedTeam == Pelican.PelicanTeam) return;
+            if (callback.ExcludedTeam == AddonGameTags.PelicanTeam) return;
             if (MyPlayer.IsAlive) callback.MarkRemaining();
         }
 
@@ -68,10 +65,10 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                 return pelican;
             }).NotNull().Sum(p => DevouredPlayerMask.Count);
 
-            if (NebulaAPI.RunEvent(new KillerTeamCallback(PelicanTeam)).RemainingOtherTeam || (totalAlive - totalDevoured) > 1) return;
+            if (NebulaAPI.RunEvent(new KillerTeamCallback(AddonGameTags.PelicanTeam)).RemainingOtherTeam || (totalAlive - totalDevoured) > 1) return;
 
-            if (MyPlayer.IsAlive && PelicanTeamWin != null)
-                NebulaAPI.CurrentGame?.TriggerGameEnd(PelicanTeamWin, GameEndReason.Situation, BitMasks.AsPlayer(MyPlayer));
+            if (MyPlayer.IsAlive)
+                NebulaAPI.CurrentGame?.TriggerGameEnd(AddonGameTags.PelicanEnd, GameEndReason.Situation, BitMasks.AsPlayer(MyPlayer));
         }
 
         public override void OnActivated() 
@@ -97,7 +94,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
                         var cancelable =
                             NebulaAPI.RunEvent(new PlayerTryVanillaKillLocalEventAbstractPlayerEvent(MyPlayer, target));
                         if (!(cancelable?.IsCanceled ?? false))
-                            MyPlayer.MurderPlayer(target, Digestion, null, KillParameter.NormalKill);
+                            MyPlayer.MurderPlayer(target, AddonGameTags.Digestion, null, KillParameter.NormalKill);
 
                         if (cancelable?.ResetCooldown ?? false) devourButton.CoolDownTimer.Start(GetCurrentCooldown());
                         return;
@@ -134,7 +131,7 @@ public class Pelican : DefinedRoleTemplate, HasCitation, DefinedRole, IAssignabl
             
             if (DevouredPlayerMask.Test(localPlayer))
             {
-                MyPlayer.MurderPlayer(localPlayer, Digestion, null, KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE,
+                MyPlayer.MurderPlayer(localPlayer, AddonGameTags.Digestion, null, KillParameter.WithAssigningGhostRole | KillParameter.WithoutSelfSE,
                     KillCondition.BothAlive);
 
                 localPlayer.VanillaPlayer.NetTransform.RpcSnapTo(MyPlayer.Position);
@@ -199,13 +196,12 @@ internal class PelicanCriteria : AbstractModule<IGameModeStandard>, IGameOperato
     static PelicanCriteria() => DIManager.Instance.RegisterModule(() => new PelicanCriteria().RegisterPermanently());
 
     [OnlyHost]
-    void OnPelicanTimeEnd(TimeMomentEndEvent ev)
+    void OnPelicanHuntEnd(TimeHuntEndEvent ev)
     {
-        var pelicanWin = Pelican.Instance.PelicanTeamWin;
-        if (ev is { IsTimeOver: true, TimeMoment.Id: "pelican" } && pelicanWin != null)
+        if (ev is { IsTimeOver: true, TimeHunt.Id: "pelican" })
         {
             EditableBitMask<GamePlayer> playerMask = BitMasks.AsPlayer().AddAll(GamePlayer.AllPlayers.Where(p => p.IsAlive && p.Role is Pelican.Instance));
-            NebulaAPI.CurrentGame?.RequestGameEnd(pelicanWin, playerMask);
+            NebulaAPI.CurrentGame?.RequestGameEnd(AddonGameTags.PelicanEnd, playerMask, AddonGameTags.PelicanHuntOverWinDetail);
         }
     }
 }
