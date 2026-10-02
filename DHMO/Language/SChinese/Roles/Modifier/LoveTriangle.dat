@@ -1,0 +1,44 @@
+# Assignable
+
+"role.loveTriangle.name" : "三角恋"
+"role.loveTriangle.generalBlurb" : "三角形具有稳定性"
+
+# Document
+
+"role.loveTriangle.doc" : "三角恋三人一组。当有一方死亡时，另外两方会殉情。"
+"role.loveTriangle.winCond" : "当存活玩家只有5个或5个以下，且你与你的爱人们存活。<br>三角恋只可以<b>独立</b>胜利，无法依靠职业胜利。"
+"role.loveTriangle.tips" : "・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.loveTriangle.detail" : "三角恋三人一组。如果一方死亡，另外两方也会死亡。"
+"options.lover.triangleMode" : "三角恋模式"
+"options.loveTriangle.involveCooldown" : "卷入冷却时间"
+"options.loveTriangle.involveInactiveTurns" : "卷入失效轮次"
+"options.loveTriangle.involveInactiveTurns.detail" : "从变为三角恋的那轮为起，当前轮次大于设置轮次后能力会失效。"
+"options.loveTriangle.sealUntilSecondTurn" : "第二轮前不能卷入他人" 
+"options.loveTriangle.sealUntilSecondTurn.detail" : "从变为三角恋的那轮为起，直到第二轮才可以使用能力。"
+"options.loveTriangle.meetingChat" : "三角恋会议聊天"
+
+# Game
+
+"chat.loveTriangleText" : "三角恋"
+
+# UI
+
+"button.label.lover.involve" : "卷入"
+
+# Stats
+
+# Team
+
+"end.detail.loveTriangle.win" : "三角恋独立胜利"
+"end.detail.loveTriangle.blocked" : "因三角恋身份阻止了其他胜利"
+
+"end.loveTriangle" : "三角恋%EXTRA%胜利"
+
+# Document
+
+"document.tip.winCond.teams.loveTriangle" : "三角恋"
+"document.tip.winCond.loveTriangles.title" : "独立胜利"
+"document.tip.winCond.loveTriangles.normal" : "当存活数为5时，且三方都存活，那么将单独胜利。"

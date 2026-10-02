@@ -33,10 +33,10 @@
 
 # UI
 
-"button.label.raven.leavemeeting" : "夜襲"
-"button.label.raven.returnmeeting" : "帰還"
-"role.raven.killtarget" : "ターゲットの役職: %ROLE%"
-"timeMoment.raven" : "レイヴンの夜が明けるまであと %TIME%"
+"button.label.raven.leaveMeeting" : "夜襲"
+"button.label.raven.returnMeeting" : "帰還"
+"role.raven.killTarget" : "ターゲットの役職: %ROLE%"
+"timeHunt.raven" : "レイヴンの夜が明けるまであと %TIME%"
 
 # Game
 

@@ -15,7 +15,7 @@
 "role.journalist.doc" : "A neutral who takes photos of the selected player and discloses them at the meeting.<br>Speculate the hidden player in the picture to find out who they are!"
 "role.journalist.winCond" : "Reach enough buzz and photo count, and the Journalist will win."
 "role.journalist.ability.title" : "Inherent Ability [Hot News]"
-"role.journalist.ability.main" : "Take photos from the cam of the tracked player to disclose at the meeting, and the tracked player will be hidden in the photo.<br>All players can click on the photo to speculate who the hidden player in the picture is. An incorrect speculation adds 1 point of buzz, while making no speculation adds 0.5 points of buzz."
+"role.journalist.ability.main" : "Take photos from the cam of the tracked player to disclose at the meeting, and the tracked player will be hidden in the photo.<br>All players can click on the photo to speculate who the hidden player in the picture is.<br>An incorrect speculation adds 1 point of buzz, while making no speculation adds 0.5 points of buzz."
 "role.journalist.tips" : "・The role is created by <b>DHMO</b>."
 
 # Options
@@ -38,6 +38,8 @@
 "ui.journalist.photoInfo" : "Click to speculate the hidden player in the picture.<br><b>Incorrect Speculation</b> or <b>No Speculation</b> will both accumulate buzz for the Journalist."
 
 # Game
+
+"end.detail.journalist.win" : "Journalist public opinion wins"
 
 "teams.journalist" : "Journalist"
 "end.journalist" : "Journalist Wins%EXTRA%"

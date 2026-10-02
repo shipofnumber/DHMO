@@ -35,7 +35,7 @@
 # UI
 
 "button.label.pelican.devour" : "丸呑み"
-"timeMoment.pelican" : "ペリカンの勝利の宴まであと %TIME%"
+"timeHunt.pelican" : "ペリカンの勝利の宴まであと %TIME%"
 
 # Game
 

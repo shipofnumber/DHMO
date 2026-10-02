@@ -37,7 +37,9 @@
 "role.journalist.whoIsHe" : "猜猜他是谁？"
 "ui.journalist.photoInfo" : "点击猜测图中隐蔽玩家。<br><b>猜测错误</b>或<b>不猜测</b>都会为记者积攒热度。"
 
-# Game
+# Team
+
+"end.detail.journalist.win" : "记者舆论胜利"
 
 "teams.journalist" : "记者"
 "end.journalist" : "记者%EXTRA%胜利"

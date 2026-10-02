@@ -13,15 +13,15 @@
 "document.tip.winCond.journalist" : "指定数のプレイヤーの写真とバズポイントを獲得すると勝利します。"
 
 "role.journalist.doc" : "プレイヤーを撮影し、会議にてバズポイントを稼ぐ第三陣営です。<br>他のプレイヤーは撮影対象を予想してバズポイントの獲得を防ぎましょう。"
-"role.journalist.winCond" : "指定数のプレイヤーの写真とバズポイントを獲得する。"
-"role.journalist.ability.title" : "固有能力 "ホットトピック""
-"role.journalist.ability.main" : "選択したプレイヤーを素性を隠して(=カモフラージュして)撮影し、会議にて全体に公開できます。<br>他のプレイヤーが予想を外すと1バズポイント、予想しないと0.5バズポイントを各個人から獲得します。"
+"role.journalist.winCond" : "十分なバズと写真数を達成すると、ジャーナリストが勝利します。"
+"role.journalist.ability.title" : "固有能力【ホットニュース】"
+"role.journalist.ability.main" : "追跡中のプレイヤーのカメラから写真を撮影して会議で公開します。写真内で追跡中のプレイヤーは隠されます。<br>全プレイヤーは写真をクリックして、写っている隠されたプレイヤーが誰かを予想できます。予想が外れるとバズポイントが1点加算され、予想しない場合は0.5点加算されます。"
 "role.journalist.tips" : "・この役職は、<b>DHMO</b>アドオンで追加されました。"
 
 # Options
 
 "options.role.journalist.detail" : "プレイヤーを撮影し、会議にてバズポイントを稼ぐ第三陣営です。"
-"options.role.journalist.miniCamCoolDown" : "選択クールダウン"
+"options.role.journalist.trackCoolDown" : "追跡クールダウン"
 "options.role.journalist.requiredBuzz" : "勝利に必要なバズポイント"
 "options.role.journalist.requiredPhotos" : "勝利に必要な撮影対象の数"
 "options.role.journalist.telephotoFinderSize" : "望遠ファインダーサイズ"
@@ -31,8 +31,10 @@
 
 "ui.action.journalist.camera" : "写真を撮影します。"
 "ui.action.journalist.toggle" : "ファインダーの向きを90度回転させます。"
-"button.label.journalist.miniCam" : "選択"
+"button.label.journalist.track" : "追跡"
+"button.label.journalist.monitor" : "監視"
 "button.label.journalist.shot" : "撮影"
+"role.journalist.whoIsHe" : "彼は誰でしょう？"
 "ui.journalist.photoInfo" : "ジャーナリストの写真を<b>クリック</b>して真っ黒な撮影対象を予想します。<br>予想が外れたり、予想しないとジャーナリストがバズポイントを獲得してしまいます。"
 
 # Game

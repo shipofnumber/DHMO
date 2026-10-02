@@ -22,12 +22,7 @@
 
 # TimeMoment
 
-"role.timeMoment.meetingButtonText" : "危险悄然降临..."
-
-# Round
-
-"game.end.round" : "共%ROUND%轮"
-"game.player.deadRound" : "第%ROUND%轮"
+"role.timeHunt.meetingButtonText" : "危险悄然逼近..."
 
 # Help
 

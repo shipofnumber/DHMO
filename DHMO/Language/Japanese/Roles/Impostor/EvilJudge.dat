@@ -1,0 +1,27 @@
+# Assignable
+
+"role.evilJudge.name" : "イビルジャッジ"
+"role.evilJudge.short" : "ジャッ"
+"role.evilJudge.blurb" : "法廷では静粛に!"
+
+# Document
+
+"role.evilJudge.doc" : "会議を休廷し、一時的に終了させられるインポスターです。また特殊な犠牲追放も行われます。"
+"role.evilJudge.ability.title" : "固有能力 "法の効力""
+"role.evilJudge.ability.main" : "会議を強制的に休廷すると会議をスキップして決められた時間後に再招集します。<br>しかし、再開された会議ではインポスター以外のプレイヤーは一部能力を使用できません。<br>イビルジャッジが生存時に投票スキップしたプレイヤーが<b>半分</b>に達すると、その中から1人がランダムで追放されます。"
+"role.evilJudge.tips" : "・元の会議の通報者が死んだり、報告されたプレイヤーが復活した場合、会議は再開されません。<br>・この役職は、<b>DHMO</b>アドオンで追加されました。"
+
+# Options
+
+"options.role.evilJudge.detail" : "イビルジャッジは味方の為に会議を延期できるインポスターです。"
+"options.role.evilJudge.numOfadjourn" : "休廷可能回数"
+"options.role.evilJudge.reopenCountdown" : "再招集クールダウン"
+"options.role.evilJudge.sacrificialExileFilter" : "犠牲追放フィルター"
+
+# UI
+
+"role.evilJudge.sacrificialExileText" : "誰かが責任を負うべきだ......"
+"role.evilJudge.reopenText" : "再招集までの時間: %TIME%s"
+"role.evilJudge.presentPushEmergencyMeetingText" : "休廷中は新しく緊急会議を始められない。"
+"role.evilJudge.adjournText" : "ジャッジは休廷を言い渡した"
+"button.label.evilJudge.adjourn" : "休廷"

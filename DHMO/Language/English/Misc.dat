@@ -22,12 +22,7 @@
 
 # TimeMoment
 
-"role.timeMoment.meetingButtonText" : "Danger creeps in..."
-
-# Round
-
-"game.end.round" : "%ROUND% round(s) total"
-"game.player.deadRound" : "Round %ROUND%"
+"role.timeHunt.meetingButtonText" : "DANGER CREEPS IN..."
 
 # Help
 

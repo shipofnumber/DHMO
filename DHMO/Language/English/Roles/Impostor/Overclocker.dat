@@ -9,7 +9,7 @@
 "role.overclocker.doc" : "An impostor who can overclock their own abilities to store extra cooldown."
 "role.overclocker.ability.title" : "Inherent Ability [Overclock]"
 "role.overclocker.ability.main" : "Abilities can be overclocked, meaning they can store extra cooldown beyond the limit for later use.<br>When using abilities, the stored cooldown is consumed first."
-"role.overclocker.ability.outtime" : "<title>Overclock</title>When used on allies, it reduces the target's %RANDOM% by <var>%PERCENTAGE%%</var> based on this ability's stored cooldown; otherwise, it increases it.<br>After using the ability, this ability's cooldown increases by the target's changed cooldown plus the set cooldown."
+"role.overclocker.ability.outtime" : "<title>Overclock</title>Reduce the target's %RANDOM% by <var>%PERCENTAGE%%</var> based on the stored cooldown when uses on allies.<br>Otherwise, it increases it.<br>After using, this ability's cooldown increases by the target's changed cooldown plus the set cooldown."
 "role.overclocker.ability.random" : "<var>random ability cooldown</var>"
 "role.overclocker.ability.all" : "<var>all ability cooldowns</var>"
 "role.overclocker.tips" : "・The role is created by <b>DHMO</b>."

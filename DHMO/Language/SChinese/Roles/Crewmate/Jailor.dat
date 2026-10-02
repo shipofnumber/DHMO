@@ -10,11 +10,10 @@
 "role.jailor.ability.title" : "固有能力【审讯】"
 "role.jailor.ability.main" : ""
 "role.jailor.ability.jail" : "<title>关押</title>尝试关押目标，并在会议上监禁。<br>%JAILINAROW%"
-"role.jailor.ability.execute" : "<title>处决</title>使用后会尝试击杀被监禁者。%CANEXECUTELOVER%<br>若处决对象为船员阵营，将无法再次关押他人，同时自身因失去公信力无法投票。"
-"role.jailor.ability.inJail" : "<title>被监禁</title>会议上在被监禁者的玩家图标上会显示监禁标记。<br>被监禁的玩家无法使用技能也无法被投票。"
+"role.jailor.ability.execute" : "<title>处决</title>使用后会尝试击杀被监禁者。<br>若处决对象为船员阵营，将无法再次关押他人，同时自身因失去公信力无法投票。"
+"role.jailor.ability.inJail" : "<title>被监禁</title>会议上在被监禁的玩家会有此标记。<br>被监禁玩家无法投票也无法使用会议能力，其他玩家也无法对被监禁玩家进行操作。"
 "role.jailor.ability.jailinArow" : "<var>会议结束后会继续监禁原目标，期间可以更换监禁目标。</var>"
 "role.jailor.ability.clearJailed" : "<var>会议结束后，会释放被监禁者。</var>"
-"role.jailor.ability.canExecuteLover" : "<br><b>可以处决恋人。</b>"
 "role.jailor.tips" : "・本职业来自于Among Us Mod <b>Town of Us Mira</b>，由<b>DHMO</b>添加。"
 
 # Options
@@ -35,7 +34,7 @@
 # Game
 
 "chat.jailor" : "[审讯室频道]"
-"chat.jailortext" : "审讯室"
+"chat.jailorText" : "审讯室"
 
 # UI
 

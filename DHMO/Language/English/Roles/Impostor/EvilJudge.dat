@@ -1,0 +1,27 @@
+# Assignable
+
+"role.evilJudge.name" : "Evil Judge"
+"role.evilJudge.short" : "EJ"
+"role.evilJudge.blurb" : "Order in the Court!"
+
+# Document
+
+"role.evilJudge.doc" : "An impostor who can adjourn the meeting to end it forcibly, and has a special sacrificial exile mechanic."
+"role.evilJudge.ability.title" : "Inherent Ability [Legal Effect]"
+"role.evilJudge.ability.main" : "Adjourning forcibly skips the meeting and reopens it after some time.<br>While the Evil Judge is alive, when players who skipped voting reach <b>half</b> of the meeting, one of the players who skipped voting will be randomly exiled."
+"role.evilJudge.tips" : "・If the reporter of the original meeting dies or the reported player is revived, the meeting will not reopen.<br>・The role is created by <b>DHMO</b>."
+
+# Options
+
+"options.role.evilJudge.detail" : "The Evil Judge buys time for the allies by adjourning meetings."
+"options.role.evilJudge.numOfadjourn" : "Num of Adjourns"
+"options.role.evilJudge.reopenCountdown" : "Reopen Countdown"
+"options.role.evilJudge.sacrificialExileFilter" : "Sacrificial Exile Filter"
+
+# UI
+
+"role.evilJudge.sacrificialExileText" : "Someone has to take the blame......"
+"role.evilJudge.reopenText" : "Time until the meeting reopens: %TIME%s"
+"role.evilJudge.presentPushEmergencyMeetingText" : "YOU CANNOT CALL DURING THE ADJOURNMENT"
+"role.evilJudge.adjournText" : "The Judge has adjourned."
+"button.label.evilJudge.adjourn" : "Adjourn"

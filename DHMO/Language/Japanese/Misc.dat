@@ -22,12 +22,7 @@
 
 # TimeMoment
 
-"role.timeMoment.meetingButtonText" : "危険がひそかに近づいている..."
-
-# Round
-
-"game.end.round" : "%ROUND%T"
-"game.player.deadRound" : "%ROUND%T"
+"role.timeHunt.meetingButtonText" : "危険がひそかに近づいている..."
 
 # Help
 

@@ -1,0 +1,27 @@
+# Assignable
+
+"role.evilJudge.name" : "邪恶的法官"
+"role.evilJudge.short" : "邪法"
+"role.evilJudge.blurb" : "肃静！"
+
+# Document
+
+"role.evilJudge.doc" : "邪恶的法官可以进行休庭强制结束会议，同时具有特殊的牺牲放逐机制。"
+"role.evilJudge.ability.title" : "固有能力【法律效力】"
+"role.evilJudge.ability.main" : "进行休庭会强制跳过会议，并在一定时间之后重启会议。<br>邪恶的法官存活时，当会议上跳过投票的玩家达到<b>一半</b>时，会随机驱逐一名跳过投票玩家。"
+"role.evilJudge.tips" : "・当原会议的报告人死亡或被报告者复活，会议则不会重启。<br>・本职业由<b>DHMO</b>添加。"
+
+# Options
+
+"options.role.evilJudge.detail" : "邪恶的法官通过休庭为争得轮次。"
+"options.role.evilJudge.numOfadjourn" : "休庭次数"
+"options.role.evilJudge.reopenCountdown" : "重启倒计时"
+"options.role.evilJudge.sacrificialExileFilter" : "牺牲放逐过滤"
+
+# UI
+
+"role.evilJudge.sacrificialExileText" : "%PLAYER%成为了这次会议的替罪羊。"
+"role.evilJudge.reopenText" : "距离重启会议还剩：%TIME%s"
+"role.evilJudge.presentPushEmergencyMeetingText" : "处于休庭间隙，无法召开新的紧急会议"
+"role.evilJudge.adjournText" : "法官宣布休庭。"
+"button.label.evilJudge.adjourn" : "休庭"

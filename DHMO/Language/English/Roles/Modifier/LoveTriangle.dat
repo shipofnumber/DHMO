@@ -1,0 +1,44 @@
+# Assignable
+
+"role.loveTriangle.name" : "Triangle"
+"role.loveTriangle.generalBlurb" : "A Love Triangle Has Stability"
+
+# Document
+
+"role.loveTriangle.doc" : "A modifier for pairs of 3. If your one of partners dies, you die following them."
+"role.loveTriangle.winCond" : "Survive with your partners when the total number of survivors is 5 or less.<br>The Triangle can only <b>solo win</b>, not by the role."
+"role.loveTriangle.tips" : "・The role is created by <b>DHMO</b>."
+
+# Options
+
+"options.role.loveTriangle.detail" : "While the number of ways to win increases, so does the risk of death."
+"options.lover.triangleMode" : "Love Triangle Mode"
+"options.loveTriangle.involveCooldown" : "Involve Cooldown"
+"options.loveTriangle.involveInactiveTurns" : "Involve Inactive Turns"
+"options.loveTriangle.involveInactiveTurns.detail" : "Starting from the turn when a Triangle forms, the ability will become inactive after the current turn count exceeds the option turn count."
+"options.loveTriangle.sealUntilSecondTurn" : "Seal Ability Until Second Turn" 
+"options.loveTriangle.sealUntilSecondTurn.detail" : "Starting from the turn when a Triangle forms, the ability cannot be used until the second turn."
+"options.loveTriangle.meetingChat" : "Meeting Chat"
+
+# Game
+
+"chat.loveTriangleText" : "Love Triangle"
+
+# UI
+
+"button.label.lover.involve" : "Involve"
+
+# Stats
+
+# Team
+
+"end.detail.loveTriangle.win" : "Love Triangle solo wins"
+"end.detail.loveTriangle.blocked" : "Blocked every win but the Triangle"
+
+"end.loveTriangle" : "Love Triangle Wins%EXTRA%"
+
+# Document
+
+"document.tip.winCond.teams.loveTriangle" : "Love Triangle"
+"document.tip.winCond.loveTriangles.title" : "Love Triangle Solo Trigger"
+"document.tip.winCond.loveTriangles.normal" : "When there are only 5 survivors, the Triangle wins if each other survive."

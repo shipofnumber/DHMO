@@ -31,14 +31,15 @@
 "options.role.bomber.bombExplosionDuration" : "爆発までの時間"
 "options.role.bomber.afterMeetingResetBomb" : "会議後に爆発までの時間をリセット"
 "options.role.bomber.bombKillLeftDeadbody" : "時限爆弾のキルで死体が残る"
+"options.role.bomber.memeMode" : "ミームモード"
 
 # Game
 
-"gameAction.bomber.passbomb" : "爆弾回し"
+"gameAction.bomber.passBomb" : "爆弾回し"
 
 # UI
 
-"button.label.bomber.ignitebomb" : "時限爆弾"
+"button.label.bomber.igniteBomb" : "時限爆弾"
 "button.label.game.passBomb" : "爆弾回し"
 
 # Status

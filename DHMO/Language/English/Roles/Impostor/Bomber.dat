@@ -8,13 +8,13 @@
 
 "role.bomber.doc" : "An impostor who can pass the bomb to others to kill them."
 "role.bomber.ability.title" : "Inherent Ability [Bomb]"
-"role.bomber.ability.main" : "After igniting the bomb, it can be passed to others. When the bomb's countdown ends, the player holding the bomb will be killed by the explosion.<br>The bomb has <b>2</b> phases: Activation (<var>%ACTIVE%s</var>) and Explosion (<var>%EXPLODE%s</var>).<br>Only the Bomber can detect the bomb and pass it to others during the Activation phase. Otherwise, the bomb can only be passed during the Explosion phase."
+"role.bomber.ability.main" : "After igniting the bomb, it can be passed to others.<br>The bomb has 2 phases: <b>Activate</b> and <b>Explosion</b>.<br><br><b>Activate</b>: In this phase, the bomb is only visible for the Bomber.<br><b>Explosion</b>: The bomb is completely visible in this phase. And when the duration is over, the bomb will explode."
 "role.bomber.ability.ignite" : "<title>Ignite</title>Ignite a bomb, %OF%"
-"role.bomber.ability.pass" : "<title>Pass</title>Pass your bomb to someone else; the bomb will inherit the original explosion timer.<br>Except for the Bomber, the Pass ability has a <b>3s</b> cooldown for everyone."
-"role.bomber.ability.evidence" : "<title>Explosion Evidence</title>After <var>%EXPLODE%</var> seconds, the player holding the bomb will be blown up, leaving evidence of the explosion at the scene.<br>Bomb kills do not trigger the Bait report, and depending on settings, no dead body may be left."
+"role.bomber.ability.pass" : "<title>Pass</title>Pass your bomb to someone else; the bomb will inherit the original explosion duration."
+"role.bomber.ability.evidence" : "<title>Explosion Evidence</title>The evidence of the explosion at the scene.<br>Depending on settings, no dead body may be left."
 "role.bomber.ability.self" : "and on <var>your own self</var>."
 "role.bomber.ability.other" : "and on <var>another player</var>."
-"role.bomber.tips" : "・The bomb can also kill the <b><color=red>impostor</color></b>.<br>・Explosions cannot trigger the Bait report.<br>・The role is created by <b>DHMO</b>."
+"role.bomber.tips" : "・The bomb can kill the <b><color=red>impostor</color></b>.<br>・Explosions cannot trigger the Bait report.<br>・The role is created by <b>DHMO</b>."
 
 # Options
 
@@ -34,11 +34,11 @@
 
 # Game
 
-"gameAction.bomber.passbomb" : "Pass Bomb"
+"gameAction.bomber.passBomb" : "Pass Bomb"
 
 # UI
 
-"button.label.bomber.ignitebomb" : "Ignite"
+"button.label.bomber.igniteBomb" : "Ignite"
 "button.label.game.passBomb" : "Pass"
 
 # Status
